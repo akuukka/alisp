@@ -1,0 +1,6 @@
+*.pro.user
+.dir-locals.el
+/build
+/compile_commands.json
+/.clangd
+.DS_Store
