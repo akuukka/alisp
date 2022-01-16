@@ -176,6 +176,54 @@ std::unique_ptr<FunctionSymbol> makeFunctionAddition()
     return f;
 }
 
+std::unique_ptr<FunctionSymbol> makeFunctionMultiplication()
+{
+    std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
+    f->name = "*";
+    f->func = [](ConsCell* p) {
+        std::unique_ptr<Symbol> r;
+        double floatMul = 1;
+        std::int64_t intMul = 1;
+        bool fp = false;
+        while (p) {
+            if (auto i = dynamic_cast<IntSymbol*>(p->sym.get())) {
+              intMul *= i->value;
+              floatMul *= i->value;
+            }
+            else if (auto f = dynamic_cast<FloatSymbol*>(p->sym.get())) {
+              floatMul *= f->value;
+              intMul *= f->value;
+              fp = true;
+            }
+            else if (auto l = dynamic_cast<ListSymbol*>(p->sym.get())) {
+                auto res = eval(*l->car);
+                if (auto i = dynamic_cast<IntSymbol*>(res.get())) {
+                  intMul *= i->value;
+                  floatMul *= i->value;
+                }
+                else if (auto f = dynamic_cast<FloatSymbol*>(res.get())) {
+                  floatMul *= f->value;
+                  intMul *= f->value;
+                  fp = true;
+                }
+                else {
+                    throw std::runtime_error("Function return type is wrong.");
+                }
+            }
+            else {
+                throw std::runtime_error("Wrong type argument: " + p->toString());
+            }
+            p = p->cdr.get();
+        }
+        if (fp) {
+          r = makeFloat(floatMul);
+        }
+        r = makeInt(intMul);
+        return r;
+    };
+    return f;
+}
+
 void cons(std::unique_ptr<Symbol> sym, List& list)
 {
     if (!list) {

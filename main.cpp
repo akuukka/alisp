@@ -44,20 +44,22 @@ void test()
         alisp::cons(std::move(inner), c);
         assert(c.toString() == "(nil)");
     }
-    // Nested integer addition
+    // Nested integer addition and multiplication
     {
         auto inner = alisp::makeList(nullptr);
         alisp::cons(alisp::makeInt(3), *inner->car);
         alisp::cons(alisp::makeInt(2), *inner->car);
-        alisp::cons(alisp::makeFunctionAddition(), *inner->car);
+        alisp::cons(alisp::makeFunctionMultiplication(), *inner->car);
 
         alisp::ConsCell c;        
         alisp::cons(std::move(inner), c);
         alisp::cons(alisp::makeInt(1), c);
         alisp::cons(alisp::makeFunctionAddition(), c);
         
-        assert(c.toString() == "(+ 1 (+ 2 3))");
-        std::cout << c.toString() << " => " << alisp::eval(c)->toString() << std::endl;
+        assert(c.toString() == "(+ 1 (* 2 3))");
+        const auto res = alisp::eval(c);
+        assert(dynamic_cast<alisp::IntSymbol*>(res.get()));
+        assert(dynamic_cast<alisp::IntSymbol*>(res.get())->value == 7);
     }
 }
 
