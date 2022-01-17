@@ -1,4 +1,6 @@
 #include <cstdint>
+#include <cstdio>
+#include <sstream>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -18,7 +20,11 @@ struct UnableToEvaluate : std::runtime_error
 
 struct Symbol {
     virtual std::string toString() const = 0;
+    virtual bool isInt() const { return false; }
+    virtual bool isFloat() const { return false; }
     virtual ~Symbol() {}
+
+    virtual bool operator==(std::int64_t value) const { return false; };
 };
 
 using NilSymbol = Symbol;
@@ -67,6 +73,10 @@ struct IntSymbol : Symbol {
     std::string toString() const override {
         return std::to_string(value);
     }
+    bool isInt() const override { return true; }
+    bool operator==(std::int64_t value) const override {
+        return this->value == value;
+    };
 };
 
 struct FloatSymbol : Symbol {
@@ -77,6 +87,7 @@ struct FloatSymbol : Symbol {
     std::string toString() const override {
         return std::to_string(value);
     }
+    bool isFloat() const override { return true; }
 };
 
 struct ListSymbol : Symbol {
@@ -95,7 +106,7 @@ std::unique_ptr<ListSymbol> makeNil()
     return r;
 }
 
-std::unique_ptr<ListSymbol> makeList(std::unique_ptr<ConsCell> car)
+std::unique_ptr<ListSymbol> makeList(std::unique_ptr<ConsCell> car =  nullptr)
 {
     if (!car) {
         return makeNil();
@@ -126,6 +137,12 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
         throw exceptions::UnableToEvaluate("Invalid function: " + c.sym->toString());
     }
     return f->func(c.cdr.get());
+}
+
+std::unique_ptr<Symbol> eval(const std::unique_ptr<ListSymbol>& list)
+{
+    assert(list->car);
+    return eval(*list->car);
 }
 
 std::unique_ptr<FunctionSymbol> makeFunctionAddition()
@@ -237,6 +254,11 @@ void cons(std::unique_ptr<Symbol> sym, List& list)
     list.cdr->cdr = std::move(cdr.cdr);
 }
 
+void cons(std::unique_ptr<Symbol> sym, const std::unique_ptr<ListSymbol>& list)
+{
+    cons(std::move(sym), *list->car);
+}
+
 bool isPartOfSymName(const char c) {
     if (c=='+') return true;
     if (c=='-') return true;
@@ -258,50 +280,68 @@ std::string parseSymbolName(const char*& str)
     return r;
 }
 
-List parseList(const char*& str)
+std::unique_ptr<Symbol> parseNumericalSymbol(const char*& str)
 {
-    assert(*str == '(');
-    str++;
-    List l;
-    std::cout << "Parse list: " << str << std::endl;
-    while (*str != ')') {
-        const char c = *str;
-        std::cout << c << std::endl;
-        if (isWhiteSpace(c)) {
-            str++;
-        }
-        else if (isPartOfSymName(c)) {
-            const std::string name = parseSymbolName(str);
-            std::cout << name << std::endl;
-            if (name == "plus" || name == "+") {
-                std::cout << "add oper " << std::endl;
-                std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
-                
+    bool fp = false;
+    int dots = 0;
+    std::string r;
+    while (((*str) >= '0' && (*str) <= '9') || (*str) == '.') {
+        if ((*str) == '.') {
+            dots++;
+            if (dots >= 2) {
+                throw std::runtime_error("Two dots!");
             }
         }
-        else {
-            throw std::runtime_error("Unexpected character.");
-        }
-
-    }
-    return l;
-}
-
-void parseProgram(const char* str)
-{
-    std::vector<List> prog;
-    while (*str) {
-        const char c = *str;
-        if (c == '(') {
-            prog.push_back(parseList(str));
-        }
+        r += *str;
         str++;
     }
+    std::stringstream ss(r);
+    if (dots) {
+        double value;
+        ss >> value;
+        return makeFloat(value);
+    }
+    else {
+        std::int64_t value;
+        ss >> value;
+        return makeInt(value);
+    }
 }
 
-void run(const char* str)
+bool onlyWhitespace(const char* expr)
 {
-    parseProgram(str);
+    while (*expr) {
+        if (!isWhiteSpace(*expr)) {
+            return false;
+        }
+        expr++;
+    }
+    return true;
+}
+
+std::unique_ptr<Symbol> parse(const char* expr)
+{
+    // Skip whitespace until next symbol
+    while (*expr) {
+        const char c = *expr;
+        if (isWhiteSpace(c)) {
+            expr++;
+            continue;
+        }
+        if (c >= '0' && c <= '9') {
+            auto sym = parseNumericalSymbol(expr);
+            if (!onlyWhitespace(expr)) {
+                throw std::runtime_error("Unexpected: " +  std::string(expr));
+            }
+            return sym;
+        }
+        else  {
+            std::stringstream os;
+            os << "Unexpected character: " << c;
+            throw std::runtime_error(os.str());
+        }
+    }    
+    return nullptr;
 }
 
 }
