@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <map>
 #include <cstdio>
 #include <sstream>
 #include <memory>
@@ -16,10 +17,13 @@ struct UnableToEvaluate : std::runtime_error
     UnableToEvaluate(std::string msg) : std::runtime_error(msg) {}
 };
 
-}
+} // namespace exceptions
+
+class Machine;
 
 struct Symbol {
     virtual std::string toString() const = 0;
+    virtual bool isList() const { return false; }
     virtual bool isInt() const { return false; }
     virtual bool isFloat() const { return false; }
     virtual ~Symbol() {}
@@ -59,7 +63,7 @@ using List = ConsCell;
 
 struct FunctionSymbol : Symbol {
     std::string name;
-    std::function<std::unique_ptr<Symbol>(ConsCell*)> func;
+    std::unique_ptr<Symbol>(*func)(ConsCell*);
     std::string toString() const override {
         return name;
     }
@@ -96,6 +100,21 @@ struct ListSymbol : Symbol {
     std::string toString() const override {
         return car ? car->toString() : "nil";
     }
+
+    bool isList() const override { return true; }
+};
+
+struct NamedSymbol : Symbol
+{
+    Machine* parent;
+    std::string name;
+
+    std::string toString() const override
+    {
+        return name;
+    }
+
+    NamedSymbol(Machine* parent) : parent(parent) {}
 };
 
 // Remember nil = ()
@@ -133,16 +152,24 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
         return makeNil();
     }
     const FunctionSymbol* f = dynamic_cast<const FunctionSymbol*>(c.sym.get());
-    if (!f) {
-        throw exceptions::UnableToEvaluate("Invalid function: " + c.sym->toString());
+    if (f) {
+        return f->func(c.cdr.get());
     }
-    return f->func(c.cdr.get());
+    throw exceptions::UnableToEvaluate("Invalid function: " + c.sym->toString());
 }
 
 std::unique_ptr<Symbol> eval(const std::unique_ptr<ListSymbol>& list)
 {
     assert(list->car);
     return eval(*list->car);
+}
+
+std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
+{
+    if (list->isList()) {
+        return eval(*dynamic_cast<ListSymbol*>(list.get())->car);
+    }
+    throw std::runtime_error("Evaluating a symbol which is not a list is not implementd yet. This should probably return a copy of the symbol itself");
 }
 
 std::unique_ptr<FunctionSymbol> makeFunctionAddition()
@@ -263,6 +290,7 @@ bool isPartOfSymName(const char c) {
     if (c=='+') return true;
     if (c=='-') return true;
     if (c>='a' && c<='z') return true;
+    if (c>='A' && c<='Z') return true;
     return false;
 }
 
@@ -319,29 +347,83 @@ bool onlyWhitespace(const char* expr)
     return true;
 }
 
-std::unique_ptr<Symbol> parse(const char* expr)
+void skipWhitespace(const char*& expr)
 {
-    // Skip whitespace until next symbol
-    while (*expr) {
-        const char c = *expr;
-        if (isWhiteSpace(c)) {
-            expr++;
-            continue;
-        }
-        if (c >= '0' && c <= '9') {
-            auto sym = parseNumericalSymbol(expr);
-            if (!onlyWhitespace(expr)) {
-                throw std::runtime_error("Unexpected: " +  std::string(expr));
-            }
-            return sym;
-        }
-        else  {
-            std::stringstream os;
-            os << "Unexpected character: " << c;
-            throw std::runtime_error(os.str());
-        }
-    }    
-    return nullptr;
+    while (*expr && isWhiteSpace(*expr)) {
+        expr++;
+    }
 }
+
+class Machine
+{
+    std::map<std::string, std::unique_ptr<FunctionSymbol>> m_funcs;
+
+    std::unique_ptr<Symbol> parseNamedSymbol(const char*& str)
+    {
+        auto sym = std::make_unique<NamedSymbol>(this);
+        while (*str && isPartOfSymName(*str)) {
+            sym->name += *str;
+            str++;
+        }
+        return sym;
+    }
+
+    std::unique_ptr<Symbol> parseNext(const char*& expr)
+    {
+        // Skip whitespace until next symbol
+        while (*expr) {
+            const char c = *expr;
+            if (isWhiteSpace(c)) {
+                expr++;
+                continue;
+            }
+            if (c >= '0' && c <= '9') {
+                return parseNumericalSymbol(expr);
+            }
+            else if (isPartOfSymName(c)) {
+                return parseNamedSymbol(expr);
+            }
+            else if (c == '(') {
+                auto l = makeList(nullptr);
+                auto lastConsCell = l->car.get();
+                assert(lastConsCell);
+                expr++;
+                while (*expr != ')') {
+                    auto sym = parseNext(expr);
+                    skipWhitespace(expr);
+                    if (lastConsCell->sym) {
+                        assert(!lastConsCell->cdr);
+                        lastConsCell->cdr = std::make_unique<ConsCell>();
+                        lastConsCell = lastConsCell->cdr.get();
+                    }
+                    lastConsCell->sym = std::move(sym);
+                }
+                expr++;
+                return l;
+            }
+            else  {
+                std::stringstream os;
+                os << "Unexpected character: " << c;
+                throw std::runtime_error(os.str());
+            }
+        }    
+        return nullptr;
+    }
+public:
+    std::unique_ptr<Symbol> parse(const char* expr)
+    {
+        auto r = parseNext(expr);
+        if (!onlyWhitespace(expr)) {
+            throw std::runtime_error("Unexpected: " + std::string(expr));
+        }
+        return r;
+    }
+
+    Machine()
+    {
+        m_funcs["+"] = makeFunctionAddition();
+        m_funcs["*"] = makeFunctionMultiplication();
+    }
+};
 
 }

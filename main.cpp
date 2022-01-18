@@ -3,6 +3,8 @@
 
 void testEmptyList()
 {
+    alisp::Machine m;
+    
     alisp::ConsCell c;
     assert(c.toString() == "nil");
     auto res = alisp::eval(c);
@@ -14,6 +16,10 @@ void testEmptyList()
 
     auto el = alisp::makeList();
     assert(el->toString() == "nil");
+
+    auto t3 = m.parse("()");
+    assert(t3 && t3->isList());
+    assert(t3->toString() == "nil");
 }
 
 void testAddition()
@@ -36,6 +42,17 @@ void testAddition()
         assert(l->toString() == "(+ 1 2)");
         auto res = alisp::eval(l);
         assert(res && res->isInt() && res->toString() == "3");
+    }
+    // Test case 1
+    {
+      /*
+      alisp::Machine m;
+      auto syms = m.parse("(+ 1 1)");
+      assert(syms->toString() == "(+ 1 1)");
+      assert(syms->isList());
+      auto res = alisp::eval(syms);
+      std::cout << res->toString() << std::endl;
+      */
     }
 }
 
@@ -78,24 +95,22 @@ void test()
     }
     // Parse simple expressions
     {
-        auto t1 = alisp::parse("   123  ");
+        alisp::Machine m;
+        auto t1 = m.parse("   123 ");
         assert(t1);
         assert(t1->isInt());
         assert(t1->toString() == "123");
         assert(*t1 == 123);
 
-        auto t2 = alisp::parse("123.5 ");
+        auto t2 = m.parse("123.5 ");
         assert(t2);
         assert(t2->isFloat());
         assert(dynamic_cast<alisp::FloatSymbol*>(t2.get())->value == 123.5);
-
-        auto t3 = alisp::parse("()");
     }
 }
 
 int main(int, char**)
 {
     test();
-    // alisp::run(" (+ 1 1)");
     return 0;
 }
