@@ -21,7 +21,8 @@ struct UnableToEvaluate : std::runtime_error
 
 class Machine;
 
-struct Symbol {
+struct Symbol
+{
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
     virtual bool isInt() const { return false; }
@@ -32,11 +33,13 @@ struct Symbol {
     virtual Symbol* resolve() {
         return this;
     }
+    virtual std::unique_ptr<Symbol> clone() const = 0;
 };
 
 using NilSymbol = Symbol;
 
-struct ConsCell {
+struct ConsCell
+{
     std::unique_ptr<Symbol> sym;
     std::unique_ptr<ConsCell> cdr;
 
@@ -64,11 +67,20 @@ struct ConsCell {
 
 using List = ConsCell;
 
-struct FunctionSymbol : Symbol {
+struct FunctionSymbol : Symbol
+{
     std::string name;
     std::unique_ptr<Symbol>(*func)(ConsCell*);
+    
     std::string toString() const override {
         return name;
+    }
+
+    std::unique_ptr<Symbol> clone() const override
+    {
+        auto sym = std::make_unique<FunctionSymbol>();
+        *sym = *this;
+        return sym;
     }
 };
 
@@ -84,6 +96,11 @@ struct IntSymbol : Symbol {
     bool operator==(std::int64_t value) const override {
         return this->value == value;
     };
+
+    std::unique_ptr<Symbol> clone() const override
+    {
+        return std::make_unique<IntSymbol>(value);
+    }
 };
 
 struct FloatSymbol : Symbol {
@@ -94,7 +111,17 @@ struct FloatSymbol : Symbol {
     std::string toString() const override {
         return std::to_string(value);
     }
+    
     bool isFloat() const override { return true; }
+    
+    bool operator==(std::int64_t value) const override {
+        return this->value == value;
+    };
+
+    std::unique_ptr<Symbol> clone() const override
+    {
+        return std::make_unique<FloatSymbol>(value);
+    }
 };
 
 struct ListSymbol : Symbol {
@@ -105,6 +132,14 @@ struct ListSymbol : Symbol {
     }
 
     bool isList() const override { return true; }
+
+    
+    std::unique_ptr<Symbol> clone() const override
+    {
+        auto sym = std::make_unique<ListSymbol>();
+        throw std::runtime_error("List cloning...");
+        return sym;
+    }
 };
 
 struct NamedSymbol : Symbol
@@ -120,6 +155,13 @@ struct NamedSymbol : Symbol
     Symbol* resolve() override;
 
     NamedSymbol(Machine* parent) : parent(parent) {}
+
+    std::unique_ptr<Symbol> clone() const override
+    {
+        auto sym = std::make_unique<NamedSymbol>(parent);
+        sym->name = name;
+        return sym;
+    }
 };
 
 // Remember nil = ()
@@ -172,10 +214,12 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<ListSymbol>& list)
 
 std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
 {
+    // If it's a list, evaluation means function call. Otherwise, return a copy of
+    // the symbol itself.
     if (list->isList()) {
         return eval(*dynamic_cast<ListSymbol*>(list.get())->car);
     }
-    throw std::runtime_error("Evaluating a symbol which is not a list is not implementd yet. This should probably return a copy of the symbol itself");
+    return list->clone();
 }
 
 std::unique_ptr<FunctionSymbol> makeFunctionAddition()
@@ -424,6 +468,11 @@ public:
             throw std::runtime_error("Unexpected: " + std::string(expr));
         }
         return r;
+    }
+
+    std::unique_ptr<Symbol> evaluate(const char* expr)
+    {
+        return eval(parse(expr));
     }
 
     Symbol* resolve(NamedSymbol* sym)
