@@ -45,14 +45,12 @@ void testAddition()
     }
     // Test case 1
     {
-      /*
       alisp::Machine m;
-      auto syms = m.parse("(+ 1 1)");
-      assert(syms->toString() == "(+ 1 1)");
+      auto syms = m.parse("(+ 3 90)");
+      assert(syms->toString() == "(+ 3 90)");
       assert(syms->isList());
       auto res = alisp::eval(syms);
-      std::cout << res->toString() << std::endl;
-      */
+      assert(res->toString() == "93");
     }
 }
 

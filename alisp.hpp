@@ -29,6 +29,9 @@ struct Symbol {
     virtual ~Symbol() {}
 
     virtual bool operator==(std::int64_t value) const { return false; };
+    virtual Symbol* resolve() {
+        return this;
+    }
 };
 
 using NilSymbol = Symbol;
@@ -114,6 +117,8 @@ struct NamedSymbol : Symbol
         return name;
     }
 
+    Symbol* resolve() override;
+
     NamedSymbol(Machine* parent) : parent(parent) {}
 };
 
@@ -151,11 +156,12 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
         // Remember: () => nil
         return makeNil();
     }
-    const FunctionSymbol* f = dynamic_cast<const FunctionSymbol*>(c.sym.get());
+    auto sym = c.sym->resolve();
+    const FunctionSymbol* f = dynamic_cast<const FunctionSymbol*>(sym);
     if (f) {
         return f->func(c.cdr.get());
     }
-    throw exceptions::UnableToEvaluate("Invalid function: " + c.sym->toString());
+    throw exceptions::UnableToEvaluate("Invalid function: " + sym->toString());
 }
 
 std::unique_ptr<Symbol> eval(const std::unique_ptr<ListSymbol>& list)
@@ -419,11 +425,24 @@ public:
         return r;
     }
 
+    Symbol* resolve(NamedSymbol* sym)
+    {
+        if (m_funcs.count(sym->name)) {
+            return m_funcs[sym->name].get();
+        }
+        throw std::runtime_error("Unable to resolve name: " + sym->name);
+    }
+
     Machine()
     {
         m_funcs["+"] = makeFunctionAddition();
         m_funcs["*"] = makeFunctionMultiplication();
     }
 };
+
+Symbol* NamedSymbol::resolve()
+{
+    return parent->resolve(this);
+}
 
 }
