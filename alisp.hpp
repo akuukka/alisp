@@ -407,10 +407,9 @@ void skipWhitespace(const char*& expr)
 
 class Machine
 {
-    std::map<std::string, std::unique_ptr<FunctionSymbol>> m_funcs;
+    std::map<std::string, std::unique_ptr<Symbol>> m_syms;
 
-    std::unique_ptr<Symbol> parseNamedSymbol(const char*& str)
-    {
+    std::unique_ptr<Symbol> parseNamedSymbol(const char *&str) {
         auto sym = std::make_unique<NamedSymbol>(this);
         while (*str && isPartOfSymName(*str)) {
             sym->name += *str;
@@ -477,16 +476,16 @@ public:
 
     Symbol* resolve(NamedSymbol* sym)
     {
-        if (m_funcs.count(sym->name)) {
-            return m_funcs[sym->name].get();
+        if (m_syms.count(sym->name)) {
+            return m_syms[sym->name].get();
         }
         throw std::runtime_error("Unable to resolve name: " + sym->name);
     }
 
     Machine()
     {
-        m_funcs["+"] = makeFunctionAddition();
-        m_funcs["*"] = makeFunctionMultiplication();
+        m_syms["+"] = makeFunctionAddition();
+        m_syms["*"] = makeFunctionMultiplication();
     }
 };
 
