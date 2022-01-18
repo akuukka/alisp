@@ -52,6 +52,16 @@ void testAddition()
       auto res = alisp::eval(syms);
       assert(res->toString() == "93");
     }
+    // Test case 2
+    {
+      alisp::Machine m;
+      const auto expr = "(* 3 (+ (+ 1 1) (+ 0 3)))";
+      auto syms = m.parse(expr);
+      assert(syms->toString() == expr);
+      assert(syms->isList());
+      auto res = alisp::eval(syms);
+      assert(res->toString() == "15");
+    }
 }
 
 void test()

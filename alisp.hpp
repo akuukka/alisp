@@ -294,6 +294,7 @@ void cons(std::unique_ptr<Symbol> sym, const std::unique_ptr<ListSymbol>& list)
 
 bool isPartOfSymName(const char c) {
     if (c=='+') return true;
+    if (c=='*') return true;
     if (c=='-') return true;
     if (c>='a' && c<='z') return true;
     if (c>='A' && c<='Z') return true;
@@ -407,7 +408,7 @@ class Machine
                 expr++;
                 return l;
             }
-            else  {
+            else {
                 std::stringstream os;
                 os << "Unexpected character: " << c;
                 throw std::runtime_error(os.str());
