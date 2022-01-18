@@ -78,6 +78,18 @@ void testNestedLists()
     assert(c.toString() == "(nil)");
 }
 
+template <typename E>
+bool expect(std::function<void(void)> code)
+{
+    try {
+        code();
+    }
+    catch (E&) {
+        return true;
+    }
+    return false;
+}
+
 void testSimpleEvaluations()
 {
     alisp::Machine m;
@@ -85,7 +97,9 @@ void testSimpleEvaluations()
     assert(intSym->isInt() && *intSym == 1);
 
     assert(m.evaluate("()")->toString() == "nil");
-    // m.evaluate("(nil)");
+    expect<alisp::exceptions::VoidFunction>([&]() {
+        m.evaluate("(nil)");
+    });
 }
 
 void test()

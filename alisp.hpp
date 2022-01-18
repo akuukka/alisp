@@ -17,6 +17,11 @@ struct UnableToEvaluate : std::runtime_error
     UnableToEvaluate(std::string msg) : std::runtime_error(msg) {}
 };
 
+struct VoidFunction : std::runtime_error
+{
+    VoidFunction(std::string fname) : std::runtime_error("void-function " + fname) {}
+};
+
 } // namespace exceptions
 
 class Machine;
@@ -203,7 +208,7 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
     if (f) {
         return f->func(c.cdr.get());
     }
-    throw exceptions::UnableToEvaluate("Invalid function: " + sym->toString());
+    throw exceptions::VoidFunction(sym->toString());
 }
 
 std::unique_ptr<Symbol> eval(const std::unique_ptr<ListSymbol>& list)
@@ -486,6 +491,7 @@ public:
     {
         m_syms["+"] = makeFunctionAddition();
         m_syms["*"] = makeFunctionMultiplication();
+        m_syms["nil"] = makeNil();
     }
 };
 
