@@ -83,6 +83,9 @@ void testSimpleEvaluations()
     alisp::Machine m;
     const auto intSym = m.evaluate("1");
     assert(intSym->isInt() && *intSym == 1);
+
+    assert(m.evaluate("()")->toString() == "nil");
+    // m.evaluate("(nil)");
 }
 
 void test()
