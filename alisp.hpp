@@ -40,7 +40,15 @@ struct Symbol
         return this;
     }
     virtual std::unique_ptr<Symbol> clone() const = 0;
+
+    friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Symbol& sym)
+{
+    os << sym.toString();
+    return os;
+}
 
 using NilSymbol = Symbol;
 
