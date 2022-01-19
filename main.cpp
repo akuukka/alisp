@@ -123,7 +123,9 @@ void testQuotedList()
     auto res = alisp::eval(syms);
     assert(res->toString() == "(1)");
 
-    // syms = m.parse("'(test)");
+    syms = m.parse("'(test)");
+    res = alisp::eval(syms);
+    assert(res->toString() == "(test)");
 }
 
 void testCloning()
