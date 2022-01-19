@@ -23,6 +23,15 @@ struct VoidFunction : std::runtime_error
     VoidFunction(std::string fname) : std::runtime_error("void-function " + fname) {}
 };
 
+struct WrongNumberOfArguments : std::runtime_error
+{
+    WrongNumberOfArguments(int num) :
+        std::runtime_error("wrong-number-of-arguments: " + std::to_string(num))
+    {
+
+    }
+};
+
 } // namespace exceptions
 
 class Machine;
@@ -161,7 +170,7 @@ struct FloatSymbol : Symbol {
 };
 
 struct ListSymbol : Symbol {
-    std::unique_ptr<ConsCell> car;
+    std::unique_ptr<ConsCell> car; // todo: remove unique_ptr
     bool quoted = false;
 
     std::string toString() const override {
@@ -283,6 +292,16 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
     return list->clone();
 }
 
+int countArgs(const ConsCell* cc)
+{
+    int i = 0;
+    while (cc) {
+        i++;
+        cc = cc->cdr.get();
+    }
+    return i;
+}
+
 std::unique_ptr<FunctionSymbol> makeFunctionAddition()
 {
     std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
@@ -326,6 +345,22 @@ std::unique_ptr<FunctionSymbol> makeFunctionAddition()
             r = makeFloat(floatSum);
         }
         r = makeInt(intSum);
+        return r;
+    };
+    return f;
+}
+
+std::unique_ptr<FunctionSymbol> makeFunctionNull()
+{
+    std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
+    f->name = "null";
+    f->func = [](ConsCell* cc) {
+        std::unique_ptr<Symbol> r;
+        const int argc = countArgs(cc);
+        if (argc != 1) {
+            throw exceptions::WrongNumberOfArguments(argc);
+        }
+        r = makeNil();
         return r;
     };
     return f;
@@ -556,6 +591,7 @@ public:
         m_syms["*"] = makeFunctionMultiplication();
         m_syms["nil"] = makeNil();
         m_syms["t"] = makeTrue();
+        m_syms["null"] = makeFunctionNull();
     }
 };
 

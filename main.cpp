@@ -97,13 +97,19 @@ void testSimpleEvaluations()
     assert(intSym->isInt() && *intSym == 1);
 
     assert(m.evaluate("()")->toString() == "nil");
-    expect<alisp::exceptions::VoidFunction>([&]() {
+    assert(expect<alisp::exceptions::VoidFunction>([&]() {
         m.evaluate("(nil)");
-    });
+    }));
 }
 
 void testNullFunction()
 {
+    alisp::Machine m;
+    assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null)"); }));
+    assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null 1 2)"); }));
+
+    auto res = m.evaluate("(null '(1))");
+    assert(res->toString() == "nil");
   /*
 
 From emacs:
