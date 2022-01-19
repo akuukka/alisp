@@ -42,6 +42,7 @@ struct Symbol
     virtual bool isList() const { return false; }
     virtual bool isInt() const { return false; }
     virtual bool isFloat() const { return false; }
+    virtual bool operator!() const { return false; }
     virtual ~Symbol() {}
 
     virtual bool operator==(std::int64_t value) const { return false; };
@@ -178,6 +179,11 @@ struct ListSymbol : Symbol {
     }
 
     bool isList() const override { return true; }
+
+    bool operator!() const override
+    {
+        return !(*car);
+    }
     
     std::unique_ptr<Symbol> clone() const override
     {
@@ -360,7 +366,12 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
         if (argc != 1) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
-        r = makeNil();
+        if (!(*cc->sym)) {
+            r = makeTrue();
+        }
+        else {
+            r = makeNil();
+        }
         return r;
     };
     return f;

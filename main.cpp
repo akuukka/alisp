@@ -20,6 +20,8 @@ void testEmptyList()
     auto t3 = m.parse("()");
     assert(t3 && t3->isList());
     assert(t3->toString() == "nil");
+
+    assert(m.evaluate("()")->toString() == "nil");
 }
 
 void testAddition()
@@ -107,9 +109,8 @@ void testNullFunction()
     alisp::Machine m;
     assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null)"); }));
     assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null 1 2)"); }));
-
-    auto res = m.evaluate("(null '(1))");
-    assert(res->toString() == "nil");
+    assert(m.evaluate("(null '(1))")->toString() == "nil");
+    assert(m.evaluate("(null '())")->toString() == "t");
   /*
 
 From emacs:
