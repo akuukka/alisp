@@ -4,6 +4,7 @@
 #include <sstream>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 #include <iostream>
 #include <cassert>
@@ -72,6 +73,17 @@ struct ConsCell
 
 using List = ConsCell;
 
+struct TrueSymbol : Symbol {
+    std::string toString() const override {
+        return "t";
+    }
+
+    std::unique_ptr<Symbol> clone() const override
+    {
+        return std::make_unique<TrueSymbol>();
+    }
+};
+
 struct FunctionSymbol : Symbol
 {
     std::string name;
@@ -131,19 +143,35 @@ struct FloatSymbol : Symbol {
 
 struct ListSymbol : Symbol {
     std::unique_ptr<ConsCell> car;
+    bool quoted = false;
 
     std::string toString() const override {
-        return car ? car->toString() : "nil";
+        return car ? (quoted ? "'" : "") + car->toString() : "nil";
     }
 
     bool isList() const override { return true; }
-
     
     std::unique_ptr<Symbol> clone() const override
     {
-        auto sym = std::make_unique<ListSymbol>();
-        throw std::runtime_error("List cloning...");
-        return sym;
+        auto copy = std::make_unique<ListSymbol>();
+        if (this->car) {
+            copy->car = std::make_unique<ConsCell>();
+            auto last = copy->car.get();
+            auto p = this->car.get();
+            bool first = true;
+            while (p) {
+                if (!first) {
+                    last->cdr = std::make_unique<ConsCell>();
+                    last = last->cdr.get();
+                }
+                first = false;
+                if (p->sym) {
+                    last->sym = p->sym->clone();
+                }
+                p = p->cdr.get();
+            }
+        }
+        return copy;
     }
 };
 
@@ -175,6 +203,11 @@ std::unique_ptr<ListSymbol> makeNil()
     auto r = std::make_unique<ListSymbol>();
     r->car = std::make_unique<ConsCell>();
     return r;
+}
+
+std::unique_ptr<TrueSymbol> makeTrue()
+{
+    return std::make_unique<TrueSymbol>();
 }
 
 std::unique_ptr<ListSymbol> makeList(std::unique_ptr<ConsCell> car =  nullptr)
@@ -222,7 +255,11 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
     // If it's a list, evaluation means function call. Otherwise, return a copy of
     // the symbol itself.
     if (list->isList()) {
-        return eval(*dynamic_cast<ListSymbol*>(list.get())->car);
+        auto plist = dynamic_cast<ListSymbol*>(list.get());
+        if (plist->quoted) {
+            return list->clone();
+        }
+        return eval(*plist->car);
     }
     return list->clone();
 }
@@ -425,6 +462,7 @@ class Machine
 
     std::unique_ptr<Symbol> parseNext(const char*& expr)
     {
+        bool quoted = false;
         // Skip whitespace until next symbol
         while (*expr) {
             const char c = *expr;
@@ -438,8 +476,14 @@ class Machine
             else if (isPartOfSymName(c)) {
                 return parseNamedSymbol(expr);
             }
+            else if (c == '\'') {
+                quoted = true;
+                expr++;
+            }
             else if (c == '(') {
                 auto l = makeList(nullptr);
+                l->quoted = quoted;
+                quoted = false;
                 auto lastConsCell = l->car.get();
                 assert(lastConsCell);
                 expr++;
@@ -492,6 +536,7 @@ public:
         m_syms["+"] = makeFunctionAddition();
         m_syms["*"] = makeFunctionMultiplication();
         m_syms["nil"] = makeNil();
+        m_syms["t"] = makeTrue();
     }
 };
 

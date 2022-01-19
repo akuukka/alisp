@@ -102,13 +102,57 @@ void testSimpleEvaluations()
     });
 }
 
+void testNullFunction()
+{
+  /*
+
+From emacs:
+
+(null '(1))
+     ⇒ nil
+(null '())
+     ⇒ t
+   */
+}
+
+void testQuotedList()
+{
+    alisp::Machine m;
+    auto syms = m.parse("'(1)");
+    assert(syms->toString() == "'(1)");
+    auto res = alisp::eval(syms);
+    assert(res->toString() == "(1)");
+
+    // syms = m.parse("'(test)");
+}
+
+void testCloning()
+{
+    auto l1 = alisp::makeList();
+    alisp::cons(alisp::makeInt(3), l1);
+    alisp::cons(alisp::makeInt(2), l1);
+    alisp::cons(alisp::makeInt(1), l1);
+    auto l1c = l1->clone();
+    assert(l1->toString() == "(1 2 3)");
+    assert(l1c->toString() == l1->toString());
+
+    alisp::Machine m;
+    auto e1 = "(2 (1 (1 2 3) 1) 2)";
+    auto l2 = m.parse(e1);
+    auto l2c = l2->clone();
+    assert(l2c->toString() == e1);
+}
+
 void test()
 {
+    testCloning();
     testEmptyList();
+    testQuotedList();
     testSimpleEvaluations();
     testAddition();
     testMultiplication();
     testNestedLists();
+    testNullFunction();
 }
 
 int main(int, char**)
