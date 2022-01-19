@@ -132,6 +132,8 @@ void testQuotedList()
     syms = m.parse("'(test)");
     res = alisp::eval(syms);
     assert(res->toString() == "(test)");
+
+    assert(m.evaluate("'()")->toString() == "nil");
 }
 
 void testCloning()
