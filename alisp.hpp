@@ -271,6 +271,9 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
         return makeNil();
     }
     auto sym = c.sym->resolve();
+    if (!sym) {
+        throw exceptions::VoidFunction(c.sym->toString());
+    }
     const FunctionSymbol* f = dynamic_cast<const FunctionSymbol*>(sym);
     if (f) {
         return f->func(c.cdr.get());
@@ -366,7 +369,8 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
         if (argc != 1) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
-        if (!(*cc->sym)) {
+        auto sym = eval(cc->sym);
+        if (!(*sym)) {
             r = makeTrue();
         }
         else {
@@ -593,7 +597,7 @@ public:
         if (m_syms.count(sym->name)) {
             return m_syms[sym->name].get();
         }
-        throw std::runtime_error("Unable to resolve name: " + sym->name);
+        return nullptr;
     }
 
     Machine()

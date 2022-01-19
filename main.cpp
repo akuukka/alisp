@@ -107,19 +107,15 @@ void testSimpleEvaluations()
 void testNullFunction()
 {
     alisp::Machine m;
+    assert(expect<alisp::exceptions::VoidFunction>([&]() {
+        m.evaluate("(null (test))");
+    }));
     assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null)"); }));
     assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null 1 2)"); }));
     assert(m.evaluate("(null '(1))")->toString() == "nil");
     assert(m.evaluate("(null '())")->toString() == "t");
-  /*
-
-From emacs:
-
-(null '(1))
-     ⇒ nil
-(null '())
-     ⇒ t
-   */
+    assert(m.evaluate("(null ())")->toString() == "t");
+    assert(m.evaluate("(null (null t))")->toString() == "t");
 }
 
 void testQuotedList()
