@@ -298,7 +298,7 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
         }
         return eval(*plist->car);
     }
-    return list->clone();
+    return list->resolve()->clone();
 }
 
 int countArgs(const ConsCell* cc)

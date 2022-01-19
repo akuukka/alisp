@@ -107,6 +107,8 @@ void testSimpleEvaluations()
 void testNullFunction()
 {
     alisp::Machine m;
+    assert(m.evaluate("(null nil)")->toString() == "t");
+    assert(m.evaluate("(null ())")->toString() == "t");
     assert(expect<alisp::exceptions::VoidFunction>([&]() {
         m.evaluate("(null (test))");
     }));
@@ -114,8 +116,9 @@ void testNullFunction()
     assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null 1 2)"); }));
     assert(m.evaluate("(null '(1))")->toString() == "nil");
     assert(m.evaluate("(null '())")->toString() == "t");
-    assert(m.evaluate("(null ())")->toString() == "t");
+
     assert(m.evaluate("(null (null t))")->toString() == "t");
+    assert(m.evaluate("(null (null (null nil)))")->toString() == "t");
 }
 
 void testQuotedList()
