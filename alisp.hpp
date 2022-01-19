@@ -50,6 +50,17 @@ inline std::ostream& operator<<(std::ostream& os, const Symbol& sym)
     return os;
 }
 
+inline std::ostream& operator<<(std::ostream& os, const std::unique_ptr<Symbol>& sym)
+{
+    if (sym) {
+        os << sym->toString();
+    }
+    else {
+        os << "nullptr";
+    }
+    return os;
+}
+
 using NilSymbol = Symbol;
 
 struct ConsCell
