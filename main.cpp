@@ -10,8 +10,7 @@ void testEmptyList()
     auto res = alisp::eval(c);
     auto ls = dynamic_cast<alisp::ListSymbol*>(res.get());
     assert(ls);
-    assert(ls->car);
-    const auto& l = *ls->car;
+    const auto& l = ls->car;
     assert(!l);
 
     auto el = alisp::makeList();
@@ -75,7 +74,7 @@ void testMultiplication()
 void testNestedLists()
 {
     alisp::ConsCell c;
-    auto inner = alisp::makeList(nullptr);
+    auto inner = alisp::makeList();
     alisp::cons(std::move(inner), c);
     assert(c.toString() == "(nil)");
 }

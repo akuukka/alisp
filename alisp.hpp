@@ -171,39 +171,36 @@ struct FloatSymbol : Symbol {
 };
 
 struct ListSymbol : Symbol {
-    std::unique_ptr<ConsCell> car; // todo: remove unique_ptr
+    ConsCell car; // todo: remove unique_ptr
     bool quoted = false;
 
     std::string toString() const override {
-        return car ? (quoted ? "'" : "") + car->toString() : "nil";
+        return (quoted ? "'" : "") + car.toString();
     }
 
     bool isList() const override { return true; }
 
     bool operator!() const override
     {
-        return !(*car);
+        return !car;
     }
     
     std::unique_ptr<Symbol> clone() const override
     {
         auto copy = std::make_unique<ListSymbol>();
-        if (this->car) {
-            copy->car = std::make_unique<ConsCell>();
-            auto last = copy->car.get();
-            auto p = this->car.get();
-            bool first = true;
-            while (p) {
-                if (!first) {
-                    last->cdr = std::make_unique<ConsCell>();
-                    last = last->cdr.get();
-                }
-                first = false;
-                if (p->sym) {
-                    last->sym = p->sym->clone();
-                }
-                p = p->cdr.get();
+        auto last = &copy->car;
+        auto p = &this->car;
+        bool first = true;
+        while (p) {
+            if (!first) {
+                last->cdr = std::make_unique<ConsCell>();
+                last = last->cdr.get();
             }
+            first = false;
+            if (p->sym) {
+                last->sym = p->sym->clone();
+            }
+            p = p->cdr.get();
         }
         return copy;
     }
@@ -234,9 +231,7 @@ struct NamedSymbol : Symbol
 // Remember nil = ()
 std::unique_ptr<ListSymbol> makeNil()
 {
-    auto r = std::make_unique<ListSymbol>();
-    r->car = std::make_unique<ConsCell>();
-    return r;
+    return std::make_unique<ListSymbol>();
 }
 
 std::unique_ptr<TrueSymbol> makeTrue()
@@ -244,14 +239,9 @@ std::unique_ptr<TrueSymbol> makeTrue()
     return std::make_unique<TrueSymbol>();
 }
 
-std::unique_ptr<ListSymbol> makeList(std::unique_ptr<ConsCell> car =  nullptr)
+std::unique_ptr<ListSymbol> makeList()
 {
-    if (!car) {
-        return makeNil();
-    }
-    auto r = std::make_unique<ListSymbol>();
-    r->car = std::move(car);
-    return r;
+    return makeNil();
 }
 
 std::unique_ptr<IntSymbol> makeInt(std::int64_t value)
@@ -284,7 +274,7 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
 std::unique_ptr<Symbol> eval(const std::unique_ptr<ListSymbol>& list)
 {
     assert(list->car);
-    return eval(*list->car);
+    return eval(list->car);
 }
 
 std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
@@ -296,7 +286,7 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
         if (plist->quoted) {
             return list->clone();
         }
-        return eval(*plist->car);
+        return eval(plist->car);
     }
     return list->resolve()->clone();
 }
@@ -331,7 +321,7 @@ std::unique_ptr<FunctionSymbol> makeFunctionAddition()
                 fp = true;
             }
             else if (auto l = dynamic_cast<ListSymbol*>(p->sym.get())) {
-                auto res = eval(*l->car);
+                auto res = eval(l->car);
                 if (auto i = dynamic_cast<IntSymbol*>(res.get())) {
                     intSum += i->value;
                     floatSum += i->value;
@@ -401,7 +391,7 @@ std::unique_ptr<FunctionSymbol> makeFunctionMultiplication()
               fp = true;
             }
             else if (auto l = dynamic_cast<ListSymbol*>(p->sym.get())) {
-                auto res = eval(*l->car);
+                auto res = eval(l->car);
                 if (auto i = dynamic_cast<IntSymbol*>(res.get())) {
                   intMul *= i->value;
                   floatMul *= i->value;
@@ -444,7 +434,7 @@ void cons(std::unique_ptr<Symbol> sym, List& list)
 
 void cons(std::unique_ptr<Symbol> sym, const std::unique_ptr<ListSymbol>& list)
 {
-    cons(std::move(sym), *list->car);
+    cons(std::move(sym), list->car);
 }
 
 bool isPartOfSymName(const char c) {
@@ -550,10 +540,10 @@ class Machine
                 expr++;
             }
             else if (c == '(') {
-                auto l = makeList(nullptr);
+                auto l = makeList();
                 l->quoted = quoted;
                 quoted = false;
-                auto lastConsCell = l->car.get();
+                auto lastConsCell = &l->car;
                 assert(lastConsCell);
                 expr++;
                 while (*expr != ')') {
