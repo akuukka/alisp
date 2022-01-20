@@ -197,8 +197,18 @@ void testStrings()
     assert(expectedMsgs.empty());
 }
 
+void testDivision()
+{
+    alisp::Machine m;
+    assert(m.evaluate("(/ 10 2)")->toString() == "5");
+    // Same as emacs: one float arg means that also preceding integer divisions
+    // are handled as floating point operations.
+    assert(std::abs(m.evaluate("(/ 10 3 3.0)")->value<double>() - 1.11111111) < 0.001);
+}
+
 void test()
 {
+    testDivision();
     testSyntaxErrorDetection();
     testStrings();
     testCloning();

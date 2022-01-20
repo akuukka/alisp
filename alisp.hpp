@@ -49,6 +49,10 @@ struct WrongTypeArgument : std::runtime_error
 } // namespace exceptions
 
 class Machine;
+struct Symbol;
+
+template <typename T>
+T getValue(const Symbol& sym);
 
 struct Symbol
 {
@@ -67,6 +71,12 @@ struct Symbol
     virtual std::unique_ptr<Symbol> clone() const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);
+
+    template<typename T>
+    T value() const
+    {
+        return getValue<T>(*this);
+    }        
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Symbol& sym)
@@ -311,6 +321,9 @@ struct FArgs
     
     std::unique_ptr<Symbol> get()
     {
+        if (!cc) {
+            return nullptr;
+        }
         auto sym = eval(cc->sym);
         cc = cc->cdr.get();
         return sym;
@@ -320,6 +333,34 @@ struct FArgs
     {
         return cc;
     }
+
+    struct Iterator {
+        ConsCell* cc;
+
+        bool operator!=(const Iterator& o) const
+        {
+            return cc != o.cc;
+        }
+
+        void operator++()
+        {
+            cc = cc->cdr.get();
+        }
+
+        std::unique_ptr<Symbol> operator*()
+        {
+            return eval(cc->sym);
+        }
+    };
+
+    Iterator begin() {
+        return Iterator{cc};
+    }
+
+    Iterator end() {
+        return Iterator{nullptr};
+    }
+
 };
 
 std::unique_ptr<Symbol> eval(const ConsCell& c)
@@ -523,6 +564,7 @@ void cons(std::unique_ptr<Symbol> sym, const std::unique_ptr<ListSymbol>& list)
 bool isPartOfSymName(const char c) {
     if (c=='+') return true;
     if (c=='*') return true;
+    if (c=='/') return true;
     if (c=='-') return true;
     if (c>='a' && c<='z') return true;
     if (c>='A' && c<='Z') return true;
@@ -587,6 +629,20 @@ void skipWhitespace(const char*& expr)
     while (*expr && isWhiteSpace(*expr)) {
         expr++;
     }
+}
+
+template<>
+inline double getValue(const Symbol& sym)
+{
+    auto s = dynamic_cast<const FloatSymbol*>(&sym);
+    return s ? s->value : 0.0;
+}
+
+template<>
+inline std::int64_t getValue(const Symbol& sym)
+{
+    auto s = dynamic_cast<const IntSymbol*>(&sym);
+    return s ? s->value : 0.0;
 }
 
 class Machine
@@ -737,6 +793,41 @@ public:
                 std::cout << str << std::endl;
             }
             return arg;
+        });
+        makeFunc("/", 1, 0xffff, [](FArgs& args) {
+            std::int64_t i = 0;
+            double f = 0;
+            bool first = true;
+            bool fp = false;
+            for (auto sym : args) {
+                if (sym->isFloat()) {
+                    fp = true;
+                    if (first) {
+                        i = sym->value<double>();
+                        f = sym->value<double>();
+                    }
+                    else {
+                        i /= sym->value<double>();
+                        f /= sym->value<double>();
+                    }
+                }
+                else if (sym->isInt()) {
+                    if (first) {
+                        i = sym->value<std::int64_t>();
+                        f = sym->value<std::int64_t>();
+                    }
+                    else {
+                        i /= sym->value<std::int64_t>();
+                        f /= sym->value<std::int64_t>();
+                    }
+                }
+                else {
+                    throw std::runtime_error("Invalid operand " + sym->toString());
+                }
+                first = false;
+            }
+            return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
+                static_cast<std::unique_ptr<Symbol>>(makeInt(i));
         });
     }
 
