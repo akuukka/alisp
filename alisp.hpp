@@ -32,6 +32,11 @@ struct WrongNumberOfArguments : std::runtime_error
     }
 };
 
+struct SyntaxError : std::runtime_error
+{
+    SyntaxError(std::string err) : std::runtime_error(err) { }
+};
+
 struct WrongTypeArgument : std::runtime_error
 {
     WrongTypeArgument(std::string arg) :
@@ -583,7 +588,7 @@ class Machine
                 auto lastConsCell = &l->car;
                 assert(lastConsCell);
                 expr++;
-                while (*expr != ')') {
+                while (*expr != ')' && *expr) {
                     auto sym = parseNext(expr);
                     skipWhitespace(expr);
                     if (lastConsCell->sym) {
@@ -592,6 +597,9 @@ class Machine
                         lastConsCell = lastConsCell->cdr.get();
                     }
                     lastConsCell->sym = std::move(sym);
+                }
+                if (!*expr) {
+                    throw exceptions::SyntaxError("End of file during parsing");
                 }
                 expr++;
                 return l;

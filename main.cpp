@@ -163,10 +163,18 @@ void testCarFunction()
     }));
     assert(m.evaluate("(car nil)")->toString() == "nil");
     assert(m.evaluate("(car '(1 2))")->toString() == "1");
+    // m.evaluate("(car (1 2)");
+}
+
+void testSyntaxErrorDetection()
+{
+    alisp::Machine m;
+    assert(expect<alisp::exceptions::SyntaxError>([&]() { m.evaluate("(car"); }));
 }
 
 void test()
 {
+    testSyntaxErrorDetection();
     testCloning();
     testEmptyList();
     testQuotedList();
