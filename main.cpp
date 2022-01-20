@@ -217,6 +217,8 @@ void testCdrFunction()
     alisp::Machine m;
     assert(m.evaluate("(cdr '(a b c))")->toString() == "(b c)");
     assert(m.evaluate("(cdr '())")->toString() == "nil");
+    assert(m.evaluate("(cdr '(a))")->toString() == "nil");
+    assert(m.evaluate("(cdr (cdr '(a b c)))")->toString() == "(c)");
 }
 
 void test()
