@@ -128,12 +128,17 @@ struct TrueSymbol : Symbol {
     }
 };
 
+struct FArgs {
+    ConsCell& cc;
+    FArgs(ConsCell& cc) : cc(cc) {}
+};
+
 struct FunctionSymbol : Symbol
 {
     std::string name;
     int minArgs = 0;
     int maxArgs = 0xffff;
-    std::unique_ptr<Symbol>(*func)(ConsCell*);
+    std::unique_ptr<Symbol>(*func)(FArgs&);
     
     std::string toString() const override {
         return name;
@@ -314,7 +319,8 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
         if (argc < f->minArgs || argc > f->maxArgs) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
-        return f->func(c.cdr.get());
+        FArgs args(*c.cdr);
+        return f->func(args);
     }
     throw exceptions::VoidFunction(sym->toString());
 }
@@ -343,7 +349,8 @@ std::unique_ptr<FunctionSymbol> makeFunctionAddition()
 {
     std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
     f->name = "+";
-    f->func = [](ConsCell* p) {
+    f->func = [](FArgs& args) {
+        auto p = &args.cc;
         std::unique_ptr<Symbol> r;
         double floatSum = 0;
         std::int64_t intSum = 0;
@@ -393,9 +400,9 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
     f->name = "null";
     f->minArgs = 1;
     f->maxArgs = 1;
-    f->func = [](ConsCell* cc) {
+    f->func = [](FArgs& args) {
         std::unique_ptr<Symbol> r;
-        auto sym = eval(cc->sym);
+        auto sym = eval(args.cc.sym);
         if (!(*sym)) {
             r = makeTrue();
         }
@@ -413,14 +420,10 @@ std::unique_ptr<FunctionSymbol> makeFunctionCar()
     f->name = "car";
     f->minArgs = 1;
     f->maxArgs = 1;
-    f->func = [](ConsCell* cc) {
-        const int argc = countArgs(cc);
-        if (argc != 1) {
-            throw exceptions::WrongNumberOfArguments(argc);
-        }
-        auto arg = eval(cc->sym);
+    f->func = [](FArgs& args) {
+        auto arg = eval(args.cc.sym);
         if (!arg->isList()) {
-            throw exceptions::WrongTypeArgument(cc->sym->toString());
+            throw exceptions::WrongTypeArgument(args.cc.sym->toString());
         }
         auto list = dynamic_cast<ListSymbol*>(arg.get());
         if (!list->car.sym) {
@@ -435,11 +438,12 @@ std::unique_ptr<FunctionSymbol> makeFunctionMultiplication()
 {
     std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
     f->name = "*";
-    f->func = [](ConsCell* p) {
+    f->func = [](FArgs& args) {
         std::unique_ptr<Symbol> r;
         double floatMul = 1;
         std::int64_t intMul = 1;
         bool fp = false;
+        auto p = &args.cc;
         while (p) {
             if (auto i = dynamic_cast<IntSymbol*>(p->sym.get())) {
               intMul *= i->value;
@@ -674,7 +678,7 @@ public:
     void makeFunc(const char* name,
                   int minArgs,
                   int maxArgs,
-                  std::unique_ptr<Symbol>(*f)(ConsCell*))
+                  std::unique_ptr<Symbol>(*f)(FArgs&))
     {
         auto func = std::make_unique<FunctionSymbol>();
         func->name = name;
@@ -692,8 +696,8 @@ public:
         m_syms["t"] = makeTrue();
         m_syms["null"] = makeFunctionNull();
         m_syms["car"] = makeFunctionCar();
-        makeFunc("stringp", 1, 1, [](ConsCell* cc) {
-            auto sym = eval(cc->sym);
+        makeFunc("stringp", 1, 1, [](FArgs& args) {
+            auto sym = eval(args.cc.sym);
             return (sym && sym->isString()) ? makeTrue() : makeNil();
         });
     }
