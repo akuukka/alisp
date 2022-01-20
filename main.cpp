@@ -162,8 +162,14 @@ void testCarFunction()
         m.evaluate("(car (+ 1 1))");
     }));
     assert(m.evaluate("(car nil)")->toString() == "nil");
+    assert(m.evaluate("(car ())")->toString() == "nil");
+    assert(m.evaluate("(car '())")->toString() == "nil");
     assert(m.evaluate("(car '(1 2))")->toString() == "1");
-    // m.evaluate("(car (1 2)");
+    assert(expect<alisp::exceptions::VoidFunction>([&]() {
+        m.evaluate("(car (1 2))");
+    }));
+    assert(m.evaluate("(car '(1 2))")->toString() == "1");
+    assert(m.evaluate("(car '((1 2)))")->toString() == "(1 2)");
 }
 
 void testSyntaxErrorDetection()
