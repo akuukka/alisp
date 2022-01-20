@@ -128,10 +128,7 @@ struct TrueSymbol : Symbol {
     }
 };
 
-struct FArgs {
-    ConsCell& cc;
-    FArgs(ConsCell& cc) : cc(cc) {}
-};
+struct FArgs;
 
 struct FunctionSymbol : Symbol
 {
@@ -154,8 +151,9 @@ struct FunctionSymbol : Symbol
 
 struct StringSymbol : Symbol {
     std::string value;
+    Machine* parent;
 
-    StringSymbol(std::string value) : value(value) {}
+    StringSymbol(std::string value, Machine* p) : value(value), parent(p) {}
     
     std::string toString() const override {
         return "\"" + value + "\"";
@@ -165,7 +163,7 @@ struct StringSymbol : Symbol {
 
     std::unique_ptr<Symbol> clone() const override
     {
-        return std::make_unique<StringSymbol>(value);
+        return std::make_unique<StringSymbol>(value, parent);
     }
 };
 
@@ -303,6 +301,27 @@ int countArgs(const ConsCell* cc)
     return i;
 }
 
+std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list);
+
+struct FArgs
+{
+    ConsCell* cc;
+    
+    FArgs(ConsCell& cc) : cc(&cc) {}
+    
+    std::unique_ptr<Symbol> get()
+    {
+        auto sym = eval(cc->sym);
+        cc = cc->cdr.get();
+        return sym;
+    }
+
+    bool hasNext() const
+    {
+        return cc;
+    }
+};
+
 std::unique_ptr<Symbol> eval(const ConsCell& c)
 {
     if (!c) {
@@ -350,7 +369,7 @@ std::unique_ptr<FunctionSymbol> makeFunctionAddition()
     std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
     f->name = "+";
     f->func = [](FArgs& args) {
-        auto p = &args.cc;
+        auto p = args.cc;
         std::unique_ptr<Symbol> r;
         double floatSum = 0;
         std::int64_t intSum = 0;
@@ -402,7 +421,7 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
     f->maxArgs = 1;
     f->func = [](FArgs& args) {
         std::unique_ptr<Symbol> r;
-        auto sym = eval(args.cc.sym);
+        auto sym = eval(args.cc->sym);
         if (!(*sym)) {
             r = makeTrue();
         }
@@ -421,9 +440,9 @@ std::unique_ptr<FunctionSymbol> makeFunctionCar()
     f->minArgs = 1;
     f->maxArgs = 1;
     f->func = [](FArgs& args) {
-        auto arg = eval(args.cc.sym);
+        auto arg = eval(args.cc->sym);
         if (!arg->isList()) {
-            throw exceptions::WrongTypeArgument(args.cc.sym->toString());
+            throw exceptions::WrongTypeArgument(args.cc->sym->toString());
         }
         auto list = dynamic_cast<ListSymbol*>(arg.get());
         if (!list->car.sym) {
@@ -443,7 +462,7 @@ std::unique_ptr<FunctionSymbol> makeFunctionMultiplication()
         double floatMul = 1;
         std::int64_t intMul = 1;
         bool fp = false;
-        auto p = &args.cc;
+        auto p = args.cc;
         while (p) {
             if (auto i = dynamic_cast<IntSymbol*>(p->sym.get())) {
               intMul *= i->value;
@@ -573,6 +592,7 @@ void skipWhitespace(const char*& expr)
 class Machine
 {
     std::map<std::string, std::unique_ptr<Symbol>> m_syms;
+    std::function<void(std::string)> m_msgHandler;
 
     std::unique_ptr<Symbol> parseNamedSymbol(const char *&str)
     {
@@ -586,7 +606,7 @@ class Machine
 
     std::unique_ptr<StringSymbol> parseString(const char *&str)
     {
-        auto sym = std::make_unique<StringSymbol>("");
+        auto sym = std::make_unique<StringSymbol>("", this);
         while (*str && *str != '"') {
             sym->value += *str;
             str++;
@@ -697,9 +717,32 @@ public:
         m_syms["null"] = makeFunctionNull();
         m_syms["car"] = makeFunctionCar();
         makeFunc("stringp", 1, 1, [](FArgs& args) {
-            auto sym = eval(args.cc.sym);
-            return (sym && sym->isString()) ? makeTrue() : makeNil();
+            return (args.get()->isString()) ? makeTrue() : makeNil();
         });
+        makeFunc("numberp", 1, 1, [](FArgs& args) {
+            auto arg = args.get();
+            return arg->isInt() || arg->isFloat() ? makeTrue() : makeNil();
+        });
+        makeFunc("message", 1, 1, [](FArgs& args) {
+            auto arg = args.get();
+            if (!arg->isString()) {
+                throw exceptions::WrongTypeArgument(arg->toString());
+            }
+            auto strSym = dynamic_cast<StringSymbol*>(arg.get());
+            std::string str = strSym->value;
+            if (strSym->parent->m_msgHandler) {
+                strSym->parent->m_msgHandler(str);
+            }
+            else {
+                std::cout << str << std::endl;
+            }
+            return arg;
+        });
+    }
+
+    void setMessageHandler(std::function<void(std::string)> handler)
+    {
+        m_msgHandler = handler;
     }
 };
 

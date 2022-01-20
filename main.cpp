@@ -1,5 +1,6 @@
 #include "alisp.hpp"
 #include <cassert>
+#include <set>
 
 void testEmptyList()
 {
@@ -186,6 +187,14 @@ void testStrings()
     assert(m.evaluate("(stringp \"abc\")")->toString() == "t");
     assert(m.evaluate("(stringp 1)")->toString() == "nil");
     assert(m.evaluate("(stringp ())")->toString() == "nil");
+    std::set<std::string> expectedMsgs = {
+        "test"
+    };
+    m.setMessageHandler([&](std::string msg) {
+        expectedMsgs.erase(msg);
+    });
+    m.evaluate("(message \"test\")");
+    assert(expectedMsgs.empty());
 }
 
 void test()
