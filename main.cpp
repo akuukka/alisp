@@ -178,9 +178,16 @@ void testSyntaxErrorDetection()
     assert(expect<alisp::exceptions::SyntaxError>([&]() { m.evaluate("(car"); }));
 }
 
+void testStrings()
+{
+    alisp::Machine m;
+    assert(m.evaluate("\"abc\"")->toString() == "\"abc\"");
+}
+
 void test()
 {
     testSyntaxErrorDetection();
+    testStrings();
     testCloning();
     testEmptyList();
     testQuotedList();

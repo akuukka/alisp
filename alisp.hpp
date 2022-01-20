@@ -56,6 +56,7 @@ struct Symbol
     virtual bool isList() const { return false; }
     virtual bool isInt() const { return false; }
     virtual bool isFloat() const { return false; }
+    virtual bool isString() const { return false; }
     virtual bool operator!() const { return false; }
     virtual ~Symbol() {}
 
@@ -143,6 +144,23 @@ struct FunctionSymbol : Symbol
         auto sym = std::make_unique<FunctionSymbol>();
         *sym = *this;
         return sym;
+    }
+};
+
+struct StringSymbol : Symbol {
+    std::string value;
+
+    StringSymbol(std::string value) : value(value) {}
+    
+    std::string toString() const override {
+        return "\"" + value + "\"";
+    }
+    
+    bool isString() const override { return true; }
+
+    std::unique_ptr<Symbol> clone() const override
+    {
+        return std::make_unique<StringSymbol>(value);
     }
 };
 
@@ -552,12 +570,27 @@ class Machine
 {
     std::map<std::string, std::unique_ptr<Symbol>> m_syms;
 
-    std::unique_ptr<Symbol> parseNamedSymbol(const char *&str) {
+    std::unique_ptr<Symbol> parseNamedSymbol(const char *&str)
+    {
         auto sym = std::make_unique<NamedSymbol>(this);
         while (*str && isPartOfSymName(*str)) {
             sym->name += *str;
             str++;
         }
+        return sym;
+    }
+
+    std::unique_ptr<StringSymbol> parseString(const char *&str)
+    {
+        auto sym = std::make_unique<StringSymbol>("");
+        while (*str && *str != '"') {
+            sym->value += *str;
+            str++;
+        }
+        if (!*str) {
+            throw std::runtime_error("unexpected end of file");
+        }
+        str++;
         return sym;
     }
 
@@ -573,6 +606,9 @@ class Machine
             }
             if (c >= '0' && c <= '9') {
                 return parseNumericalSymbol(expr);
+            }
+            else if (c == '\"') {
+                return parseString(++expr);
             }
             else if (isPartOfSymName(c)) {
                 return parseNamedSymbol(expr);
