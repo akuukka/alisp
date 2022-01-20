@@ -116,6 +116,8 @@ struct TrueSymbol : Symbol {
 struct FunctionSymbol : Symbol
 {
     std::string name;
+    int minArgs = 0;
+    int maxArgs = 0xffff;
     std::unique_ptr<Symbol>(*func)(ConsCell*);
     
     std::string toString() const override {
@@ -254,6 +256,16 @@ std::unique_ptr<FloatSymbol> makeFloat(double value)
     return std::make_unique<FloatSymbol>(value);
 }
 
+int countArgs(const ConsCell* cc)
+{
+    int i = 0;
+    while (cc) {
+        i++;
+        cc = cc->cdr.get();
+    }
+    return i;
+}
+
 std::unique_ptr<Symbol> eval(const ConsCell& c)
 {
     if (!c) {
@@ -266,6 +278,10 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
     }
     const FunctionSymbol* f = dynamic_cast<const FunctionSymbol*>(sym);
     if (f) {
+        const int argc = countArgs(c.cdr.get());
+        if (argc < f->minArgs || argc > f->maxArgs) {
+            throw exceptions::WrongNumberOfArguments(argc);
+        }
         return f->func(c.cdr.get());
     }
     throw exceptions::VoidFunction(sym->toString());
@@ -289,16 +305,6 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
         return eval(plist->car);
     }
     return list->resolve()->clone();
-}
-
-int countArgs(const ConsCell* cc)
-{
-    int i = 0;
-    while (cc) {
-        i++;
-        cc = cc->cdr.get();
-    }
-    return i;
 }
 
 std::unique_ptr<FunctionSymbol> makeFunctionAddition()
@@ -353,6 +359,27 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
 {
     std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
     f->name = "null";
+    f->minArgs = 1;
+    f->maxArgs = 1;
+    f->func = [](ConsCell* cc) {
+        std::unique_ptr<Symbol> r;
+        auto sym = eval(cc->sym);
+        if (!(*sym)) {
+            r = makeTrue();
+        }
+        else {
+            r = makeNil();
+        }
+        return r;
+    };
+    return f;
+}
+
+std::unique_ptr<FunctionSymbol> makeFunctionCar()
+{
+    std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
+    /*
+    f->name = "car";
     f->func = [](ConsCell* cc) {
         std::unique_ptr<Symbol> r;
         const int argc = countArgs(cc);
@@ -368,6 +395,7 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
         }
         return r;
     };
+    */
     return f;
 }
 
@@ -597,6 +625,7 @@ public:
         m_syms["nil"] = makeNil();
         m_syms["t"] = makeTrue();
         m_syms["null"] = makeFunctionNull();
+        m_syms["car"] = makeFunctionCar();
     }
 };
 
