@@ -268,7 +268,7 @@ std::unique_ptr<Symbol> makeNil()
     return std::make_unique<ListSymbol>();
 }
 
-std::unique_ptr<TrueSymbol> makeTrue()
+std::unique_ptr<Symbol> makeTrue()
 {
     return std::make_unique<TrueSymbol>();
 }
@@ -671,6 +671,19 @@ public:
         return nullptr;
     }
 
+    void makeFunc(const char* name,
+                  int minArgs,
+                  int maxArgs,
+                  std::unique_ptr<Symbol>(*f)(ConsCell*))
+    {
+        auto func = std::make_unique<FunctionSymbol>();
+        func->name = name;
+        func->minArgs = minArgs;
+        func->maxArgs = maxArgs;
+        func->func = f;
+        m_syms[name] = std::move(func);
+    }
+
     Machine()
     {
         m_syms["+"] = makeFunctionAddition();
@@ -679,6 +692,10 @@ public:
         m_syms["t"] = makeTrue();
         m_syms["null"] = makeFunctionNull();
         m_syms["car"] = makeFunctionCar();
+        makeFunc("stringp", 1, 1, [](ConsCell* cc) {
+            auto sym = eval(cc->sym);
+            return (sym && sym->isString()) ? makeTrue() : makeNil();
+        });
     }
 };
 

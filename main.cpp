@@ -182,6 +182,10 @@ void testStrings()
 {
     alisp::Machine m;
     assert(m.evaluate("\"abc\"")->toString() == "\"abc\"");
+    assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
+    assert(m.evaluate("(stringp \"abc\")")->toString() == "t");
+    assert(m.evaluate("(stringp 1)")->toString() == "nil");
+    assert(m.evaluate("(stringp ())")->toString() == "nil");
 }
 
 void test()
