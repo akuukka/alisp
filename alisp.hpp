@@ -46,6 +46,15 @@ struct WrongTypeArgument : std::runtime_error
     }
 };
 
+struct ArithError : std::runtime_error
+{
+    ArithError(std::string err) :
+        std::runtime_error("arith-error: " + err)
+    {
+
+    }
+};
+
 } // namespace exceptions
 
 class Machine;
@@ -801,24 +810,32 @@ public:
             bool fp = false;
             for (auto sym : args) {
                 if (sym->isFloat()) {
+                    const double v = sym->value<double>();
+                    if (v == 0) {
+                        throw exceptions::ArithError("Division by zero");
+                    }
                     fp = true;
                     if (first) {
-                        i = sym->value<double>();
-                        f = sym->value<double>();
+                        i = v;
+                        f = v;
                     }
                     else {
-                        i /= sym->value<double>();
-                        f /= sym->value<double>();
+                        i /= v;
+                        f /= v;
                     }
                 }
                 else if (sym->isInt()) {
+                    const std::int64_t v = sym->value<std::int64_t>();
+                    if (v == 0) {
+                        throw exceptions::ArithError("Division by zero");
+                    }
                     if (first) {
-                        i = sym->value<std::int64_t>();
-                        f = sym->value<std::int64_t>();
+                        i = v;
+                        f = v;
                     }
                     else {
-                        i /= sym->value<std::int64_t>();
-                        f /= sym->value<std::int64_t>();
+                        i /= v;
+                        f /= v;
                     }
                 }
                 else {

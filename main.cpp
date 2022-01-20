@@ -204,6 +204,12 @@ void testDivision()
     // Same as emacs: one float arg means that also preceding integer divisions
     // are handled as floating point operations.
     assert(std::abs(m.evaluate("(/ 10 3 3.0)")->value<double>() - 1.11111111) < 0.001);
+    assert(expect<alisp::exceptions::ArithError>([&]() {
+        m.evaluate("(/ 1 0)");
+    }));
+    assert(expect<alisp::exceptions::ArithError>([&]() {
+        m.evaluate("(/ 1 0.0)");
+    }));
 }
 
 void test()
