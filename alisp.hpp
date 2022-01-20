@@ -18,6 +18,12 @@ struct UnableToEvaluate : std::runtime_error
     UnableToEvaluate(std::string msg) : std::runtime_error(msg) {}
 };
 
+
+struct Error : std::runtime_error
+{
+    Error(std::string msg) : std::runtime_error(msg) {}
+};
+
 struct VoidFunction : std::runtime_error
 {
     VoidFunction(std::string fname) : std::runtime_error("void-function " + fname) {}
@@ -688,13 +694,37 @@ public:
             auto arg = args.get();
             return arg->isInt() || arg->isFloat() ? makeTrue() : makeNil();
         });
-        makeFunc("message", 1, 1, [](FArgs& args) {
+        makeFunc("message", 1, 0xffff, [](FArgs& args) {
             auto arg = args.get();
             if (!arg->isString()) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
             auto strSym = dynamic_cast<StringSymbol*>(arg.get());
             std::string str = strSym->value;
+            for (size_t i = 0; i < str.size(); i++) {
+                if (str[i] == '%') {
+                    if (str[i+1] == '%') {
+                        str.erase(i, 1);
+                    }
+                    else if (str[i+1] == 'd') {
+                        const auto nextSym = args.get();
+                        std::int64_t intVal;
+                        if (nextSym->isInt()) {
+                            intVal = nextSym->value<std::int64_t>();
+                        }
+                        else if (nextSym->isFloat()) {
+                            intVal = static_cast<std::int64_t>(nextSym->value<double>());
+                        }
+                        else {
+                            throw exceptions::Error("Format specifier doesn’t match argument type");
+                        }
+                        str = str.substr(0, i) + std::to_string(intVal) + str.substr(i+2);
+                    }
+                    else {
+                        throw exceptions::Error("Invalid format string");
+                    }
+                }
+            }
             if (strSym->parent->m_msgHandler) {
                 strSym->parent->m_msgHandler(str);
             }

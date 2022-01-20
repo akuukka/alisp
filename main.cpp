@@ -170,12 +170,15 @@ void testStrings()
     assert(m.evaluate("(stringp 1)")->toString() == "nil");
     assert(m.evaluate("(stringp ())")->toString() == "nil");
     std::set<std::string> expectedMsgs = {
-        "test"
+        "test", "a%b", "num: 50.%", "15"
     };
     m.setMessageHandler([&](std::string msg) {
         expectedMsgs.erase(msg);
     });
     m.evaluate("(message \"test\")");
+    m.evaluate("(message \"a%%b\")");
+    m.evaluate("(message \"%d\" 15)");
+    m.evaluate("(message \"num: %d.%%\" 50)");
     assert(expectedMsgs.empty());
 }
 
