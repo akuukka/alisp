@@ -10,7 +10,7 @@ void testEmptyList()
     alisp::ConsCell c;
     assert(c.toString() == "nil");
     auto res = alisp::eval(c);
-    auto ls = dynamic_cast<alisp::ListSymbol*>(res.get());
+    auto ls = dynamic_cast<alisp::ListObject*>(res.get());
     assert(ls);
     const auto& l = ls->car;
     assert(!l);
@@ -27,25 +27,38 @@ void testEmptyList()
 
 void testAddition()
 {
+    alisp::Machine m;
     // Test case 1
     {
-      alisp::Machine m;
-      auto syms = m.parse("(+ 3 90)");
-      assert(syms->toString() == "(+ 3 90)");
-      assert(syms->isList());
-      auto res = alisp::eval(syms);
-      assert(res->toString() == "93");
+
+        auto syms = m.parse("(+ 3 90)");
+        assert(syms->toString() == "(+ 3 90)");
+        assert(syms->isList());
+        auto res = alisp::eval(syms);
+        assert(res->toString() == "93");
     }
     // Test case 2
     {
-      alisp::Machine m;
-      const auto expr = "(* 3 (+ (+ 1 1) (+ 0 3)))";
-      auto syms = m.parse(expr);
-      assert(syms->toString() == expr);
-      assert(syms->isList());
-      auto res = alisp::eval(syms);
-      assert(res->toString() == "15");
+        alisp::Machine m;
+        const auto expr = "(* 3 (+ (+ 1 1) (+ 0 3)))";
+        auto syms = m.parse(expr);
+        assert(syms->toString() == expr);
+        assert(syms->isList());
+        auto res = alisp::eval(syms);
+        assert(res->toString() == "15");
     }
+    // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
+    /*
+foo                 ; A symbol named ‘foo’.
+FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
+1+                  ; A symbol named ‘1+’
+                    ;   (not ‘+1’, which is an integer).
+\+1                 ; A symbol named ‘+1’
+                    ;   (not a very readable name).
+\(*\ 1\ 2\)         ; A symbol named ‘(* 1 2)’ (a worse name).
++-/_*~!@$%^&=:<>{}  ; A symbol named ‘+-/_*~!@$%^&=:<>{}’.
+                    ;   These characters need not be escaped.
+     */
 }
 
 void testMultiplication()

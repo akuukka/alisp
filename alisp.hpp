@@ -18,7 +18,6 @@ struct UnableToEvaluate : std::runtime_error
     UnableToEvaluate(std::string msg) : std::runtime_error(msg) {}
 };
 
-
 struct Error : std::runtime_error
 {
     Error(std::string msg) : std::runtime_error(msg) {}
@@ -64,44 +63,35 @@ struct ArithError : std::runtime_error
 } // namespace exceptions
 
 class Machine;
-struct Symbol;
+struct Object;
 
-template <typename T>
-T getValue(const Symbol& sym);
+template <typename T> T getValue(const Object &sym);
 
-struct Symbol
-{
+struct Object {
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
     virtual bool isInt() const { return false; }
     virtual bool isFloat() const { return false; }
     virtual bool isString() const { return false; }
     virtual bool operator!() const { return false; }
-    virtual ~Symbol() {}
+    virtual ~Object() {}
 
     virtual bool operator==(std::int64_t value) const { return false; };
-    virtual Symbol* resolve() {
-        return this;
-    }
-    virtual std::unique_ptr<Symbol> clone() const = 0;
+    virtual Object *resolve() { return this; }
+    virtual std::unique_ptr<Object> clone() const = 0;
 
-    friend std::ostream& operator<<(std::ostream& os, const Symbol& sym);
+    friend std::ostream &operator<<(std::ostream &os, const Object &sym);
 
-    template<typename T>
-    T value() const
-    {
-        return getValue<T>(*this);
-    }        
+    template <typename T> T value() const { return getValue<T>(*this); }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Symbol& sym)
-{
+inline std::ostream &operator<<(std::ostream &os, const Object &sym) {
     os << sym.toString();
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const std::unique_ptr<Symbol>& sym)
-{
+inline std::ostream &operator<<(std::ostream &os,
+                                const std::unique_ptr<Object> &sym) {
     if (sym) {
         os << sym->toString();
     }
@@ -111,21 +101,19 @@ inline std::ostream& operator<<(std::ostream& os, const std::unique_ptr<Symbol>&
     return os;
 }
 
-using NilSymbol = Symbol;
-
 struct ConsCell
 {
-    std::unique_ptr<Symbol> sym;
+    std::unique_ptr<Object> obj;
     std::unique_ptr<ConsCell> cdr;
 
     std::string toString() const {
-        if (!sym && !cdr) {
+        if (!obj && !cdr) {
             return "nil";
         }
         std::string s = "(";
-        const ConsCell* t = this;
+        const ConsCell *t = this;
         while (t) {
-            s += t->sym ? t->sym->toString() : "";
+            s += t->obj ? t->obj->toString() : "";
             t = t->cdr.get();
             if (t) {
                 s += " ";
@@ -135,104 +123,85 @@ struct ConsCell
         return s;
     }
 
-    bool operator!() const {
-        return !sym;
-    }
+    bool operator!() const { return !obj; }
 };
 
-using List = ConsCell;
+struct TrueObject : Object {
+    std::string toString() const override { return "t"; }
 
-struct TrueSymbol : Symbol {
-    std::string toString() const override {
-        return "t";
-    }
-
-    std::unique_ptr<Symbol> clone() const override
+    std::unique_ptr<Object> clone() const override
     {
-        return std::make_unique<TrueSymbol>();
+        return std::make_unique<TrueObject>();
     }
 };
 
 struct FArgs;
 
-struct FunctionSymbol : Symbol
-{
+struct FunctionObject : Object {
     std::string name;
     int minArgs = 0;
     int maxArgs = 0xffff;
-    std::unique_ptr<Symbol>(*func)(FArgs&);
-    
-    std::string toString() const override {
-        return name;
-    }
+    std::unique_ptr<Object> (*func)(FArgs &);
 
-    std::unique_ptr<Symbol> clone() const override
-    {
-        auto sym = std::make_unique<FunctionSymbol>();
+    std::string toString() const override { return name; }
+
+    std::unique_ptr<Object> clone() const override {
+        auto sym = std::make_unique<FunctionObject>();
         *sym = *this;
         return sym;
     }
 };
 
-struct StringSymbol : Symbol {
+struct StringObject : Object {
     std::string value;
-    Machine* parent;
+    Machine *parent;
 
-    StringSymbol(std::string value, Machine* p) : value(value), parent(p) {}
-    
-    std::string toString() const override {
-        return "\"" + value + "\"";
-    }
-    
+    StringObject(std::string value, Machine *p) : value(value), parent(p) {}
+
+    std::string toString() const override { return "\"" + value + "\""; }
+
     bool isString() const override { return true; }
 
-    std::unique_ptr<Symbol> clone() const override
-    {
-        return std::make_unique<StringSymbol>(value, parent);
+    std::unique_ptr<Object> clone() const override {
+        return std::make_unique<StringObject>(value, parent);
     }
 };
 
-struct IntSymbol : Symbol {
+struct IntObject : Object {
     std::int64_t value;
 
-    IntSymbol(std::int64_t value) : value(value) {}
-    
-    std::string toString() const override {
-        return std::to_string(value);
-    }
+    IntObject(std::int64_t value) : value(value) {}
+
+    std::string toString() const override { return std::to_string(value); }
     bool isInt() const override { return true; }
     bool operator==(std::int64_t value) const override {
         return this->value == value;
     };
 
-    std::unique_ptr<Symbol> clone() const override
-    {
-        return std::make_unique<IntSymbol>(value);
+    std::unique_ptr<Object> clone() const override {
+        return std::make_unique<IntObject>(value);
     }
 };
 
-struct FloatSymbol : Symbol {
+struct FloatObject : Object {
     double value;
 
-    FloatSymbol(double value) : value(value) {}
-    
-    std::string toString() const override {
-        return std::to_string(value);
-    }
-    
+    FloatObject(double value) : value(value) {}
+
+    std::string toString() const override { return std::to_string(value); }
+
     bool isFloat() const override { return true; }
-    
+
     bool operator==(std::int64_t value) const override {
         return this->value == value;
     };
 
-    std::unique_ptr<Symbol> clone() const override
-    {
-        return std::make_unique<FloatSymbol>(value);
+    std::unique_ptr<Object> clone() const override {
+        return std::make_unique<FloatObject>(value);
     }
 };
 
-struct ListSymbol : Symbol {
+struct ListObject : Object {
     ConsCell car; // todo: remove unique_ptr
     bool quoted = false;
 
@@ -242,14 +211,10 @@ struct ListSymbol : Symbol {
 
     bool isList() const override { return true; }
 
-    bool operator!() const override
-    {
-        return !car;
-    }
-    
-    std::unique_ptr<Symbol> clone() const override
-    {
-        auto copy = std::make_unique<ListSymbol>();
+    bool operator!() const override { return !car; }
+
+    std::unique_ptr<Object> clone() const override {
+        auto copy = std::make_unique<ListObject>();
         auto last = &copy->car;
         auto p = &this->car;
         bool first = true;
@@ -259,8 +224,8 @@ struct ListSymbol : Symbol {
                 last = last->cdr.get();
             }
             first = false;
-            if (p->sym) {
-                last->sym = p->sym->clone();
+            if (p->obj) {
+                last->obj = p->obj->clone();
             }
             p = p->cdr.get();
         }
@@ -268,22 +233,17 @@ struct ListSymbol : Symbol {
     }
 };
 
-struct NamedSymbol : Symbol
-{
-    Machine* parent;
+struct NamedSymbol : Object {
+    Machine *parent;
     std::string name;
 
-    std::string toString() const override
-    {
-        return name;
-    }
+    std::string toString() const override { return name; }
 
-    Symbol* resolve() override;
+    Object *resolve() override;
 
-    NamedSymbol(Machine* parent) : parent(parent) {}
+    NamedSymbol(Machine *parent) : parent(parent) {}
 
-    std::unique_ptr<Symbol> clone() const override
-    {
+    std::unique_ptr<Object> clone() const override {
         auto sym = std::make_unique<NamedSymbol>(parent);
         sym->name = name;
         return sym;
@@ -291,29 +251,21 @@ struct NamedSymbol : Symbol
 };
 
 // Remember nil = ()
-std::unique_ptr<Symbol> makeNil()
+std::unique_ptr<Object> makeNil() { return std::make_unique<ListObject>(); }
+
+std::unique_ptr<Object> makeTrue() { return std::make_unique<TrueObject>(); }
+
+std::unique_ptr<ListObject> makeList()
 {
-    return std::make_unique<ListSymbol>();
+    return std::make_unique<ListObject>();
 }
 
-std::unique_ptr<Symbol> makeTrue()
-{
-    return std::make_unique<TrueSymbol>();
+std::unique_ptr<IntObject> makeInt(std::int64_t value) {
+    return std::make_unique<IntObject>(value);
 }
 
-std::unique_ptr<ListSymbol> makeList()
-{
-    return std::make_unique<ListSymbol>();
-}
-
-std::unique_ptr<IntSymbol> makeInt(std::int64_t value)
-{
-    return std::make_unique<IntSymbol>(value);
-}
-
-std::unique_ptr<FloatSymbol> makeFloat(double value)
-{
-    return std::make_unique<FloatSymbol>(value);
+std::unique_ptr<FloatObject> makeFloat(double value) {
+    return std::make_unique<FloatObject>(value);
 }
 
 int countArgs(const ConsCell* cc)
@@ -326,20 +278,19 @@ int countArgs(const ConsCell* cc)
     return i;
 }
 
-std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list);
+std::unique_ptr<Object> eval(const std::unique_ptr<Object> &list);
 
 struct FArgs
 {
     ConsCell* cc;
     
     FArgs(ConsCell& cc) : cc(&cc) {}
-    
-    std::unique_ptr<Symbol> get()
-    {
+
+    std::unique_ptr<Object> get() {
         if (!cc) {
             return nullptr;
         }
-        auto sym = eval(cc->sym);
+        auto sym = eval(cc->obj);
         cc = cc->cdr.get();
         return sym;
     }
@@ -362,10 +313,7 @@ struct FArgs
             cc = cc->cdr.get();
         }
 
-        std::unique_ptr<Symbol> operator*()
-        {
-            return eval(cc->sym);
-        }
+        std::unique_ptr<Object> operator*() { return eval(cc->obj); }
     };
 
     Iterator begin() {
@@ -378,17 +326,16 @@ struct FArgs
 
 };
 
-std::unique_ptr<Symbol> eval(const ConsCell& c)
-{
+std::unique_ptr<Object> eval(const ConsCell &c) {
     if (!c) {
         // Remember: () => nil
         return makeNil();
     }
-    auto sym = c.sym->resolve();
+    auto sym = c.obj->resolve();
     if (!sym) {
-        throw exceptions::VoidFunction(c.sym->toString());
+        throw exceptions::VoidFunction(c.obj->toString());
     }
-    const FunctionSymbol* f = dynamic_cast<const FunctionSymbol*>(sym);
+    const FunctionObject *f = dynamic_cast<const FunctionObject *>(sym);
     if (f) {
         const int argc = countArgs(c.cdr.get());
         if (argc < f->minArgs || argc > f->maxArgs) {
@@ -400,18 +347,16 @@ std::unique_ptr<Symbol> eval(const ConsCell& c)
     throw exceptions::VoidFunction(sym->toString());
 }
 
-std::unique_ptr<Symbol> eval(const std::unique_ptr<ListSymbol>& list)
-{
+std::unique_ptr<Object> eval(const std::unique_ptr<ListObject> &list) {
     assert(list->car);
     return eval(list->car);
 }
 
-std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
-{
+std::unique_ptr<Object> eval(const std::unique_ptr<Object> &list) {
     // If it's a list, evaluation means function call. Otherwise, return a copy of
     // the symbol itself.
     if (list->isList()) {
-        auto plist = dynamic_cast<ListSymbol*>(list.get());
+        auto plist = dynamic_cast<ListObject *>(list.get());
         if (plist->quoted) {
             return list->clone();
         }
@@ -420,19 +365,17 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
     return list->resolve()->clone();
 }
 
-std::unique_ptr<FunctionSymbol> makeFunctionNull()
-{
-    std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
+std::unique_ptr<FunctionObject> makeFunctionNull() {
+    std::unique_ptr<FunctionObject> f = std::make_unique<FunctionObject>();
     f->name = "null";
     f->minArgs = 1;
     f->maxArgs = 1;
-    f->func = [](FArgs& args) {
-        std::unique_ptr<Symbol> r;
-        auto sym = eval(args.cc->sym);
+    f->func = [](FArgs &args) {
+        std::unique_ptr<Object> r;
+        auto sym = eval(args.cc->obj);
         if (!(*sym)) {
             r = makeTrue();
-        }
-        else {
+        } else {
             r = makeNil();
         }
         return r;
@@ -440,45 +383,46 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
     return f;
 }
 
-std::unique_ptr<FunctionSymbol> makeFunctionCar()
+std::unique_ptr<FunctionObject> makeFunctionCar()
 {
-    std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
+    std::unique_ptr<FunctionObject> f = std::make_unique<FunctionObject>();
     f->name = "car";
     f->minArgs = 1;
     f->maxArgs = 1;
-    f->func = [](FArgs& args) {
-        auto arg = eval(args.cc->sym);
+    f->func = [](FArgs &args) {
+        auto arg = eval(args.cc->obj);
         if (!arg->isList()) {
-            throw exceptions::WrongTypeArgument(args.cc->sym->toString());
+            throw exceptions::WrongTypeArgument(args.cc->obj->toString());
         }
-        auto list = dynamic_cast<ListSymbol*>(arg.get());
-        if (!list->car.sym) {
+        auto list = dynamic_cast<ListObject *>(arg.get());
+        if (!list->car.obj) {
             return makeNil();
         }
-        return list->car.sym->clone();
+        return list->car.obj->clone();
     };
     return f;
 }
 
-void cons(std::unique_ptr<Symbol> sym, List& list)
+void cons(std::unique_ptr<Object> sym, ConsCell& list)
 {
     if (!list) {
-        list.sym = std::move(sym);
+        list.obj = std::move(sym);
         return;
     }
     ConsCell cdr = std::move(list);
-    list.sym = std::move(sym);
+    list.obj = std::move(sym);
     list.cdr = std::make_unique<ConsCell>();
-    list.cdr->sym = std::move(cdr.sym);
+    list.cdr->obj = std::move(cdr.obj);
     list.cdr->cdr = std::move(cdr.cdr);
 }
 
-void cons(std::unique_ptr<Symbol> sym, const std::unique_ptr<ListSymbol>& list)
+void cons(std::unique_ptr<Object> sym, const std::unique_ptr<ListObject> &list)
 {
     cons(std::move(sym), list->car);
 }
 
-bool isPartOfSymName(const char c) {
+bool isPartOfSymName(const char c)
+{
     if (c=='+') return true;
     if (c=='*') return true;
     if (c=='/') return true;
@@ -488,7 +432,8 @@ bool isPartOfSymName(const char c) {
     return false;
 }
 
-bool isWhiteSpace(const char c) {
+bool isWhiteSpace(const char c)
+{
     return c == ' ';
 }
 
@@ -502,7 +447,7 @@ std::string parseSymbolName(const char*& str)
     return r;
 }
 
-std::unique_ptr<Symbol> parseNumericalSymbol(const char*& str)
+std::unique_ptr<Object> parseNumericalSymbol(const char *&str)
 {
     bool fp = false;
     int dots = 0;
@@ -549,26 +494,25 @@ void skipWhitespace(const char*& expr)
 }
 
 template<>
-inline double getValue(const Symbol& sym)
+inline double getValue(const Object &sym)
 {
-    auto s = dynamic_cast<const FloatSymbol*>(&sym);
+    auto s = dynamic_cast<const FloatObject *>(&sym);
     return s ? s->value : 0.0;
 }
 
-template<>
-inline std::int64_t getValue(const Symbol& sym)
+template <>
+inline std::int64_t getValue(const Object &sym)
 {
-    auto s = dynamic_cast<const IntSymbol*>(&sym);
+    auto s = dynamic_cast<const IntObject *>(&sym);
     return s ? s->value : 0.0;
 }
 
 class Machine
 {
-    std::map<std::string, std::unique_ptr<Symbol>> m_syms;
+    std::map<std::string, std::unique_ptr<Object>> m_syms;
     std::function<void(std::string)> m_msgHandler;
 
-    std::unique_ptr<Symbol> parseNamedSymbol(const char *&str)
-    {
+    std::unique_ptr<Object> parseNamedSymbol(const char *&str) {
         auto sym = std::make_unique<NamedSymbol>(this);
         while (*str && isPartOfSymName(*str)) {
             sym->name += *str;
@@ -577,9 +521,8 @@ class Machine
         return sym;
     }
 
-    std::unique_ptr<StringSymbol> parseString(const char *&str)
-    {
-        auto sym = std::make_unique<StringSymbol>("", this);
+    std::unique_ptr<StringObject> parseString(const char *&str) {
+        auto sym = std::make_unique<StringObject>("", this);
         while (*str && *str != '"') {
             sym->value += *str;
             str++;
@@ -591,8 +534,7 @@ class Machine
         return sym;
     }
 
-    std::unique_ptr<Symbol> parseNext(const char*& expr)
-    {
+    std::unique_ptr<Object> parseNext(const char *&expr) {
         bool quoted = false;
         // Skip whitespace until next symbol
         while (*expr) {
@@ -603,18 +545,14 @@ class Machine
             }
             if (c >= '0' && c <= '9') {
                 return parseNumericalSymbol(expr);
-            }
-            else if (c == '\"') {
+            } else if (c == '\"') {
                 return parseString(++expr);
-            }
-            else if (isPartOfSymName(c)) {
+            } else if (isPartOfSymName(c)) {
                 return parseNamedSymbol(expr);
-            }
-            else if (c == '\'') {
+            } else if (c == '\'') {
                 quoted = true;
                 expr++;
-            }
-            else if (c == '(') {
+            } else if (c == '(') {
                 auto l = makeList();
                 l->quoted = quoted;
                 quoted = false;
@@ -624,30 +562,29 @@ class Machine
                 while (*expr != ')' && *expr) {
                     auto sym = parseNext(expr);
                     skipWhitespace(expr);
-                    if (lastConsCell->sym) {
+                    if (lastConsCell->obj) {
                         assert(!lastConsCell->cdr);
                         lastConsCell->cdr = std::make_unique<ConsCell>();
                         lastConsCell = lastConsCell->cdr.get();
                     }
-                    lastConsCell->sym = std::move(sym);
+                    lastConsCell->obj = std::move(sym);
                 }
                 if (!*expr) {
                     throw exceptions::SyntaxError("End of file during parsing");
                 }
                 expr++;
                 return l;
-            }
-            else {
+            } else {
                 std::stringstream os;
                 os << "Unexpected character: " << c;
                 throw std::runtime_error(os.str());
             }
-        }    
+        }
         return nullptr;
     }
+
 public:
-    std::unique_ptr<Symbol> parse(const char* expr)
-    {
+    std::unique_ptr<Object> parse(const char *expr) {
         auto r = parseNext(expr);
         if (!onlyWhitespace(expr)) {
             throw std::runtime_error("Unexpected: " + std::string(expr));
@@ -655,25 +592,20 @@ public:
         return r;
     }
 
-    std::unique_ptr<Symbol> evaluate(const char* expr)
-    {
+    std::unique_ptr<Object> evaluate(const char *expr) {
         return eval(parse(expr));
     }
 
-    Symbol* resolve(NamedSymbol* sym)
-    {
+    Object *resolve(NamedSymbol *sym) {
         if (m_syms.count(sym->name)) {
             return m_syms[sym->name].get();
         }
         return nullptr;
     }
 
-    void makeFunc(const char* name,
-                  int minArgs,
-                  int maxArgs,
-                  std::unique_ptr<Symbol>(*f)(FArgs&))
-    {
-        auto func = std::make_unique<FunctionSymbol>();
+    void makeFunc(const char *name, int minArgs, int maxArgs,
+                  std::unique_ptr<Object> (*f)(FArgs &)) {
+        auto func = std::make_unique<FunctionObject>();
         func->name = name;
         func->minArgs = minArgs;
         func->maxArgs = maxArgs;
@@ -699,7 +631,7 @@ public:
             if (!arg->isString()) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
-            auto strSym = dynamic_cast<StringSymbol*>(arg.get());
+            auto strSym = dynamic_cast<StringObject *>(arg.get());
             std::string str = strSym->value;
             for (size_t i = 0; i < str.size(); i++) {
                 if (str[i] == '%') {
@@ -773,8 +705,8 @@ public:
                 }
                 first = false;
             }
-            return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
-                static_cast<std::unique_ptr<Symbol>>(makeInt(i));
+            return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
+                : static_cast<std::unique_ptr<Object>>(makeInt(i));
         });
         makeFunc("+", 0, 0xffff, [](FArgs& args) {
             std::int64_t i = 0;
@@ -796,8 +728,8 @@ public:
                     throw std::runtime_error("Invalid operand " + sym->toString());
                 }
             }
-            return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
-                static_cast<std::unique_ptr<Symbol>>(makeInt(i));
+            return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
+                : static_cast<std::unique_ptr<Object>>(makeInt(i));
         });
         makeFunc("*", 0, 0xffff, [](FArgs& args) {
             std::int64_t i = 1;
@@ -819,44 +751,44 @@ public:
                     throw std::runtime_error("Invalid operand " + sym->toString());
                 }
             }
-            return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
-                static_cast<std::unique_ptr<Symbol>>(makeInt(i));
+            return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
+                : static_cast<std::unique_ptr<Object>>(makeInt(i));
         });
         makeFunc("cdr", 1, 1, [](FArgs& args) {
             auto sym = args.get();
             if (!sym->isList()) {
                 throw exceptions::WrongTypeArgument(sym->toString());
             }
-            auto list = dynamic_cast<ListSymbol*>(sym.get());
-            std::unique_ptr<ListSymbol> cdr = makeList();
+            auto list = dynamic_cast<ListObject*>(sym.get());
+            std::unique_ptr<ListObject> cdr = makeList();
             if (list->car.cdr) {
-                cdr->car.sym = std::move(list->car.cdr->sym);
+                cdr->car.obj = std::move(list->car.cdr->obj);
                 cdr->car.cdr = std::move(list->car.cdr->cdr);
             }
-            std::unique_ptr<Symbol> ret;
+            std::unique_ptr<Object> ret;
             ret = std::move(cdr);
             return ret;
         });
-        makeFunc("progn", 0, 0xfffff, [](FArgs& args) {
-            std::unique_ptr<Symbol> ret = makeNil();
-            for (auto sym : args) {
-                ret = std::move(sym);
+        makeFunc("progn", 0, 0xfffff, [](FArgs &args) {
+            std::unique_ptr<Object> ret = makeNil();
+            for (auto obj : args) {
+                ret = std::move(obj);
             }
             return ret;
         });
-        makeFunc("setq", 2, 2, [](FArgs& args) {
-            const NamedSymbol* name = dynamic_cast<NamedSymbol*>(args.cc->sym.get());
+        makeFunc("setq", 2, 2, [](FArgs &args) {
+            const NamedSymbol *name =
+                dynamic_cast<NamedSymbol *>(args.cc->obj.get());
             if (!name) {
-                throw exceptions::WrongTypeArgument(args.cc->sym->toString());
+                throw exceptions::WrongTypeArgument(args.cc->obj->toString());
             }
-            auto value = eval(args.cc->cdr->sym);
+            auto value = eval(args.cc->cdr->obj);
             name->parent->setVariable(name->name, value->clone());
             return value;
         });
     }
 
-    void setVariable(std::string name, std::unique_ptr<Symbol> sym)
-    {
+    void setVariable(std::string name, std::unique_ptr<Object> sym) {
         m_syms[name] = std::move(sym);
     }
 
@@ -866,9 +798,5 @@ public:
     }
 };
 
-Symbol* NamedSymbol::resolve()
-{
-    return parent->resolve(this);
-}
-
+Object *NamedSymbol::resolve() { return parent->resolve(this); }
 }
