@@ -846,6 +846,19 @@ public:
             return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
                 static_cast<std::unique_ptr<Symbol>>(makeInt(i));
         });
+        makeFunc("cdr", 1, 1, [](FArgs& args) {
+            auto sym = args.get();
+            assert(sym->isList());
+            auto list = dynamic_cast<ListSymbol*>(sym.get());
+            std::unique_ptr<ListSymbol> cdr = makeList();
+            if (list->car.cdr) {
+                cdr->car.sym = std::move(list->car.cdr->sym);
+                cdr->car.cdr = std::move(list->car.cdr->cdr);
+            }
+            std::unique_ptr<Symbol> ret;
+            ret = std::move(cdr);
+            return ret;
+        });
     }
 
     void setMessageHandler(std::function<void(std::string)> handler)

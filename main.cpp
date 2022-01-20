@@ -212,6 +212,13 @@ void testDivision()
     }));
 }
 
+void testCdrFunction()
+{
+    alisp::Machine m;
+    assert(m.evaluate("(cdr '(a b c))")->toString() == "(b c)");
+    assert(m.evaluate("(cdr '())")->toString() == "nil");
+}
+
 void test()
 {
     testDivision();
@@ -226,6 +233,7 @@ void test()
     testNestedLists();
     testNullFunction();
     testCarFunction();
+    testCdrFunction();
 }
 
 int main(int, char**)
