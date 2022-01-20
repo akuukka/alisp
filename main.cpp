@@ -224,6 +224,20 @@ void testCdrFunction()
     }));
 }
 
+void testPrognFunction()
+{
+    alisp::Machine m;
+    std::set<std::string> expectedMsgs = {
+        "A", "B"
+    };
+    m.setMessageHandler([&](std::string msg) {
+        expectedMsgs.erase(msg);
+    });
+    assert(m.evaluate("(progn (message \"A\") (message \"B\") 2)")->toString() == "2");
+    assert(expectedMsgs.empty());
+    assert(m.evaluate("(progn)")->toString() == "nil");
+}
+
 void test()
 {
     testDivision();
@@ -239,6 +253,7 @@ void test()
     testNullFunction();
     testCarFunction();
     testCdrFunction();
+    testPrognFunction();
 }
 
 int main(int, char**)

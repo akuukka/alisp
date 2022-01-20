@@ -861,6 +861,13 @@ public:
             ret = std::move(cdr);
             return ret;
         });
+        makeFunc("progn", 0, 0xfffff, [](FArgs& args) {
+            std::unique_ptr<Symbol> ret = makeNil();
+            for (auto sym : args) {
+                ret = std::move(sym);
+            }
+            return ret;
+        });
     }
 
     void setMessageHandler(std::function<void(std::string)> handler)
