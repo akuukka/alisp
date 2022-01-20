@@ -414,55 +414,6 @@ std::unique_ptr<Symbol> eval(const std::unique_ptr<Symbol>& list)
     return list->resolve()->clone();
 }
 
-std::unique_ptr<FunctionSymbol> makeFunctionAddition()
-{
-    std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
-    f->name = "+";
-    f->func = [](FArgs& args) {
-        auto p = args.cc;
-        std::unique_ptr<Symbol> r;
-        double floatSum = 0;
-        std::int64_t intSum = 0;
-        bool fp = false;
-        while (p) {
-            if (auto i = dynamic_cast<IntSymbol*>(p->sym.get())) {
-                intSum += i->value;
-                floatSum += i->value;
-            }
-            else if (auto f = dynamic_cast<FloatSymbol*>(p->sym.get())) {
-                floatSum += f->value;
-                intSum += f->value;
-                fp = true;
-            }
-            else if (auto l = dynamic_cast<ListSymbol*>(p->sym.get())) {
-                auto res = eval(l->car);
-                if (auto i = dynamic_cast<IntSymbol*>(res.get())) {
-                    intSum += i->value;
-                    floatSum += i->value;
-                }
-                else if (auto f = dynamic_cast<FloatSymbol*>(res.get())) {
-                    floatSum += f->value;
-                    intSum += f->value;
-                    fp = true;
-                }
-                else {
-                    throw std::runtime_error("Function return type is wrong.");
-                }
-            }
-            else {
-                throw std::runtime_error("Wrong type argument: " + p->toString());
-            }
-            p = p->cdr.get();
-        }
-        if (fp) {
-            r = makeFloat(floatSum);
-        }
-        r = makeInt(intSum);
-        return r;
-    };
-    return f;
-}
-
 std::unique_ptr<FunctionSymbol> makeFunctionNull()
 {
     std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
@@ -499,55 +450,6 @@ std::unique_ptr<FunctionSymbol> makeFunctionCar()
             return makeNil();
         }
         return list->car.sym->clone();
-    };
-    return f;
-}
-
-std::unique_ptr<FunctionSymbol> makeFunctionMultiplication()
-{
-    std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
-    f->name = "*";
-    f->func = [](FArgs& args) {
-        std::unique_ptr<Symbol> r;
-        double floatMul = 1;
-        std::int64_t intMul = 1;
-        bool fp = false;
-        auto p = args.cc;
-        while (p) {
-            if (auto i = dynamic_cast<IntSymbol*>(p->sym.get())) {
-              intMul *= i->value;
-              floatMul *= i->value;
-            }
-            else if (auto f = dynamic_cast<FloatSymbol*>(p->sym.get())) {
-              floatMul *= f->value;
-              intMul *= f->value;
-              fp = true;
-            }
-            else if (auto l = dynamic_cast<ListSymbol*>(p->sym.get())) {
-                auto res = eval(l->car);
-                if (auto i = dynamic_cast<IntSymbol*>(res.get())) {
-                  intMul *= i->value;
-                  floatMul *= i->value;
-                }
-                else if (auto f = dynamic_cast<FloatSymbol*>(res.get())) {
-                  floatMul *= f->value;
-                  intMul *= f->value;
-                  fp = true;
-                }
-                else {
-                    throw std::runtime_error("Function return type is wrong.");
-                }
-            }
-            else {
-                throw std::runtime_error("Wrong type argument: " + p->toString());
-            }
-            p = p->cdr.get();
-        }
-        if (fp) {
-          r = makeFloat(floatMul);
-        }
-        r = makeInt(intMul);
-        return r;
     };
     return f;
 }
@@ -775,8 +677,6 @@ public:
 
     Machine()
     {
-        m_syms["+"] = makeFunctionAddition();
-        m_syms["*"] = makeFunctionMultiplication();
         m_syms["nil"] = makeNil();
         m_syms["t"] = makeTrue();
         m_syms["null"] = makeFunctionNull();
@@ -846,6 +746,52 @@ public:
             return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
                 static_cast<std::unique_ptr<Symbol>>(makeInt(i));
         });
+        makeFunc("+", 0, 0xffff, [](FArgs& args) {
+            std::int64_t i = 0;
+            double f = 0;
+            bool fp = false;
+            for (auto sym : args) {
+                if (sym->isFloat()) {
+                    const double v = sym->value<double>();
+                    fp = true;
+                    i += v;
+                    f += v;
+                }
+                else if (sym->isInt()) {
+                    const std::int64_t v = sym->value<std::int64_t>();
+                    i += v;
+                    f += v;
+                }
+                else {
+                    throw std::runtime_error("Invalid operand " + sym->toString());
+                }
+            }
+            return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
+                static_cast<std::unique_ptr<Symbol>>(makeInt(i));
+        });
+        makeFunc("*", 0, 0xffff, [](FArgs& args) {
+            std::int64_t i = 1;
+            double f = 1;
+            bool fp = false;
+            for (auto sym : args) {
+                if (sym->isFloat()) {
+                    const double v = sym->value<double>();
+                    fp = true;
+                    i *= v;
+                    f *= v;
+                }
+                else if (sym->isInt()) {
+                    const std::int64_t v = sym->value<std::int64_t>();
+                    i *= v;
+                    f *= v;
+                }
+                else {
+                    throw std::runtime_error("Invalid operand " + sym->toString());
+                }
+            }
+            return fp ? static_cast<std::unique_ptr<Symbol>>(makeFloat(f)) :
+                static_cast<std::unique_ptr<Symbol>>(makeInt(i));
+        });
         makeFunc("cdr", 1, 1, [](FArgs& args) {
             auto sym = args.get();
             if (!sym->isList()) {
@@ -868,6 +814,20 @@ public:
             }
             return ret;
         });
+        makeFunc("setq", 2, 2, [](FArgs& args) {
+            const NamedSymbol* name = dynamic_cast<NamedSymbol*>(args.cc->sym.get());
+            if (!name) {
+                throw exceptions::WrongTypeArgument(args.cc->sym->toString());
+            }
+            auto value = eval(args.cc->cdr->sym);
+            name->parent->setVariable(name->name, value->clone());
+            return value;
+        });
+    }
+
+    void setVariable(std::string name, std::unique_ptr<Symbol> sym)
+    {
+        m_syms[name] = std::move(sym);
     }
 
     void setMessageHandler(std::function<void(std::string)> handler)

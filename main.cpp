@@ -1,5 +1,6 @@
 #include "alisp.hpp"
 #include <cassert>
+#include <cstdint>
 #include <set>
 
 void testEmptyList()
@@ -26,25 +27,6 @@ void testEmptyList()
 
 void testAddition()
 {
-    // Addition alone (expect same result as emacs: 0)
-    {
-        auto l = alisp::makeList();
-        alisp::cons(alisp::makeFunctionAddition(), l);
-        assert(l->toString() == "(+)");
-        auto res = alisp::eval(l);
-        assert(res && res->isInt());
-        assert(res->toString() == "0");
-    }
-    // Simple integer addition
-    {
-        auto l = alisp::makeList();
-        alisp::cons(alisp::makeInt(2), l);
-        alisp::cons(alisp::makeInt(1), l);
-        alisp::cons(alisp::makeFunctionAddition(), l);
-        assert(l->toString() == "(+ 1 2)");
-        auto res = alisp::eval(l);
-        assert(res && res->isInt() && res->toString() == "3");
-    }
     // Test case 1
     {
       alisp::Machine m;
@@ -238,8 +220,17 @@ void testPrognFunction()
     assert(m.evaluate("(progn)")->toString() == "nil");
 }
 
+void testVariables()
+{
+    alisp::Machine m;
+    m.evaluate("(setq x 2)");
+    assert(m.evaluate("(/ 1.0 x)")->value<double>() == 0.5);
+    assert(m.evaluate("(+ 1 x)")->value<std::int64_t>() == 3);
+}
+
 void test()
 {
+    testVariables();
     testDivision();
     testSyntaxErrorDetection();
     testStrings();
