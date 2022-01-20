@@ -848,7 +848,9 @@ public:
         });
         makeFunc("cdr", 1, 1, [](FArgs& args) {
             auto sym = args.get();
-            assert(sym->isList());
+            if (!sym->isList()) {
+                throw exceptions::WrongTypeArgument(sym->toString());
+            }
             auto list = dynamic_cast<ListSymbol*>(sym.get());
             std::unique_ptr<ListSymbol> cdr = makeList();
             if (list->car.cdr) {

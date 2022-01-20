@@ -219,6 +219,9 @@ void testCdrFunction()
     assert(m.evaluate("(cdr '())")->toString() == "nil");
     assert(m.evaluate("(cdr '(a))")->toString() == "nil");
     assert(m.evaluate("(cdr (cdr '(a b c)))")->toString() == "(c)");
+    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
+        m.evaluate("(cdr 1)");
+    }));
 }
 
 void test()
