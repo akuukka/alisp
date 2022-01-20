@@ -152,6 +152,19 @@ void testCloning()
     assert(l2c->toString() == e1);
 }
 
+void testCarFunction()
+{
+    alisp::Machine m;
+    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
+        m.evaluate("(car 1)");
+    }));
+    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
+        m.evaluate("(car (+ 1 1))");
+    }));
+    assert(m.evaluate("(car nil)")->toString() == "nil");
+    assert(m.evaluate("(car '(1 2))")->toString() == "1");
+}
+
 void test()
 {
     testCloning();
@@ -162,6 +175,7 @@ void test()
     testMultiplication();
     testNestedLists();
     testNullFunction();
+    testCarFunction();
 }
 
 int main(int, char**)

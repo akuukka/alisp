@@ -32,6 +32,15 @@ struct WrongNumberOfArguments : std::runtime_error
     }
 };
 
+struct WrongTypeArgument : std::runtime_error
+{
+    WrongTypeArgument(std::string arg) :
+        std::runtime_error("wrong-type-argument: " + arg)
+    {
+
+    }
+};
+
 } // namespace exceptions
 
 class Machine;
@@ -231,7 +240,7 @@ struct NamedSymbol : Symbol
 };
 
 // Remember nil = ()
-std::unique_ptr<ListSymbol> makeNil()
+std::unique_ptr<Symbol> makeNil()
 {
     return std::make_unique<ListSymbol>();
 }
@@ -243,7 +252,7 @@ std::unique_ptr<TrueSymbol> makeTrue()
 
 std::unique_ptr<ListSymbol> makeList()
 {
-    return makeNil();
+    return std::make_unique<ListSymbol>();
 }
 
 std::unique_ptr<IntSymbol> makeInt(std::int64_t value)
@@ -378,24 +387,24 @@ std::unique_ptr<FunctionSymbol> makeFunctionNull()
 std::unique_ptr<FunctionSymbol> makeFunctionCar()
 {
     std::unique_ptr<FunctionSymbol> f = std::make_unique<FunctionSymbol>();
-    /*
     f->name = "car";
+    f->minArgs = 1;
+    f->maxArgs = 1;
     f->func = [](ConsCell* cc) {
-        std::unique_ptr<Symbol> r;
         const int argc = countArgs(cc);
         if (argc != 1) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
-        auto sym = eval(cc->sym);
-        if (!(*sym)) {
-            r = makeTrue();
+        auto arg = eval(cc->sym);
+        if (!arg->isList()) {
+            throw exceptions::WrongTypeArgument(cc->sym->toString());
         }
-        else {
-            r = makeNil();
+        auto list = dynamic_cast<ListSymbol*>(arg.get());
+        if (!list->car.sym) {
+            return makeNil();
         }
-        return r;
+        return list->car.sym->clone();
     };
-    */
     return f;
 }
 
