@@ -237,10 +237,14 @@ struct ListObject : Object {
 
 struct NamedObject : Object
 {
-    Machine *parent;
+    Machine* parent;
     std::string name;
+    bool quoted = false;
 
-    std::string toString() const override { return name; }
+    std::string toString() const override
+    {
+        return (quoted ? "'" : "") + name;
+    }
 
     Object* resolveVariable() override;
     Function* resolveFunction() override;
@@ -251,8 +255,14 @@ struct NamedObject : Object
     {
         auto sym = std::make_unique<NamedObject>(parent);
         sym->name = name;
+        sym->quoted = quoted;
         return sym;
     }
+};
+
+struct SymbolObject : Object
+{
+    
 };
 
 // Remember nil = ()
@@ -468,15 +478,17 @@ class Machine
     std::map<std::string, Symbol> m_syms;
     std::function<void(std::string)> m_msgHandler;
 
-    std::unique_ptr<Object> parseNamedObject(const char *&str) {
-        auto sym = std::make_unique<NamedObject>(this);
+    std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
+    {
+        auto obj = std::make_unique<NamedObject>(this);
+        obj->quoted = quoted;
         while (*str && isPartOfSymName(*str)) {
-            sym->name += *str;
+            obj->name += *str;
             str++;
         }
-        return sym;
+        return obj;
     }
-
+    
     std::unique_ptr<StringObject> parseString(const char *&str) {
         auto sym = std::make_unique<StringObject>("", this);
         while (*str && *str != '"') {
@@ -490,7 +502,8 @@ class Machine
         return sym;
     }
 
-    std::unique_ptr<Object> parseNext(const char *&expr) {
+    std::unique_ptr<Object> parseNext(const char *&expr)
+    {
         bool quoted = false;
         // Skip whitespace until next symbol
         while (*expr) {
@@ -501,14 +514,19 @@ class Machine
             }
             if (c >= '0' && c <= '9') {
                 return parseNumericalSymbol(expr);
-            } else if (c == '\"') {
+            }
+            else if (c == '\"') {
                 return parseString(++expr);
-            } else if (isPartOfSymName(c)) {
-                return parseNamedObject(expr);
-            } else if (c == '\'') {
+            }
+            else if (isPartOfSymName(c))
+            {
+                return parseNamedObject(expr, quoted);
+            }
+            else if (c == '\'') {
                 quoted = true;
                 expr++;
-            } else if (c == '(') {
+            }
+            else if (c == '(') {
                 auto l = makeList();
                 l->quoted = quoted;
                 quoted = false;

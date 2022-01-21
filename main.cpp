@@ -221,8 +221,15 @@ void testVariables()
     assert(m.evaluate("(+ 1 x)")->value<std::int64_t>() == 3);
 }
 
+void testSymbols()
+{
+    alisp::Machine m;
+    assert(m.evaluate("'('a 'b)")->toString() == "('a 'b)");
+}
+
 void test()
 {
+    testSymbols();
     testVariables();
     testDivision();
     testSyntaxErrorDetection();
