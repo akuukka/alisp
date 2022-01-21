@@ -31,31 +31,11 @@ void testEmptyList()
 void testAddition()
 {
     alisp::Machine m;
-    // Test case 1
-    {
-
-        auto syms = m.parse("(+ 3 90)");
-        assert(syms->toString() == "(+ 3 90)");
-        assert(syms->isList());
-        auto res = alisp::eval(syms);
-        assert(res->toString() == "93");
-    }
-    // Test case 2
-    {
-        alisp::Machine m;
-        const auto expr = "(* 3 (+ (+ 1 1) (+ 0 3)))";
-        auto syms = m.parse(expr);
-        assert(syms->toString() == expr);
-        assert(syms->isList());
-        auto res = alisp::eval(syms);
-        assert(res->toString() == "15");
-    }
 }
 
 void testMultiplication()
 {
     alisp::Machine m;
-    assert(alisp::eval(m.parse("(*)"))->toString() == "1");
 }
 
 void testNestedLists()
@@ -110,15 +90,6 @@ void testNullFunction()
 void testQuotedList()
 {
     alisp::Machine m;
-    auto syms = m.parse("'(1)");
-    assert(syms->toString() == "'(1)");
-    auto res = alisp::eval(syms);
-    assert(res->toString() == "(1)");
-
-    syms = m.parse("'(test)");
-    res = alisp::eval(syms);
-    assert(res->toString() == "(test)");
-
     assert(m.evaluate("'()")->toString() == "nil");
 }
 
@@ -263,6 +234,7 @@ void testEqFunction()
     ASSERT_EQ(m.evaluate("(eq 1 1)"), "t");
     ASSERT_EQ(m.evaluate("(eq 1 1.0)"), "nil");
     ASSERT_EQ(m.evaluate("(eq 1.0 1.0)"), "t");
+    ASSERT_EQ(m.evaluate("(eq nil nil)"), "t");
 }
 
 void test()

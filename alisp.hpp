@@ -229,11 +229,13 @@ struct FloatObject : Object
     }
 };
 
-struct ListObject : Object {
-    ConsCell car; // todo: remove unique_ptr
+struct ListObject : Object
+{
+    ConsCell car;
     bool quoted = false;
 
-    std::string toString() const override {
+    std::string toString() const override
+    {
         return (quoted ? "'" : "") + car.toString();
     }
 
@@ -241,7 +243,8 @@ struct ListObject : Object {
 
     bool operator!() const override { return !car; }
 
-    std::unique_ptr<Object> clone() const override {
+    std::unique_ptr<Object> clone() const override
+    {
         auto copy = std::make_unique<ListObject>();
         auto last = &copy->car;
         auto p = &this->car;
@@ -258,6 +261,14 @@ struct ListObject : Object {
             p = p->cdr.get();
         }
         return copy;
+    }
+
+    bool equals(const Object& o) const override
+    {
+        const ListObject* op = dynamic_cast<const ListObject*>(&o);
+        std::cout << this << " vs " << op << std::endl;
+        std::cout << this->toString() << " vs " << op->toString() << std::endl;
+        return this == &o;
     }
 };
 
@@ -352,8 +363,6 @@ int countArgs(const ConsCell* cc)
     return i;
 }
 
-std::unique_ptr<Object> eval(const std::unique_ptr<Object> &list);
-
 struct FArgs
 {
     ConsCell* cc;
@@ -361,15 +370,7 @@ struct FArgs
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
-    std::unique_ptr<Object> get()
-    {
-        if (!cc) {
-            return nullptr;
-        }
-        auto sym = eval(cc->obj);
-        cc = cc->cdr.get();
-        return sym;
-    }
+    std::unique_ptr<Object> get();
 
     bool hasNext() const
     {
@@ -378,6 +379,7 @@ struct FArgs
 
     struct Iterator
     {
+        Machine* m;
         ConsCell* cc;
 
         bool operator!=(const Iterator& o) const
@@ -390,53 +392,19 @@ struct FArgs
             cc = cc->cdr.get();
         }
 
-        std::unique_ptr<Object> operator*() { return eval(cc->obj); }
+        std::unique_ptr<Object> operator*();
     };
 
     Iterator begin()
     {
-        return Iterator{cc};
+        return Iterator{&m, cc};
     }
 
     Iterator end()
     {
-        return Iterator{nullptr};
+        return Iterator{&m, nullptr};
     }
 };
-
-std::unique_ptr<Object> eval(const std::unique_ptr<Object>& obj)
-{
-    // If it's a list, evaluation means function call. Otherwise, return a copy of
-    // the symbol itself.
-    if (!obj->isList()) {
-        auto var = obj->resolveVariable();
-        if (!var) {
-            throw exceptions::VoidVariable(obj->toString());
-        }
-        return var->clone();
-    }
-    auto plist = dynamic_cast<ListObject *>(obj.get());
-    if (plist->quoted) {
-        return obj->clone();
-    }
-    const auto &c = plist->car;
-    if (!c) {
-        // Remember: () => nil
-        return makeNil();
-    }
-    const Function* f = c.obj->resolveFunction();
-    if (f) {
-        assert(dynamic_cast<const NamedObject*>(c.obj.get()));
-        auto& m = *dynamic_cast<const NamedObject*>(c.obj.get())->parent;
-        const int argc = countArgs(c.cdr.get());
-        if (argc < f->minArgs || argc > f->maxArgs) {
-            throw exceptions::WrongNumberOfArguments(argc);
-        }
-        FArgs args(*c.cdr, m);
-        return f->func(args);
-    }
-    throw exceptions::VoidFunction(c.obj->toString());
-}
 
 void cons(std::unique_ptr<Object> sym, ConsCell& list)
 {
@@ -661,7 +629,6 @@ class Machine
         }
         return nullptr;
     }
-
 public:
     std::unique_ptr<Object> parse(const char *expr) {
         auto r = parseNext(expr);
@@ -669,6 +636,40 @@ public:
             throw std::runtime_error("Unexpected: " + std::string(expr));
         }
         return r;
+    }
+
+    std::unique_ptr<Object> eval(const std::unique_ptr<Object>& obj)
+    {
+        // If it's a list, evaluation means function call. Otherwise, return a copy of
+        // the symbol itself.
+        if (!obj->isList()) {
+            auto var = obj->resolveVariable();
+            if (!var) {
+                throw exceptions::VoidVariable(obj->toString());
+            }
+            return var->clone();
+        }
+        auto plist = dynamic_cast<ListObject*>(obj.get());
+        if (plist->quoted) {
+            return obj->clone();
+        }
+        const auto &c = plist->car;
+        if (!c) {
+            // Remember: () => nil
+            return makeNil();
+        }
+        const Function* f = c.obj->resolveFunction();
+        if (f) {
+            assert(dynamic_cast<const NamedObject*>(c.obj.get()));
+            auto& m = *dynamic_cast<const NamedObject*>(c.obj.get())->parent;
+            const int argc = countArgs(c.cdr.get());
+            if (argc < f->minArgs || argc > f->maxArgs) {
+                throw exceptions::WrongNumberOfArguments(argc);
+            }
+            FArgs args(*c.cdr, m);
+            return f->func(args);
+        }
+        throw exceptions::VoidFunction(c.obj->toString());
     }
 
     std::unique_ptr<Object> evaluate(const char *expr)
@@ -720,7 +721,7 @@ public:
             }
             return r;
         });
-        makeFunc("car", 1, 1, [](FArgs &args) {
+        makeFunc("car", 1, 1, [this](FArgs &args) {
             auto arg = eval(args.cc->obj);
             if (!arg->isList()) {
                 throw exceptions::WrongTypeArgument(args.cc->obj->toString());
@@ -911,7 +912,7 @@ public:
             }
             return ret;
         });
-        makeFunc("setq", 2, 2, [](FArgs &args) {
+        makeFunc("setq", 2, 2, [this](FArgs &args) {
             const NamedObject* name =
                 dynamic_cast<NamedObject*>(args.cc->obj.get());
             if (!name) {
@@ -948,6 +949,21 @@ Object* NamedObject::resolveVariable()
 Function* NamedObject::resolveFunction()
 {
     return parent->resolveFunction(this);
+}
+
+std::unique_ptr<Object> FArgs::get()
+{
+    if (!cc) {
+        return nullptr;
+    }
+    auto sym = m.eval(cc->obj);
+    cc = cc->cdr.get();
+    return sym;
+}
+
+std::unique_ptr<Object> FArgs::Iterator::operator*()
+{
+    return m->eval(cc->obj);
 }
 
 }
