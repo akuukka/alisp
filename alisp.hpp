@@ -109,7 +109,8 @@ struct ConsCell
     std::unique_ptr<Object> obj;
     std::unique_ptr<ConsCell> cdr;
 
-    std::string toString() const {
+    std::string toString() const
+    {
         if (!obj && !cdr) {
             return "nil";
         }
@@ -234,7 +235,7 @@ struct ListObject : Object {
     }
 };
 
-struct NamedSymbol : Object
+struct NamedObject : Object
 {
     Machine *parent;
     std::string name;
@@ -244,11 +245,11 @@ struct NamedSymbol : Object
     Object* resolveVariable() override;
     Function* resolveFunction() override;
 
-    NamedSymbol(Machine *parent) : parent(parent) {}
+    NamedObject(Machine *parent) : parent(parent) {}
 
     std::unique_ptr<Object> clone() const override
     {
-        auto sym = std::make_unique<NamedSymbol>(parent);
+        auto sym = std::make_unique<NamedObject>(parent);
         sym->name = name;
         return sym;
     }
@@ -467,8 +468,8 @@ class Machine
     std::map<std::string, Symbol> m_syms;
     std::function<void(std::string)> m_msgHandler;
 
-    std::unique_ptr<Object> parseNamedSymbol(const char *&str) {
-        auto sym = std::make_unique<NamedSymbol>(this);
+    std::unique_ptr<Object> parseNamedObject(const char *&str) {
+        auto sym = std::make_unique<NamedObject>(this);
         while (*str && isPartOfSymName(*str)) {
             sym->name += *str;
             str++;
@@ -503,7 +504,7 @@ class Machine
             } else if (c == '\"') {
                 return parseString(++expr);
             } else if (isPartOfSymName(c)) {
-                return parseNamedSymbol(expr);
+                return parseNamedObject(expr);
             } else if (c == '\'') {
                 quoted = true;
                 expr++;
@@ -552,7 +553,7 @@ public:
         return eval(parse(expr));
     }
 
-    Object* resolveVariable(NamedSymbol* sym)
+    Object* resolveVariable(NamedObject* sym)
     {
         if (m_syms.count(sym->name)) {
             return m_syms[sym->name].variable.get();
@@ -560,7 +561,7 @@ public:
         return nullptr;
     }
 
-    Function* resolveFunction(NamedSymbol* sym)
+    Function* resolveFunction(NamedObject* sym)
     {
         if (m_syms.count(sym->name)) {
             return m_syms[sym->name].function.get();
@@ -763,8 +764,8 @@ public:
             return ret;
         });
         makeFunc("setq", 2, 2, [](FArgs &args) {
-            const NamedSymbol *name =
-                dynamic_cast<NamedSymbol *>(args.cc->obj.get());
+            const NamedObject *name =
+                dynamic_cast<NamedObject *>(args.cc->obj.get());
             if (!name) {
                 throw exceptions::WrongTypeArgument(args.cc->obj->toString());
             }
@@ -785,12 +786,12 @@ public:
     }
 };
 
-Object* NamedSymbol::resolveVariable()
+Object* NamedObject::resolveVariable()
 {
     return parent->resolveVariable(this);
 }
 
-Function* NamedSymbol::resolveFunction()
+Function* NamedObject::resolveFunction()
 {
     return parent->resolveFunction(this);
 }
