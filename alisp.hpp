@@ -64,6 +64,7 @@ struct ArithError : std::runtime_error
 
 class Machine;
 struct Object;
+struct Function;
 
 template <typename T> T getValue(const Object &sym);
 
@@ -78,7 +79,8 @@ struct Object
     virtual ~Object() {}
 
     virtual bool operator==(std::int64_t value) const { return false; };
-    virtual Object *resolve() { return this; }
+    virtual Object* resolveVariable() { return this; }
+    virtual Function* resolveFunction() { return nullptr; }
     virtual std::unique_ptr<Object> clone() const = 0;
 
     friend std::ostream &operator<<(std::ostream &os, const Object &sym);
@@ -138,19 +140,17 @@ struct TrueObject : Object {
 
 struct FArgs;
 
-struct FunctionObject : Object {
+struct Function
+{
     std::string name;
     int minArgs = 0;
     int maxArgs = 0xffff;
-    std::unique_ptr<Object> (*func)(FArgs &);
+    std::unique_ptr<Object> (*func)(FArgs&);
+};
 
-    std::string toString() const override { return name; }
-
-    std::unique_ptr<Object> clone() const override {
-        auto sym = std::make_unique<FunctionObject>();
-        *sym = *this;
-        return sym;
-    }
+struct Symbol {
+    std::unique_ptr<Object> variable;
+    std::unique_ptr<Function> function;
 };
 
 struct StringObject : Object {
@@ -234,17 +234,20 @@ struct ListObject : Object {
     }
 };
 
-struct NamedSymbol : Object {
+struct NamedSymbol : Object
+{
     Machine *parent;
     std::string name;
 
     std::string toString() const override { return name; }
 
-    Object *resolve() override;
+    Object* resolveVariable() override;
+    Function* resolveFunction() override;
 
     NamedSymbol(Machine *parent) : parent(parent) {}
 
-    std::unique_ptr<Object> clone() const override {
+    std::unique_ptr<Object> clone() const override
+    {
         auto sym = std::make_unique<NamedSymbol>(parent);
         sym->name = name;
         return sym;
@@ -332,9 +335,9 @@ std::unique_ptr<Object> eval(const std::unique_ptr<Object>& list)
     // If it's a list, evaluation means function call. Otherwise, return a copy of
     // the symbol itself.
     if (!list->isList()) {
-        return list->resolve()->clone();
+        return list->resolveVariable()->clone();
     }
-    auto plist = dynamic_cast<ListObject *>(list.get());
+    auto plist = dynamic_cast<ListObject*>(list.get());
     if (plist->quoted) {
         return list->clone();
     }
@@ -343,11 +346,7 @@ std::unique_ptr<Object> eval(const std::unique_ptr<Object>& list)
         // Remember: () => nil
         return makeNil();
     }
-    auto obj = c.obj->resolve();
-    if (!obj) {
-        throw exceptions::VoidFunction(c.obj->toString());
-    }
-    const FunctionObject *f = dynamic_cast<const FunctionObject*>(obj);
+    const Function* f = c.obj->resolveFunction();
     if (f) {
         const int argc = countArgs(c.cdr.get());
         if (argc < f->minArgs || argc > f->maxArgs) {
@@ -356,45 +355,7 @@ std::unique_ptr<Object> eval(const std::unique_ptr<Object>& list)
         FArgs args(*c.cdr);
         return f->func(args);
     }
-    throw exceptions::VoidFunction(obj->toString());
-}
-
-std::unique_ptr<FunctionObject> makeFunctionNull() {
-    std::unique_ptr<FunctionObject> f = std::make_unique<FunctionObject>();
-    f->name = "null";
-    f->minArgs = 1;
-    f->maxArgs = 1;
-    f->func = [](FArgs &args) {
-        std::unique_ptr<Object> r;
-        auto sym = eval(args.cc->obj);
-        if (!(*sym)) {
-            r = makeTrue();
-        } else {
-            r = makeNil();
-        }
-        return r;
-    };
-    return f;
-}
-
-std::unique_ptr<FunctionObject> makeFunctionCar()
-{
-    std::unique_ptr<FunctionObject> f = std::make_unique<FunctionObject>();
-    f->name = "car";
-    f->minArgs = 1;
-    f->maxArgs = 1;
-    f->func = [](FArgs &args) {
-        auto arg = eval(args.cc->obj);
-        if (!arg->isList()) {
-            throw exceptions::WrongTypeArgument(args.cc->obj->toString());
-        }
-        auto list = dynamic_cast<ListObject *>(arg.get());
-        if (!list->car.obj) {
-            return makeNil();
-        }
-        return list->car.obj->clone();
-    };
-    return f;
+    throw exceptions::VoidFunction(c.obj->toString());
 }
 
 void cons(std::unique_ptr<Object> sym, ConsCell& list)
@@ -503,7 +464,7 @@ inline std::int64_t getValue(const Object &sym)
 
 class Machine
 {
-    std::map<std::string, std::unique_ptr<Object>> m_syms;
+    std::map<std::string, Symbol> m_syms;
     std::function<void(std::string)> m_msgHandler;
 
     std::unique_ptr<Object> parseNamedSymbol(const char *&str) {
@@ -586,33 +547,64 @@ public:
         return r;
     }
 
-    std::unique_ptr<Object> evaluate(const char *expr) {
+    std::unique_ptr<Object> evaluate(const char *expr)
+    {
         return eval(parse(expr));
     }
 
-    Object *resolve(NamedSymbol *sym) {
+    Object* resolveVariable(NamedSymbol* sym)
+    {
         if (m_syms.count(sym->name)) {
-            return m_syms[sym->name].get();
+            return m_syms[sym->name].variable.get();
+        }
+        return nullptr;
+    }
+
+    Function* resolveFunction(NamedSymbol* sym)
+    {
+        if (m_syms.count(sym->name)) {
+            return m_syms[sym->name].function.get();
         }
         return nullptr;
     }
 
     void makeFunc(const char *name, int minArgs, int maxArgs,
-                  std::unique_ptr<Object> (*f)(FArgs &)) {
-        auto func = std::make_unique<FunctionObject>();
+                  std::unique_ptr<Object> (*f)(FArgs &))
+    {
+        auto func = std::make_unique<Function>();
         func->name = name;
         func->minArgs = minArgs;
         func->maxArgs = maxArgs;
         func->func = f;
-        m_syms[name] = std::move(func);
+        m_syms[name].function = std::move(func);
     }
 
     Machine()
     {
-        m_syms["nil"] = makeNil();
-        m_syms["t"] = makeTrue();
-        m_syms["null"] = makeFunctionNull();
-        m_syms["car"] = makeFunctionCar();
+        setVariable("nil", makeNil());
+        setVariable("t", makeTrue());
+        
+        makeFunc("null", 1, 1, [](FArgs &args) {
+            std::unique_ptr<Object> r;
+            auto sym = eval(args.cc->obj);
+            if (!(*sym)) {
+                r = makeTrue();
+            } else {
+                r = makeNil();
+            }
+            return r;
+        });
+        makeFunc("car", 1, 1, [](FArgs &args) {
+            auto arg = eval(args.cc->obj);
+            if (!arg->isList()) {
+                throw exceptions::WrongTypeArgument(args.cc->obj->toString());
+            }
+            auto list = dynamic_cast<ListObject *>(arg.get());
+            if (!list->car.obj) {
+                return makeNil();
+            }
+            return list->car.obj->clone();
+        });
         makeFunc("stringp", 1, 1, [](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
         });
@@ -782,9 +774,9 @@ public:
         });
     }
 
-    void setVariable(std::string name, std::unique_ptr<Object> sym)
+    void setVariable(std::string name, std::unique_ptr<Object> obj)
     {
-        m_syms[name] = std::move(sym);
+        m_syms[name].variable = std::move(obj);
     }
 
     void setMessageHandler(std::function<void(std::string)> handler)
@@ -793,9 +785,14 @@ public:
     }
 };
 
-Object *NamedSymbol::resolve()
+Object* NamedSymbol::resolveVariable()
 {
-    return parent->resolve(this);
+    return parent->resolveVariable(this);
+}
+
+Function* NamedSymbol::resolveFunction()
+{
+    return parent->resolveFunction(this);
 }
 
 }
