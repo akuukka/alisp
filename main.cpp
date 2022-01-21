@@ -244,8 +244,16 @@ void testEqFunction()
     ASSERT_EQ(m.evaluate("(progn (setq l '(a b))(eq l l))"), "t");
 }
 
+void testInternFunction()
+{
+    alisp::Machine m;
+    ASSERT_EQ(m.evaluate("(setq sym (intern \"foo\"))"), "foo");
+    ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "t");
+}
+
 void test()
 {
+    testInternFunction();
     testEqFunction();
     testAddition();
     testMultiplication();

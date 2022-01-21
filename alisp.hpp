@@ -291,17 +291,18 @@ struct NamedObject : Object
 struct SymbolObject : Object
 {
     Symbol* sym = nullptr;
+    bool quoted = false;
 
-    SymbolObject(Symbol* sym) : sym(sym) {}
+    SymbolObject(Symbol* sym, bool quoted) : sym(sym), quoted(quoted) {}
 
     std::string toString() const override
     {
-        return "'" + sym->name;
+        return (quoted ? "'" : "") + sym->name;
     }
 
     std::unique_ptr<Object> clone() const override
     {
-        return std::make_unique<SymbolObject>(this->sym);
+        return std::make_unique<SymbolObject>(sym, quoted);
     }
 
     bool equals(const Object& o) const override
@@ -315,7 +316,7 @@ struct UninternedSymbolObject : SymbolObject
 {
     std::shared_ptr<Symbol> symbol;
 
-    UninternedSymbolObject(std::shared_ptr<Symbol> s) : SymbolObject(s.get())
+    UninternedSymbolObject(std::shared_ptr<Symbol> s) : SymbolObject(s.get(), false)
     {
         symbol = s;
     }
@@ -532,8 +533,9 @@ class Machine
 
     Symbol* getSymbol(std::string name)
     {
-        if (!m_syms.count("name")) {
+        if (!m_syms.count(name)) {
             m_syms[name].name = name;
+            m_syms[name].parent = this;
         }
         return &m_syms[name];
     }
@@ -546,7 +548,7 @@ class Machine
             str++;
         }
         if (quoted) {
-            return std::make_unique<SymbolObject>(getSymbol(name));
+            return std::make_unique<SymbolObject>(getSymbol(name), true);
         }
         else {
             auto obj = std::make_unique<NamedObject>(this);
@@ -702,7 +704,7 @@ public:
     Machine()
     {
         setVariable("nil", makeNil());
-        setVariable("t", std::make_unique<SymbolObject>(getSymbol("t")));
+        setVariable("t", std::make_unique<SymbolObject>(getSymbol("t"), false));
         
         makeFunc("null", 1, 1, [this](FArgs &args) {
             std::unique_ptr<Object> r;
@@ -904,6 +906,13 @@ public:
                 ret = std::move(obj);
             }
             return ret;
+        });
+        makeFunc("intern", 1, 1, [this](FArgs& args) {
+            const auto arg = args.get();
+            if (!arg->isString()) {
+                throw exceptions::WrongTypeArgument(arg->toString());
+            }
+            return std::make_unique<SymbolObject>(getSymbol(arg->value<std::string>()), false);
         });
         makeFunc("setq", 2, 2, [this](FArgs &args) {
             const NamedObject* name =
