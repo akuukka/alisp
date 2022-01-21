@@ -266,8 +266,9 @@ struct ListObject : Object
     bool equals(const Object& o) const override
     {
         const ListObject* op = dynamic_cast<const ListObject*>(&o);
-        std::cout << this << " vs " << op << std::endl;
-        std::cout << this->toString() << " vs " << op->toString() << std::endl;
+        if (op && !(*this) && !(*op)) {
+            return true;
+        }
         return this == &o;
     }
 };

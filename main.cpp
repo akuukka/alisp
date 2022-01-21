@@ -31,11 +31,15 @@ void testEmptyList()
 void testAddition()
 {
     alisp::Machine m;
+    ASSERT_EQ(m.evaluate("(+ 1 1)"), "2");
+    ASSERT_EQ(m.evaluate("(+)"), "0");
 }
 
 void testMultiplication()
 {
     alisp::Machine m;
+    ASSERT_EQ(m.evaluate("(* 3 4)"), "12");
+    ASSERT_EQ(m.evaluate("(*)"), "1");
 }
 
 void testNestedLists()
@@ -239,6 +243,8 @@ void testEqFunction()
 
 void test()
 {
+    testAddition();
+    testMultiplication();
     testEqFunction();
     testVariables();
     testSymbols();
@@ -249,8 +255,6 @@ void test()
     testEmptyList();
     testQuotedList();
     testSimpleEvaluations();
-    testAddition();
-    testMultiplication();
     testNestedLists();
     testNullFunction();
     testCarFunction();
