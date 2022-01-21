@@ -135,15 +135,6 @@ struct ConsCell
     bool operator!() const { return !obj; }
 };
 
-struct TrueObject : Object {
-    std::string toString() const override { return "t"; }
-
-    std::unique_ptr<Object> clone() const override
-    {
-        return std::make_unique<TrueObject>();
-    }
-};
-
 struct FArgs;
 
 struct Function
@@ -151,7 +142,8 @@ struct Function
     std::string name;
     int minArgs = 0;
     int maxArgs = 0xffff;
-    std::unique_ptr<Object> (*func)(FArgs&);
+    // std::unique_ptr<Object> (*func)(FArgs&);
+    std::function<std::unique_ptr<Object>(FArgs&)> func;
 };
 
 struct Symbol
@@ -305,8 +297,6 @@ struct UninternedSymbolObject : SymbolObject
 
 // Remember nil = ()
 std::unique_ptr<Object> makeNil() { return std::make_unique<ListObject>(); }
-
-std::unique_ptr<Object> makeTrue() { return std::make_unique<TrueObject>(); }
 
 std::unique_ptr<ListObject> makeList()
 {
@@ -514,24 +504,39 @@ inline double getValue(const Object &sym)
     return s ? s->value : 0.0;
 }
 
-template <>
+template<>
 inline std::int64_t getValue(const Object &sym)
 {
     auto s = dynamic_cast<const IntObject *>(&sym);
     return s ? s->value : 0.0;
 }
 
-template <>
+template<>
 inline std::string getValue(const Object& sym)
 {
     auto s = dynamic_cast<const StringObject*>(&sym);
     return s ? s->value : "";
 }
 
+template<>
+inline const Symbol* getValue(const Object& sym)
+{
+    auto s = dynamic_cast<const SymbolObject*>(&sym);
+    return s ? s->sym : nullptr;
+}
+
 class Machine
 {
     std::map<std::string, Symbol> m_syms;
     std::function<void(std::string)> m_msgHandler;
+
+    std::unique_ptr<Object> makeTrue()
+    {
+        assert(m_syms.count("t"));
+        auto r = std::make_unique<NamedObject>(this);
+        r->name = "t";
+        return r;
+    }
 
     std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
     {
@@ -652,7 +657,7 @@ public:
     }
 
     void makeFunc(const char *name, int minArgs, int maxArgs,
-                  std::unique_ptr<Object> (*f)(FArgs &))
+                  std::function<std::unique_ptr<Object>(FArgs &)> f)
     {
         auto func = std::make_unique<Function>();
         func->name = name;
@@ -667,9 +672,13 @@ public:
     Machine()
     {
         setVariable("nil", makeNil());
-        setVariable("t", makeTrue());
+
+        auto trueSym = std::make_unique<SymbolObject>();
+        trueSym->sym = &m_syms["t"];
+        trueSym->sym->name = "t";
+        setVariable("t", std::move(trueSym));
         
-        makeFunc("null", 1, 1, [](FArgs &args) {
+        makeFunc("null", 1, 1, [this](FArgs &args) {
             std::unique_ptr<Object> r;
             auto sym = eval(args.cc->obj);
             if (!(*sym)) {
@@ -690,10 +699,10 @@ public:
             }
             return list->car.obj->clone();
         });
-        makeFunc("stringp", 1, 1, [](FArgs& args) {
+        makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
         });
-        makeFunc("numberp", 1, 1, [](FArgs& args) {
+        makeFunc("numberp", 1, 1, [this](FArgs& args) {
             auto arg = args.get();
             return arg->isInt() || arg->isFloat() ? makeTrue() : makeNil();
         });
@@ -707,7 +716,7 @@ public:
             std::unique_ptr<Object> r = std::make_unique<UninternedSymbolObject>(symbol);
             return r;
         });
-        makeFunc("symbolp", 1, 1, [](FArgs& args) {
+        makeFunc("symbolp", 1, 1, [this](FArgs& args) {
             return dynamic_cast<SymbolObject*>(args.get().get()) ? makeTrue() : makeNil();
         });
         makeFunc("symbol-name", 1, 1, [](FArgs& args) {
@@ -879,6 +888,16 @@ public:
             auto value = eval(args.cc->cdr->obj);
             name->parent->setVariable(name->name, value->clone());
             return value;
+        });
+        makeFunc("eq", 2, 2, [this](FArgs& args) {
+            const auto lhs = args.get();
+            const auto rhs = args.get();
+            if (lhs->value<const Symbol*>() &&
+                lhs->value<const Symbol*>() == rhs->value<const Symbol*>())
+            {
+                return makeTrue();
+            }
+            return makeNil();
         });
     }
 
