@@ -3,6 +3,15 @@
 #include <cstdint>
 #include <set>
 
+void ASSERT_EQ(std::string a, std::string b)
+{
+    if (a == b) {
+        return;
+    }
+    std::cerr << "Was expecting " << b << " but got " << a << std::endl;
+    assert(false);
+}
+
 void testEmptyList()
 {
     alisp::Machine m;
@@ -235,6 +244,8 @@ void testSymbols()
         m.evaluate("(symbol-name 2)");
     }));
     assert(m.evaluate("(make-symbol \"test\")")->toString() == "test");
+    ASSERT_EQ(m.evaluate("(progn (setq sym (make-symbol \"foo\"))(symbol-name sym))")->toString(),
+              "\"foo\"");
 }
 
 void test()
