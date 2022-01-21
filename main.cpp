@@ -229,6 +229,7 @@ void testSymbols()
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
         m.evaluate("(eq 'a a)");
     }));
+    ASSERT_EQ(m.evaluate("(progn (setq l '(a b))(eq l l))"), "tt");
 }
 
 void testEqFunction()
@@ -239,6 +240,9 @@ void testEqFunction()
     ASSERT_EQ(m.evaluate("(eq 1 1.0)"), "nil");
     ASSERT_EQ(m.evaluate("(eq 1.0 1.0)"), "t");
     ASSERT_EQ(m.evaluate("(eq nil nil)"), "t");
+    ASSERT_EQ(m.evaluate("(eq () nil)"), "t");
+    ASSERT_EQ(m.evaluate("(eq '() nil)"), "t");
+
 }
 
 void test()
