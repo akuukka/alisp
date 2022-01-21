@@ -7,17 +7,6 @@ void testEmptyList()
 {
     alisp::Machine m;
     
-    alisp::ConsCell c;
-    assert(c.toString() == "nil");
-    auto res = alisp::eval(c);
-    auto ls = dynamic_cast<alisp::ListObject*>(res.get());
-    assert(ls);
-    const auto& l = ls->car;
-    assert(!l);
-
-    auto el = alisp::makeList();
-    assert(el->toString() == "nil");
-
     auto t3 = m.parse("()");
     assert(t3 && t3->isList());
     assert(t3->toString() == "nil");
