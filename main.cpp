@@ -253,6 +253,7 @@ void testInternFunction()
     ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "nil");
     ASSERT_EQ(m.evaluate("(setq sym (intern \"frazzle\"))"), "frazzle");
     ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "frazzle");
+    ASSERT_EQ(m.evaluate("(eq sym 'frazzle)"), "t");
 }
 
 void test()
