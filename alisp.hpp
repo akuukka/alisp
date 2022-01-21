@@ -67,7 +67,8 @@ struct Object;
 
 template <typename T> T getValue(const Object &sym);
 
-struct Object {
+struct Object
+{
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
     virtual bool isInt() const { return false; }
@@ -326,16 +327,17 @@ struct FArgs
 
 };
 
-std::unique_ptr<Object> eval(const ConsCell &c) {
+std::unique_ptr<Object> eval(const ConsCell &c)
+{
     if (!c) {
         // Remember: () => nil
         return makeNil();
     }
-    auto sym = c.obj->resolve();
-    if (!sym) {
+    auto obj = c.obj->resolve();
+    if (!obj) {
         throw exceptions::VoidFunction(c.obj->toString());
     }
-    const FunctionObject *f = dynamic_cast<const FunctionObject *>(sym);
+    const FunctionObject *f = dynamic_cast<const FunctionObject*>(obj);
     if (f) {
         const int argc = countArgs(c.cdr.get());
         if (argc < f->minArgs || argc > f->maxArgs) {
@@ -344,15 +346,11 @@ std::unique_ptr<Object> eval(const ConsCell &c) {
         FArgs args(*c.cdr);
         return f->func(args);
     }
-    throw exceptions::VoidFunction(sym->toString());
+    throw exceptions::VoidFunction(obj->toString());
 }
 
-std::unique_ptr<Object> eval(const std::unique_ptr<ListObject> &list) {
-    assert(list->car);
-    return eval(list->car);
-}
-
-std::unique_ptr<Object> eval(const std::unique_ptr<Object> &list) {
+std::unique_ptr<Object> eval(const std::unique_ptr<Object> &list)
+{
     // If it's a list, evaluation means function call. Otherwise, return a copy of
     // the symbol itself.
     if (list->isList()) {
@@ -788,7 +786,8 @@ public:
         });
     }
 
-    void setVariable(std::string name, std::unique_ptr<Object> sym) {
+    void setVariable(std::string name, std::unique_ptr<Object> sym)
+    {
         m_syms[name] = std::move(sym);
     }
 
@@ -798,5 +797,9 @@ public:
     }
 };
 
-Object *NamedSymbol::resolve() { return parent->resolve(this); }
+Object *NamedSymbol::resolve()
+{
+    return parent->resolve(this);
+}
+
 }

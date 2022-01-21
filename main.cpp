@@ -47,18 +47,6 @@ void testAddition()
         auto res = alisp::eval(syms);
         assert(res->toString() == "15");
     }
-    // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
-    /*
-foo                 ; A symbol named ‘foo’.
-FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
-1+                  ; A symbol named ‘1+’
-                    ;   (not ‘+1’, which is an integer).
-\+1                 ; A symbol named ‘+1’
-                    ;   (not a very readable name).
-\(*\ 1\ 2\)         ; A symbol named ‘(* 1 2)’ (a worse name).
-+-/_*~!@$%^&=:<>{}  ; A symbol named ‘+-/_*~!@$%^&=:<>{}’.
-                    ;   These characters need not be escaped.
-     */
 }
 
 void testMultiplication()
@@ -261,6 +249,22 @@ void test()
     testCarFunction();
     testCdrFunction();
     testPrognFunction();
+
+    // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
+    /*
+(setq sym (make-symbol "foo"))
+(symbol-name sym) => foo
+
+foo                 ; A symbol named ‘foo’.
+FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
+1+                  ; A symbol named ‘1+’
+                    ;   (not ‘+1’, which is an integer).
+\+1                 ; A symbol named ‘+1’
+                    ;   (not a very readable name).
+\(*\ 1\ 2\)         ; A symbol named ‘(* 1 2)’ (a worse name).
++-/_*~!@$%^&=:<>{}  ; A symbol named ‘+-/_*~!@$%^&=:<>{}’.
+                    ;   These characters need not be escaped.
+     */
 }
 
 int main(int, char**)
