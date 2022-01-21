@@ -28,6 +28,11 @@ struct VoidFunction : std::runtime_error
     VoidFunction(std::string fname) : std::runtime_error("void-function " + fname) {}
 };
 
+struct VoidVariable : std::runtime_error
+{
+    VoidVariable(std::string vname) : std::runtime_error("void-variable " + vname) {}
+};
+
 struct WrongNumberOfArguments : std::runtime_error
 {
     WrongNumberOfArguments(int num) :
@@ -360,7 +365,7 @@ std::unique_ptr<Object> eval(const std::unique_ptr<Object>& obj)
     if (!obj->isList()) {
         auto var = obj->resolveVariable();
         if (!var) {
-            throw std::runtime_error("Unable to resolve: " + obj->toString());
+            throw exceptions::VoidVariable(obj->toString());
         }
         return var->clone();
     }
@@ -656,6 +661,9 @@ public:
         makeFunc("numberp", 1, 1, [](FArgs& args) {
             auto arg = args.get();
             return arg->isInt() || arg->isFloat() ? makeTrue() : makeNil();
+        });
+        makeFunc("symbolp", 1, 1, [](FArgs& args) {
+            return dynamic_cast<SymbolObject*>(args.get().get()) ? makeTrue() : makeNil();
         });
         makeFunc("message", 1, 0xffff, [](FArgs& args) {
             auto arg = args.get();

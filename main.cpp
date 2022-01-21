@@ -225,6 +225,10 @@ void testSymbols()
 {
     alisp::Machine m;
     assert(m.evaluate("'('a 'b)")->toString() == "('a 'b)");
+    assert(m.evaluate("(symbolp 'abc)")->toString() == "t");
+    assert(expect<alisp::exceptions::VoidVariable>([&]() {
+        m.evaluate("(symbolp abc)");
+    }));
 }
 
 void test()
