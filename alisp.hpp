@@ -87,6 +87,10 @@ struct Object
     virtual Object* resolveVariable() { return this; }
     virtual Function* resolveFunction() { return nullptr; }
     virtual std::unique_ptr<Object> clone() const = 0;
+    virtual bool equals(const Object& o) const
+    {
+        return false;
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const Object &sym);
 
@@ -154,7 +158,8 @@ struct Symbol
     std::unique_ptr<Function> function;
 };
 
-struct StringObject : Object {
+struct StringObject : Object
+{
     std::string value;
     Machine *parent;
 
@@ -166,6 +171,12 @@ struct StringObject : Object {
 
     std::unique_ptr<Object> clone() const override {
         return std::make_unique<StringObject>(value, parent);
+    }
+
+    bool equals(const Object& o) const override
+    {
+        const StringObject* op = dynamic_cast<const StringObject*>(&o);
+        return op && op->value == value;
     }
 };
 
@@ -183,9 +194,16 @@ struct IntObject : Object {
     std::unique_ptr<Object> clone() const override {
         return std::make_unique<IntObject>(value);
     }
+
+    bool equals(const Object& o) const override
+    {
+        const IntObject* op = dynamic_cast<const IntObject*>(&o);
+        return op && op->value == value;
+    }
 };
 
-struct FloatObject : Object {
+struct FloatObject : Object
+{
     double value;
 
     FloatObject(double value) : value(value) {}
@@ -194,12 +212,20 @@ struct FloatObject : Object {
 
     bool isFloat() const override { return true; }
 
-    bool operator==(std::int64_t value) const override {
+    bool operator==(std::int64_t value) const override
+    {
         return this->value == value;
     };
 
-    std::unique_ptr<Object> clone() const override {
+    std::unique_ptr<Object> clone() const override
+    {
         return std::make_unique<FloatObject>(value);
+    }
+
+    bool equals(const Object& o) const override
+    {
+        const FloatObject* op = dynamic_cast<const FloatObject*>(&o);
+        return op && op->value == value;
     }
 };
 
@@ -262,6 +288,8 @@ struct SymbolObject : Object
 {
     Symbol* sym = nullptr;
 
+    SymbolObject(Symbol* sym) : sym(sym) {}
+
     std::string toString() const override
     {
         return "'" + sym->name;
@@ -269,9 +297,13 @@ struct SymbolObject : Object
 
     std::unique_ptr<Object> clone() const override
     {
-        auto sym = std::make_unique<SymbolObject>();
-        *sym = *this;
-        return sym;
+        return std::make_unique<SymbolObject>(this->sym);
+    }
+
+    bool equals(const Object& o) const override
+    {
+        const SymbolObject* op = dynamic_cast<const SymbolObject*>(&o);
+        return op && op->sym == sym;
     }
 };
 
@@ -279,9 +311,8 @@ struct UninternedSymbolObject : SymbolObject
 {
     std::shared_ptr<Symbol> symbol;
 
-    UninternedSymbolObject(std::shared_ptr<Symbol> s)
+    UninternedSymbolObject(std::shared_ptr<Symbol> s) : SymbolObject(s.get())
     {
-        sym = s.get();
         symbol = s;
     }
 
@@ -538,6 +569,14 @@ class Machine
         return r;
     }
 
+    Symbol* getSymbol(std::string name)
+    {
+        if (!m_syms.count("name")) {
+            m_syms[name].name = name;
+        }
+        return &m_syms[name];
+    }
+
     std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
     {
         std::string name;
@@ -546,10 +585,7 @@ class Machine
             str++;
         }
         if (quoted) {
-            auto obj = std::make_unique<SymbolObject>();
-            obj->sym = &m_syms[name];
-            obj->sym->name = name;
-            return obj;
+            return std::make_unique<SymbolObject>(getSymbol(name));
         }
         else {
             auto obj = std::make_unique<NamedObject>(this);
@@ -672,11 +708,7 @@ public:
     Machine()
     {
         setVariable("nil", makeNil());
-
-        auto trueSym = std::make_unique<SymbolObject>();
-        trueSym->sym = &m_syms["t"];
-        trueSym->sym->name = "t";
-        setVariable("t", std::move(trueSym));
+        setVariable("t", std::make_unique<SymbolObject>(getSymbol("t")));
         
         makeFunc("null", 1, 1, [this](FArgs &args) {
             std::unique_ptr<Object> r;
@@ -890,14 +922,7 @@ public:
             return value;
         });
         makeFunc("eq", 2, 2, [this](FArgs& args) {
-            const auto lhs = args.get();
-            const auto rhs = args.get();
-            if (lhs->value<const Symbol*>() &&
-                lhs->value<const Symbol*>() == rhs->value<const Symbol*>())
-            {
-                return makeTrue();
-            }
-            return makeNil();
+            return args.get()->equals(*args.get()) ? makeTrue() : makeNil();
         });
     }
 

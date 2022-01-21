@@ -249,16 +249,25 @@ void testSymbols()
         m.evaluate("(symbol-name 2)");
     }));
     assert(m.evaluate("(make-symbol \"test\")")->toString() == "test");
-    ASSERT_EQ(m.evaluate("(progn (setq sym (make-symbol \"foo\"))(symbol-name sym))")->toString(),
-              "\"foo\"");
-    ASSERT_EQ(m.evaluate("(eq 'a 'a)"), "t");
+    ASSERT_EQ(m.evaluate("(progn (setq sym (make-symbol \"foo\"))(symbol-name sym))"), "\"foo\"");
+    ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "nil");
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
         m.evaluate("(eq 'a a)");
     }));
 }
 
+void testEqFunction()
+{
+    alisp::Machine m;
+    ASSERT_EQ(m.evaluate("(eq 'a 'a)"), "t");
+    ASSERT_EQ(m.evaluate("(eq 1 1)"), "t");
+    ASSERT_EQ(m.evaluate("(eq 1 1.0)"), "nil");
+    ASSERT_EQ(m.evaluate("(eq 1.0 1.0)"), "t");
+}
+
 void test()
 {
+    testEqFunction();
     testVariables();
     testSymbols();
     testDivision();
