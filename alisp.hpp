@@ -231,35 +231,27 @@ struct FloatObject : Object
 
 struct ListObject : Object
 {
-    ConsCell car;
+    std::shared_ptr<ConsCell> car;
     bool quoted = false;
+
+    ListObject()
+    {
+        car = std::make_shared<ConsCell>();
+    }
 
     std::string toString() const override
     {
-        return (quoted ? "'" : "") + car.toString();
+        return (quoted ? "'" : "") + car->toString();
     }
 
     bool isList() const override { return true; }
 
-    bool operator!() const override { return !car; }
+    bool operator!() const override { return !(*car); }
 
     std::unique_ptr<Object> clone() const override
     {
         auto copy = std::make_unique<ListObject>();
-        auto last = &copy->car;
-        auto p = &this->car;
-        bool first = true;
-        while (p) {
-            if (!first) {
-                last->cdr = std::make_unique<ConsCell>();
-                last = last->cdr.get();
-            }
-            first = false;
-            if (p->obj) {
-                last->obj = p->obj->clone();
-            }
-            p = p->cdr.get();
-        }
+        copy->car = car;
         return copy;
     }
 
@@ -422,7 +414,7 @@ void cons(std::unique_ptr<Object> sym, ConsCell& list)
 
 void cons(std::unique_ptr<Object> sym, const std::unique_ptr<ListObject> &list)
 {
-    cons(std::move(sym), list->car);
+    cons(std::move(sym), *list->car);
 }
 
 bool isPartOfSymName(const char c)
@@ -604,7 +596,7 @@ class Machine
                 auto l = makeList();
                 l->quoted = quoted;
                 quoted = false;
-                auto lastConsCell = &l->car;
+                auto lastConsCell = l->car.get();
                 assert(lastConsCell);
                 expr++;
                 while (*expr != ')' && *expr) {
@@ -654,7 +646,7 @@ public:
         if (plist->quoted) {
             return obj->clone();
         }
-        const auto &c = plist->car;
+        const auto &c = *plist->car;
         if (!c) {
             // Remember: () => nil
             return makeNil();
@@ -728,10 +720,10 @@ public:
                 throw exceptions::WrongTypeArgument(args.cc->obj->toString());
             }
             auto list = dynamic_cast<ListObject *>(arg.get());
-            if (!list->car.obj) {
+            if (!list->car->obj) {
                 return makeNil();
             }
-            return list->car.obj->clone();
+            return list->car->obj->clone();
         });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
@@ -898,9 +890,9 @@ public:
             }
             auto list = dynamic_cast<ListObject*>(sym.get());
             std::unique_ptr<ListObject> cdr = makeList();
-            if (list->car.cdr) {
-                cdr->car.obj = std::move(list->car.cdr->obj);
-                cdr->car.cdr = std::move(list->car.cdr->cdr);
+            if (list->car->cdr) {
+                cdr->car->obj = std::move(list->car->cdr->obj);
+                cdr->car->cdr = std::move(list->car->cdr->cdr);
             }
             std::unique_ptr<Object> ret;
             ret = std::move(cdr);
