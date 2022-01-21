@@ -229,8 +229,8 @@ void testSymbols()
 
 void test()
 {
-    testSymbols();
     testVariables();
+    testSymbols();
     testDivision();
     testSyntaxErrorDetection();
     testStrings();

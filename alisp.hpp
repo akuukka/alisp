@@ -149,7 +149,9 @@ struct Function
     std::unique_ptr<Object> (*func)(FArgs&);
 };
 
-struct Symbol {
+struct Symbol
+{
+    std::string name;
     std::unique_ptr<Object> variable;
     std::unique_ptr<Function> function;
 };
@@ -239,11 +241,10 @@ struct NamedObject : Object
 {
     Machine* parent;
     std::string name;
-    bool quoted = false;
 
     std::string toString() const override
     {
-        return (quoted ? "'" : "") + name;
+        return name;
     }
 
     Object* resolveVariable() override;
@@ -255,14 +256,25 @@ struct NamedObject : Object
     {
         auto sym = std::make_unique<NamedObject>(parent);
         sym->name = name;
-        sym->quoted = quoted;
         return sym;
     }
 };
 
 struct SymbolObject : Object
 {
-    
+    Symbol* sym = nullptr;
+
+    std::string toString() const override
+    {
+        return "'" + sym->name;
+    }
+
+    std::unique_ptr<Object> clone() const override
+    {
+        auto sym = std::make_unique<SymbolObject>();
+        *sym = *this;
+        return sym;
+    }
 };
 
 // Remember nil = ()
@@ -341,23 +353,27 @@ struct FArgs
 
 };
 
-std::unique_ptr<Object> eval(const std::unique_ptr<Object>& list)
+std::unique_ptr<Object> eval(const std::unique_ptr<Object>& obj)
 {
     // If it's a list, evaluation means function call. Otherwise, return a copy of
     // the symbol itself.
-    if (!list->isList()) {
-        return list->resolveVariable()->clone();
+    if (!obj->isList()) {
+        auto var = obj->resolveVariable();
+        if (!var) {
+            throw std::runtime_error("Unable to resolve: " + obj->toString());
+        }
+        return var->clone();
     }
-    auto plist = dynamic_cast<ListObject*>(list.get());
+    auto plist = dynamic_cast<ListObject *>(obj.get());
     if (plist->quoted) {
-        return list->clone();
+        return obj->clone();
     }
-    const auto& c = plist->car;
+    const auto &c = plist->car;
     if (!c) {
         // Remember: () => nil
         return makeNil();
     }
-    const Function* f = c.obj->resolveFunction();
+    const Function *f = c.obj->resolveFunction();
     if (f) {
         const int argc = countArgs(c.cdr.get());
         if (argc < f->minArgs || argc > f->maxArgs) {
@@ -480,13 +496,22 @@ class Machine
 
     std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
     {
-        auto obj = std::make_unique<NamedObject>(this);
-        obj->quoted = quoted;
+        std::string name;
         while (*str && isPartOfSymName(*str)) {
-            obj->name += *str;
+            name += *str;
             str++;
         }
-        return obj;
+        if (quoted) {
+            auto obj = std::make_unique<SymbolObject>();
+            obj->sym = &m_syms[name];
+            obj->sym->name = name;
+            return obj;
+        }
+        else {
+            auto obj = std::make_unique<NamedObject>(this);
+            obj->name = name;
+            return obj;
+        }
     }
     
     std::unique_ptr<StringObject> parseString(const char *&str) {
@@ -595,6 +620,7 @@ public:
         func->minArgs = minArgs;
         func->maxArgs = maxArgs;
         func->func = f;
+        m_syms[name].name = name;
         m_syms[name].function = std::move(func);
     }
 
@@ -782,8 +808,8 @@ public:
             return ret;
         });
         makeFunc("setq", 2, 2, [](FArgs &args) {
-            const NamedObject *name =
-                dynamic_cast<NamedObject *>(args.cc->obj.get());
+            const NamedObject* name =
+                dynamic_cast<NamedObject*>(args.cc->obj.get());
             if (!name) {
                 throw exceptions::WrongTypeArgument(args.cc->obj->toString());
             }
@@ -795,7 +821,9 @@ public:
 
     void setVariable(std::string name, std::unique_ptr<Object> obj)
     {
+        assert(obj);
         m_syms[name].variable = std::move(obj);
+        m_syms[name].name = std::move(name);
     }
 
     void setMessageHandler(std::function<void(std::string)> handler)
