@@ -226,8 +226,12 @@ void testSymbols()
     alisp::Machine m;
     assert(m.evaluate("'('a 'b)")->toString() == "('a 'b)");
     assert(m.evaluate("(symbolp 'abc)")->toString() == "t");
+    assert(m.evaluate("(symbol-name 'abc)")->toString() == "\"abc\"");
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
         m.evaluate("(symbolp abc)");
+    }));
+    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
+        m.evaluate("(symbol-name 2)");
     }));
 }
 
@@ -252,6 +256,7 @@ void test()
 
     // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
     /*
+(symbol-name 2)
 (setq sym (make-symbol "foo"))
 (symbol-name sym) => foo
 

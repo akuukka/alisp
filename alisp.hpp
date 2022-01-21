@@ -156,6 +156,7 @@ struct Function
 
 struct Symbol
 {
+    Machine* parent;
     std::string name;
     std::unique_ptr<Object> variable;
     std::unique_ptr<Function> function;
@@ -627,6 +628,7 @@ public:
         func->func = f;
         m_syms[name].name = name;
         m_syms[name].function = std::move(func);
+        m_syms[name].parent = this;
     }
 
     Machine()
@@ -665,12 +667,22 @@ public:
         makeFunc("symbolp", 1, 1, [](FArgs& args) {
             return dynamic_cast<SymbolObject*>(args.get().get()) ? makeTrue() : makeNil();
         });
+        makeFunc("symbol-name", 1, 1, [](FArgs& args) {
+            const auto obj = args.get();
+            const auto sym = dynamic_cast<SymbolObject*>(obj.get());
+            if (!sym) {
+                throw exceptions::WrongTypeArgument(obj->toString());
+            }
+            std::unique_ptr<Object> r = std::make_unique<StringObject>(sym->sym->name,
+                                                                       sym->sym->parent);
+            return r;
+        });
         makeFunc("message", 1, 0xffff, [](FArgs& args) {
             auto arg = args.get();
             if (!arg->isString()) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
-            auto strSym = dynamic_cast<StringObject *>(arg.get());
+            auto strSym = dynamic_cast<StringObject*>(arg.get());
             std::string str = strSym->value;
             for (size_t i = 0; i < str.size(); i++) {
                 if (str[i] == '%') {
@@ -830,6 +842,7 @@ public:
     void setVariable(std::string name, std::unique_ptr<Object> obj)
     {
         assert(obj);
+        m_syms[name].parent = this;
         m_syms[name].variable = std::move(obj);
         m_syms[name].name = std::move(name);
     }
