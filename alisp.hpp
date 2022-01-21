@@ -316,10 +316,12 @@ std::unique_ptr<Object> eval(const std::unique_ptr<Object> &list);
 struct FArgs
 {
     ConsCell* cc;
+    Machine& m;
     
-    FArgs(ConsCell& cc) : cc(&cc) {}
+    FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
-    std::unique_ptr<Object> get() {
+    std::unique_ptr<Object> get()
+    {
         if (!cc) {
             return nullptr;
         }
@@ -333,7 +335,8 @@ struct FArgs
         return cc;
     }
 
-    struct Iterator {
+    struct Iterator
+    {
         ConsCell* cc;
 
         bool operator!=(const Iterator& o) const
@@ -349,14 +352,15 @@ struct FArgs
         std::unique_ptr<Object> operator*() { return eval(cc->obj); }
     };
 
-    Iterator begin() {
+    Iterator begin()
+    {
         return Iterator{cc};
     }
 
-    Iterator end() {
+    Iterator end()
+    {
         return Iterator{nullptr};
     }
-
 };
 
 std::unique_ptr<Object> eval(const std::unique_ptr<Object>& obj)
@@ -379,13 +383,15 @@ std::unique_ptr<Object> eval(const std::unique_ptr<Object>& obj)
         // Remember: () => nil
         return makeNil();
     }
-    const Function *f = c.obj->resolveFunction();
+    const Function* f = c.obj->resolveFunction();
     if (f) {
+        assert(dynamic_cast<const NamedObject*>(c.obj.get()));
+        auto& m = *dynamic_cast<const NamedObject*>(c.obj.get())->parent;
         const int argc = countArgs(c.cdr.get());
         if (argc < f->minArgs || argc > f->maxArgs) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
-        FArgs args(*c.cdr);
+        FArgs args(*c.cdr, m);
         return f->func(args);
     }
     throw exceptions::VoidFunction(c.obj->toString());
