@@ -156,7 +156,7 @@ struct Function
 
 struct Symbol
 {
-    Machine* parent;
+    Machine* parent = nullptr;
     std::string name;
     std::unique_ptr<Object> variable;
     std::unique_ptr<Function> function;
@@ -279,6 +279,26 @@ struct SymbolObject : Object
     {
         auto sym = std::make_unique<SymbolObject>();
         *sym = *this;
+        return sym;
+    }
+};
+
+struct UninternedSymbolObject : SymbolObject
+{
+    std::shared_ptr<Symbol> symbol;
+
+    UninternedSymbolObject(std::shared_ptr<Symbol> s)
+    {
+        sym = s.get();
+        symbol = s;
+    }
+
+    std::string toString() const override { return sym->name; }
+    
+    std::unique_ptr<Object> clone() const override
+    {
+        auto sym = std::make_unique<UninternedSymbolObject>(symbol);
+        sym->sym = symbol.get();
         return sym;
     }
 };
@@ -501,6 +521,13 @@ inline std::int64_t getValue(const Object &sym)
     return s ? s->value : 0.0;
 }
 
+template <>
+inline std::string getValue(const Object& sym)
+{
+    auto s = dynamic_cast<const StringObject*>(&sym);
+    return s ? s->value : "";
+}
+
 class Machine
 {
     std::map<std::string, Symbol> m_syms;
@@ -669,6 +696,16 @@ public:
         makeFunc("numberp", 1, 1, [](FArgs& args) {
             auto arg = args.get();
             return arg->isInt() || arg->isFloat() ? makeTrue() : makeNil();
+        });
+        makeFunc("make-symbol", 1, 1, [](FArgs& args) {
+            const auto arg = args.get();
+            if (!arg->isString()) {
+                throw exceptions::WrongTypeArgument(arg->toString());
+            }
+            std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
+            symbol->name = arg->value<std::string>();
+            std::unique_ptr<Object> r = std::make_unique<UninternedSymbolObject>(symbol);
+            return r;
         });
         makeFunc("symbolp", 1, 1, [](FArgs& args) {
             return dynamic_cast<SymbolObject*>(args.get().get()) ? makeTrue() : makeNil();

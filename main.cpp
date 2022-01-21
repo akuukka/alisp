@@ -234,6 +234,7 @@ void testSymbols()
     assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
         m.evaluate("(symbol-name 2)");
     }));
+    assert(m.evaluate("(make-symbol \"test\")")->toString() == "test");
 }
 
 void test()
