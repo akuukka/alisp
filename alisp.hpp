@@ -331,32 +331,32 @@ std::unique_ptr<Object> eval(const std::unique_ptr<Object>& list)
 {
     // If it's a list, evaluation means function call. Otherwise, return a copy of
     // the symbol itself.
-    if (list->isList()) {
-        auto plist = dynamic_cast<ListObject *>(list.get());
-        if (plist->quoted) {
-            return list->clone();
-        }
-        const auto& c = plist->car;
-        if (!c) {
-            // Remember: () => nil
-            return makeNil();
-        }
-        auto obj = c.obj->resolve();
-        if (!obj) {
-            throw exceptions::VoidFunction(c.obj->toString());
-        }
-        const FunctionObject *f = dynamic_cast<const FunctionObject*>(obj);
-        if (f) {
-            const int argc = countArgs(c.cdr.get());
-            if (argc < f->minArgs || argc > f->maxArgs) {
-                throw exceptions::WrongNumberOfArguments(argc);
-            }
-            FArgs args(*c.cdr);
-            return f->func(args);
-        }
-        throw exceptions::VoidFunction(obj->toString());
+    if (!list->isList()) {
+        return list->resolve()->clone();
     }
-    return list->resolve()->clone();
+    auto plist = dynamic_cast<ListObject *>(list.get());
+    if (plist->quoted) {
+        return list->clone();
+    }
+    const auto& c = plist->car;
+    if (!c) {
+        // Remember: () => nil
+        return makeNil();
+    }
+    auto obj = c.obj->resolve();
+    if (!obj) {
+        throw exceptions::VoidFunction(c.obj->toString());
+    }
+    const FunctionObject *f = dynamic_cast<const FunctionObject*>(obj);
+    if (f) {
+        const int argc = countArgs(c.cdr.get());
+        if (argc < f->minArgs || argc > f->maxArgs) {
+            throw exceptions::WrongNumberOfArguments(argc);
+        }
+        FArgs args(*c.cdr);
+        return f->func(args);
+    }
+    throw exceptions::VoidFunction(obj->toString());
 }
 
 std::unique_ptr<FunctionObject> makeFunctionNull() {
