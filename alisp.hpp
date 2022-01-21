@@ -302,7 +302,7 @@ struct SymbolObject : Object
 
     std::unique_ptr<Object> clone() const override
     {
-        return std::make_unique<SymbolObject>(sym, quoted);
+        return std::make_unique<SymbolObject>(sym, false);
     }
 
     bool equals(const Object& o) const override

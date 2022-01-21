@@ -226,6 +226,7 @@ void testSymbols()
     assert(m.evaluate("(make-symbol \"test\")")->toString() == "test");
     ASSERT_EQ(m.evaluate("(progn (setq sym (make-symbol \"foo\"))(symbol-name sym))"), "\"foo\"");
     ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "nil");
+    ASSERT_EQ(m.evaluate("'t"), "t");
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
         m.evaluate("(eq 'a a)");
     }));
