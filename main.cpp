@@ -12,6 +12,11 @@ void ASSERT_EQ(std::string a, std::string b)
     assert(false);
 }
 
+void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
+{
+    ASSERT_EQ(a->toString(), b);
+}
+
 void testEmptyList()
 {
     alisp::Machine m;
@@ -246,6 +251,10 @@ void testSymbols()
     assert(m.evaluate("(make-symbol \"test\")")->toString() == "test");
     ASSERT_EQ(m.evaluate("(progn (setq sym (make-symbol \"foo\"))(symbol-name sym))")->toString(),
               "\"foo\"");
+    ASSERT_EQ(m.evaluate("(eq 'a 'a)"), "t");
+    assert(expect<alisp::exceptions::VoidVariable>([&]() {
+        m.evaluate("(eq 'a a)");
+    }));
 }
 
 void test()
