@@ -250,6 +250,9 @@ void testInternFunction()
     alisp::Machine m;
     ASSERT_EQ(m.evaluate("(setq sym (intern \"foo\"))"), "foo");
     ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "t");
+    ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "nil");
+    ASSERT_EQ(m.evaluate("(setq sym (intern \"frazzle\"))"), "frazzle");
+    ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "frazzle");
 }
 
 void test()

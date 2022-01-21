@@ -914,6 +914,20 @@ public:
             }
             return std::make_unique<SymbolObject>(getSymbol(arg->value<std::string>()), false);
         });
+        makeFunc("intern-soft", 1, 1, [this](FArgs& args) {
+            const auto arg = args.get();
+            if (!arg->isString()) {
+                throw exceptions::WrongTypeArgument(arg->toString());
+            }
+            std::unique_ptr<Object> r;
+            if (!m_syms.count(arg->value<std::string>())) {
+                r = makeNil();
+            }
+            else {
+                r = std::make_unique<SymbolObject>(getSymbol(arg->value<std::string>()), false);
+            }
+            return r;
+        });
         makeFunc("setq", 2, 2, [this](FArgs &args) {
             const NamedObject* name =
                 dynamic_cast<NamedObject*>(args.cc->obj.get());
