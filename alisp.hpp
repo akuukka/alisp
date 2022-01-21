@@ -261,7 +261,7 @@ struct ListObject : Object
         if (op && !(*this) && !(*op)) {
             return true;
         }
-        return this == &o;
+        return this->car == op->car;
     }
 };
 
