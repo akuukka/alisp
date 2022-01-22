@@ -931,7 +931,7 @@ public:
         });
         makeFunc("describe-variable", 1, 1, [this](FArgs& args) {
             const auto arg = args.get();
-            std::string descr;
+            std::string descr = "You did not specify a variable.";
             if (auto sym = dynamic_cast<SymbolObject*>(arg.get())) {
                 assert(sym->sym);
                 if (!sym->sym->variable) {
@@ -941,8 +941,10 @@ public:
                     descr = arg->toString() + "'s value is " + sym->sym->variable->toString();
                 }                        
             }
-            else {
-                descr = "No description for " + arg->toString();
+            else if (auto list = dynamic_cast<ListObject*>(arg.get())) {
+                if (!*list) {
+                    descr = arg->toString() + "'s value is " + arg->toString();
+                }
             }
             return std::make_unique<StringObject>(descr);
         });

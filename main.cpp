@@ -304,6 +304,9 @@ void testDescribeVariableFunction()
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'a)", "a is void as a variable");
     m.evaluate("(setq a 12345)");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'a)", "12345");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable nil)", "nil's value is nil");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable t)", "t's value is t");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 't)", "t's value is t");
 }
 
 void test()
