@@ -295,6 +295,14 @@ void testInternFunction()
     ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "abc");
     ASSERT_EQ(m.evaluate("(unintern sym)"), "t");
     ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "nil");
+
+    // Ensure same functionality as emacs: if sym refers to abra and then abra is uninterned,
+    // after that describe-variable still can show what sym pointed to.
+    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"abra\"))", "abra");
+    ASSERT_OUTPUT_EQ(m, "(setq abra 500)", "500");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'abra)", "abra's value is 500");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "abra's value is 500");
+    
 }
 
 void testDescribeVariableFunction()
