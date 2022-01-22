@@ -312,15 +312,6 @@ struct SymbolObject : Object
     }
 };
 
-// We can probably get rid of this...
-struct UninternedSymbolObject : SymbolObject
-{
-    UninternedSymbolObject(std::shared_ptr<Symbol> s) : SymbolObject(s, false)
-    {
-        
-    }
-};
-
 // Remember nil = ()
 std::unique_ptr<Object> makeNil() { return std::make_unique<ListObject>(); }
 
@@ -730,7 +721,7 @@ public:
             }
             std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
             symbol->name = arg->value<std::string>();
-            std::unique_ptr<Object> r = std::make_unique<UninternedSymbolObject>(symbol);
+            std::unique_ptr<Object> r = std::make_unique<SymbolObject>(symbol, false);
             return r;
         });
         makeFunc("symbolp", 1, 1, [this](FArgs& args) {
