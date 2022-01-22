@@ -259,6 +259,8 @@ void testInternFunction()
     ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "abc");
     ASSERT_EQ(m.evaluate("(unintern sym)"), "t");
     ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "nil");
+
+    
 }
 
 void test()

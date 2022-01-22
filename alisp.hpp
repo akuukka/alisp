@@ -290,10 +290,10 @@ struct NamedObject : Object
 
 struct SymbolObject : Object
 {
-    Symbol* sym = nullptr;
+    std::shared_ptr<Symbol> sym;
     bool quoted = false;
 
-    SymbolObject(Symbol* sym, bool quoted) : sym(sym), quoted(quoted) {}
+    SymbolObject(std::shared_ptr<Symbol> sym, bool quoted) : sym(sym), quoted(quoted) {}
 
     std::string toString() const override
     {
@@ -312,22 +312,12 @@ struct SymbolObject : Object
     }
 };
 
+// We can probably get rid of this...
 struct UninternedSymbolObject : SymbolObject
 {
-    std::shared_ptr<Symbol> symbol;
-
-    UninternedSymbolObject(std::shared_ptr<Symbol> s) : SymbolObject(s.get(), false)
+    UninternedSymbolObject(std::shared_ptr<Symbol> s) : SymbolObject(s, false)
     {
-        symbol = s;
-    }
-
-    std::string toString() const override { return sym->name; }
-    
-    std::unique_ptr<Object> clone() const override
-    {
-        auto sym = std::make_unique<UninternedSymbolObject>(symbol);
-        sym->sym = symbol.get();
-        return sym;
+        
     }
 };
 
@@ -515,12 +505,12 @@ template<>
 inline const Symbol* getValue(const Object& sym)
 {
     auto s = dynamic_cast<const SymbolObject*>(&sym);
-    return s ? s->sym : nullptr;
+    return s ? s->sym.get() : nullptr;
 }
 
 class Machine
 {
-    std::map<std::string, Symbol> m_syms;
+    std::map<std::string, std::shared_ptr<Symbol>> m_syms;
     std::function<void(std::string)> m_msgHandler;
 
     std::unique_ptr<Object> makeTrue()
@@ -531,13 +521,14 @@ class Machine
         return r;
     }
 
-    Symbol* getSymbol(std::string name)
+    std::shared_ptr<Symbol> getSymbol(std::string name)
     {
         if (!m_syms.count(name)) {
-            m_syms[name].name = name;
-            m_syms[name].parent = this;
+            m_syms[name] = std::make_shared<Symbol>();
+            m_syms[name]->name = name;
+            m_syms[name]->parent = this;
         }
-        return &m_syms[name];
+        return m_syms[name];
     }
 
     std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
@@ -675,7 +666,7 @@ public:
     Object* resolveVariable(NamedObject* sym)
     {
         if (m_syms.count(sym->name)) {
-            return m_syms[sym->name].variable.get();
+            return m_syms[sym->name]->variable.get();
         }
         return nullptr;
     }
@@ -683,7 +674,7 @@ public:
     Function* resolveFunction(NamedObject* sym)
     {
         if (m_syms.count(sym->name)) {
-            return m_syms[sym->name].function.get();
+            return m_syms[sym->name]->function.get();
         }
         return nullptr;
     }
@@ -696,9 +687,7 @@ public:
         func->minArgs = minArgs;
         func->maxArgs = maxArgs;
         func->func = f;
-        m_syms[name].name = name;
-        m_syms[name].function = std::move(func);
-        m_syms[name].parent = this;
+        getSymbol(name)->function = std::move(func);
     }
 
     Machine()
@@ -955,9 +944,8 @@ public:
     void setVariable(std::string name, std::unique_ptr<Object> obj)
     {
         assert(obj);
-        m_syms[name].parent = this;
-        m_syms[name].variable = std::move(obj);
-        m_syms[name].name = std::move(name);
+        auto s = getSymbol(name);
+        s->variable = std::move(obj);
     }
 
     void setMessageHandler(std::function<void(std::string)> handler)
