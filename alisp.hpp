@@ -380,6 +380,28 @@ struct FArgs
     }
 };
 
+template<size_t I, typename ...Args>
+inline typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
+                                                                       FArgs&)
+{}
+
+template<size_t I, typename ...Args>
+inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
+                                                                      FArgs& args)
+{
+    using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
+    std::get<I>(t) = args.get()->value<T>();
+    writeToTuple<I + 1>(t, args);
+}
+
+template<typename ...Args>
+std::tuple<Args...> toTuple(FArgs& args)
+{
+    std::tuple<Args...> tuple;
+    writeToTuple<0>(tuple, args);
+    return tuple;
+}
+
 void cons(std::unique_ptr<Object> sym, ConsCell& list)
 {
     if (!list) {
@@ -536,6 +558,22 @@ class Machine
 {
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
     std::function<void(std::string)> m_msgHandler;
+    
+    template<typename R, typename ...Args>
+    void makeFuncInternal(const char* name, std::function<R(Args...)> f)
+    {
+        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
+            std::tuple<Args...> t = toTuple<Args...>(args);
+            return makeObject<R>(std::apply(f, t));
+        };
+
+        auto func = std::make_unique<Function>();
+        func->name = name;
+        func->minArgs = sizeof...(Args);
+        func->maxArgs = sizeof...(Args);
+        func->func = w;
+        getSymbol(name)->function = std::move(func);
+    }
 
     std::unique_ptr<Object> makeTrue()
     {
@@ -981,51 +1019,13 @@ public:
             }
             return std::make_unique<StringObject>(descr);
         });
-        makeFunc("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
+        defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
     }
 
     template<typename F>
-    void makeFunc(const char* name, F&& f)
+    void defun(const char* name, F&& f)
     {
         makeFuncInternal(name, lambda_to_func(f));
-    }
-
-    template<size_t I, typename ...Args>
-    typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
-                                                                           FArgs&)
-    {}
-
-    template<size_t I, typename ...Args>
-    typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
-                                                                          FArgs& args)
-    {
-        using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-        std::get<I>(t) = args.get()->value<T>();
-        writeToTuple<I + 1>(t, args);
-    }
-
-    template<typename ...Args>
-    std::tuple<Args...> toTuple(FArgs& args)
-    {
-        std::tuple<Args...> tuple;
-        writeToTuple<0>(tuple, args);
-        return tuple;
-    }
-
-    template<typename R, typename ...Args>
-    void makeFuncInternal(const char* name, std::function<R(Args...)> f)
-    {
-        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
-            std::tuple<Args...> t = toTuple<Args...>(args);
-            return makeObject<R>(std::apply(f, t));
-        };
-
-        auto func = std::make_unique<Function>();
-        func->name = name;
-        func->minArgs = sizeof...(Args);
-        func->maxArgs = sizeof...(Args);
-        func->func = w;
-        getSymbol(name)->function = std::move(func);
     }
 
     void setVariable(std::string name, std::unique_ptr<Object> obj)
