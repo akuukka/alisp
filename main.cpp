@@ -165,10 +165,12 @@ void testSyntaxErrorDetection()
 void testStrings()
 {
     alisp::Machine m;
-    ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 0 3)", "\"abc\"");
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 2)", "\"cdefg\"");
+    ASSERT_EXCEPTION(m, "(substring \"abcdefg\" 2.0)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 0 3)", "\"abc\"");
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\")", "\"abcdefg\"");
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" -3 -1)", "\"ef\"");
+    ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" -3 nil)", "\"efg\"");
     ASSERT_OUTPUT_EQ(m, "(concat \"ab\" \"cd\")", "\"abcd\"");
     assert(m.evaluate("\"abc\"")->toString() == "\"abc\"");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
@@ -328,6 +330,7 @@ void testBasicArithmetic()
 
 void test()
 {
+    testStrings();
     testBasicArithmetic();
     testDescribeVariableFunction();
     testInternFunction();
@@ -336,7 +339,6 @@ void test()
     testSymbols();
     testDivision();
     testSyntaxErrorDetection();
-    testStrings();
     testCloning();
     testEmptyList();
     testQuotedList();

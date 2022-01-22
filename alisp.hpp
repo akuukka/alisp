@@ -78,6 +78,7 @@ struct Object
 {
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
+    virtual bool isNil() const { return false; }
     virtual bool isInt() const { return false; }
     virtual bool isFloat() const { return false; }
     virtual bool isString() const { return false; }
@@ -258,7 +259,7 @@ struct ListObject : Object
     }
 
     bool isList() const override { return true; }
-
+    bool isNil() const override { return !(*this); }
     bool operator!() const override { return !(*car); }
 
     std::unique_ptr<Object> clone() const override
@@ -417,16 +418,28 @@ inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std
                                                                       FArgs& args)
 {
     using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-    std::optional<T> opt;
+    const bool isOptionalParam = OptCheck<T>::value;
+    std::optional<typename OptCheck<T>::BaseType> opt;
     std::unique_ptr<Object> arg;
+    bool conversionFailed = false;
     if (args.hasNext()) {
         arg = args.get();
-        opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();        
+        opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
+        if (!opt) {
+            if (isOptionalParam && arg->isNil()) {
+                // nil => std::nullopt makes sense
+            }
+            else {
+                conversionFailed = true;
+            }
+        }
     }
-    if (!opt && !OptCheck<T>::value) {
+    if (!opt && (!isOptionalParam || conversionFailed)) {
         throw exceptions::WrongTypeArgument(arg->toString());
     }
-    std::get<I>(t) = std::move(*opt);
+    if (opt) {
+        std::get<I>(t) = std::move(*opt);
+    }
     writeToTuple<I + 1>(t, args);
 }
 
