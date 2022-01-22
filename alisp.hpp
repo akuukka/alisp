@@ -394,19 +394,43 @@ struct FArgs
     }
 };
 
+namespace
+{
+template <typename, template <typename...> typename>
+struct is_instance_impl : public std::false_type {};
+
+template <template <typename...> typename U, typename...Ts>
+struct is_instance_impl<U<Ts...>, U> : public std::true_type {};
+}
+
+template <typename T, template <typename ...> typename U>
+using is_instance = is_instance_impl<std::decay_t<T>, U>;
+
 template<size_t I, typename ...Args>
 inline typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
                                                                        FArgs&)
 {}
+
+template <typename T> struct OptCheck : std::false_type { using BaseType = T; };
+
+template <typename T>
+struct OptCheck<std::optional<T>> : std::true_type {
+    using BaseType = T;
+};
+
 
 template<size_t I, typename ...Args>
 inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
                                                                       FArgs& args)
 {
     using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-    const auto arg = args.get();
-    std::optional<T> opt = arg->valueOrNull<T>();
-    if (!opt) {
+    std::optional<T> opt;
+    std::unique_ptr<Object> arg;
+    if (args.hasNext()) {
+        arg = args.get();
+        opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();        
+    }
+    if (!opt && !OptCheck<T>::value) {
         throw exceptions::WrongTypeArgument(arg->toString());
     }
     std::get<I>(t) = std::move(*opt);
@@ -576,6 +600,31 @@ auto lambda_to_func(F f) {
     return lambda_to_func_impl(f, std::make_index_sequence<traits::arity>{}, traits{});
 }
 
+template<int N, typename... Ts>
+using NthTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
+
+template <size_t I, typename... Args>
+inline typename std::enable_if<I == sizeof...(Args), size_t>::type countNonOpts()
+{
+    return 0;
+}
+
+template <size_t I, typename... Args>
+inline typename std::enable_if<I < sizeof...(Args), size_t>::type countNonOpts()
+{
+    using ThisType = NthTypeOf<I, Args...>;
+    if (OptCheck<ThisType>::value) {
+        return 0;
+    }
+    return 1 + countNonOpts<I+1, Args...>();
+}
+
+template <typename... Args>
+inline size_t getMinArgs()
+{
+    return countNonOpts<0, Args...>();
+}
+
 class Machine
 {
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
@@ -600,9 +649,10 @@ class Machine
 
         auto func = std::make_unique<Function>();
         func->name = name;
-        func->minArgs = sizeof...(Args);
+        func->minArgs = getMinArgs<Args...>();
         func->maxArgs = sizeof...(Args);
         func->func = w;
+        // std::cout << name << " " << func->minArgs << " " << func->maxArgs << std::endl;
         getSymbol(name)->function = std::move(func);
     }
 
@@ -1045,6 +1095,11 @@ public:
         });
         defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
         defun("concat", [](std::string str1, std::string str2) { return str1 + str2; });
+        defun("substring", [](std::string str,
+                              std::optional<std::int64_t> start,
+                              std::optional<std::int64_t> end) {
+            return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
+        });
     }
 
     template<typename F>

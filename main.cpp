@@ -179,6 +179,9 @@ void testSyntaxErrorDetection()
 void testStrings()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 0 3)", "\"abc\"");
+    ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 2)", "\"cdefg\"");
+    ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\")", "\"abcdefg\"");
     ASSERT_OUTPUT_EQ(m, "(concat \"ab\" \"cd\")", "\"abcd\"");
     assert(m.evaluate("\"abc\"")->toString() == "\"abc\"");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
