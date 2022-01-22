@@ -17,6 +17,42 @@ void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
     ASSERT_EQ(a->toString(), b);
 }
 
+void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, const char* res)
+{
+    const std::string out = m.evaluate(expr)->toString();
+    if (out != res) {
+        std::cerr << "Expected '" << expr << "' to output '" << res << "' but ";
+        std::cerr << " got '" << out << "' instead.\n";
+        exit(1);
+    }
+}
+
+void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res)
+{
+    const std::string out = m.evaluate(expr)->toString();
+    if (out.find(res) == std::string::npos) {
+        std::cerr << "Expected the output of '" << expr << "' to contain '" << res << "' but ";
+        std::cerr << " it didn't. The output was '" << out << "'.\n";
+        exit(1);
+    }
+}
+
+#define ASSERT_EXCEPTION(m, expr, exception)                            \
+{                                                                       \
+    bool ok = false;                                                    \
+    try {                                                               \
+        (m).evaluate((expr));                                           \
+    }                                                                   \
+    catch (exception & ex) {                                            \
+        ok = true;                                                      \
+    }                                                                   \
+    if (!ok) {                                                           \
+        std::cerr << "Expected '" << expr << "' to throw ";             \
+        std::cerr << #exception << "\n";                                \
+        exit(1);                                                        \
+    }                                                                   \
+}
+
 void testEmptyList()
 {
     alisp::Machine m;
@@ -264,7 +300,10 @@ void testInternFunction()
 void testDescribeVariableFunction()
 {
     alisp::Machine m;
-    ASSERT_EQ(m.evaluate("(describe-variable 'a)"), "\"test\"");
+    ASSERT_EXCEPTION(m, "(describe-variable a)", alisp::exceptions::VoidVariable);
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'a)", "a is void as a variable");
+    m.evaluate("(setq a 12345)");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'a)", "12345");
 }
 
 void test()

@@ -930,7 +930,20 @@ public:
             return args.get()->equals(*args.get()) ? makeTrue() : makeNil();
         });
         makeFunc("describe-variable", 1, 1, [this](FArgs& args) {
-            std::string descr = "test";
+            const auto arg = args.get();
+            std::string descr;
+            if (auto sym = dynamic_cast<SymbolObject*>(arg.get())) {
+                assert(sym->sym);
+                if (!sym->sym->variable) {
+                    descr = arg->toString() + " is void as a variable.";
+                }
+                else {
+                    descr = arg->toString() + "'s value is " + sym->sym->variable->toString();
+                }                        
+            }
+            else {
+                descr = "No description for " + arg->toString();
+            }
             return std::make_unique<StringObject>(descr);
         });
     }
