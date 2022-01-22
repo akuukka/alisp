@@ -394,27 +394,20 @@ struct FArgs
     }
 };
 
-namespace
-{
-template <typename, template <typename...> typename>
-struct is_instance_impl : public std::false_type {};
-
-template <template <typename...> typename U, typename...Ts>
-struct is_instance_impl<U<Ts...>, U> : public std::true_type {};
-}
-
-template <typename T, template <typename ...> typename U>
-using is_instance = is_instance_impl<std::decay_t<T>, U>;
-
 template<size_t I, typename ...Args>
 inline typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
                                                                        FArgs&)
 {}
 
-template <typename T> struct OptCheck : std::false_type { using BaseType = T; };
+template <typename T>
+struct OptCheck : std::false_type
+{
+    using BaseType = T;
+};
 
 template <typename T>
-struct OptCheck<std::optional<T>> : std::true_type {
+struct OptCheck<std::optional<T>> : std::true_type
+{
     using BaseType = T;
 };
 
