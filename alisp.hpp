@@ -914,6 +914,15 @@ public:
             }
             return std::make_unique<SymbolObject>(getSymbol(arg->value<std::string>()), false);
         });
+        makeFunc("unintern", 1, 1, [this](FArgs& args) {
+            const auto arg = args.get();
+            const auto sym = dynamic_cast<SymbolObject*>(arg.get());
+            if (!sym) {
+                throw exceptions::WrongTypeArgument(arg->toString());
+            }
+            const bool uninterned = m_syms.erase(sym->sym->name);
+            return uninterned ? makeTrue() : makeNil();
+        });
         makeFunc("intern-soft", 1, 1, [this](FArgs& args) {
             const auto arg = args.get();
             if (!arg->isString()) {
