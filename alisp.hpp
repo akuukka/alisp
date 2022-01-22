@@ -161,16 +161,16 @@ struct Symbol
 struct StringObject : Object
 {
     std::string value;
-    Machine *parent;
 
-    StringObject(std::string value, Machine *p) : value(value), parent(p) {}
+    StringObject(std::string value) : value(value) {}
 
     std::string toString() const override { return "\"" + value + "\""; }
 
     bool isString() const override { return true; }
 
-    std::unique_ptr<Object> clone() const override {
-        return std::make_unique<StringObject>(value, parent);
+    std::unique_ptr<Object> clone() const override
+    {
+        return std::make_unique<StringObject>(value);
     }
 
     bool equals(const Object& o) const override
@@ -539,8 +539,9 @@ class Machine
         }
     }
     
-    std::unique_ptr<StringObject> parseString(const char *&str) {
-        auto sym = std::make_unique<StringObject>("", this);
+    std::unique_ptr<StringObject> parseString(const char *&str)
+    {
+        auto sym = std::make_unique<StringObject>("");
         while (*str && *str != '"') {
             sym->value += *str;
             str++;
@@ -733,11 +734,9 @@ public:
             if (!sym) {
                 throw exceptions::WrongTypeArgument(obj->toString());
             }
-            std::unique_ptr<Object> r = std::make_unique<StringObject>(sym->sym->name,
-                                                                       sym->sym->parent);
-            return r;
+            return std::make_unique<StringObject>(sym->sym->name);
         });
-        makeFunc("message", 1, 0xffff, [](FArgs& args) {
+        makeFunc("message", 1, 0xffff, [this](FArgs& args) {
             auto arg = args.get();
             if (!arg->isString()) {
                 throw exceptions::WrongTypeArgument(arg->toString());
@@ -768,8 +767,8 @@ public:
                     }
                 }
             }
-            if (strSym->parent->m_msgHandler) {
-                strSym->parent->m_msgHandler(str);
+            if (m_msgHandler) {
+                m_msgHandler(str);
             }
             else {
                 std::cout << str << std::endl;
@@ -929,6 +928,10 @@ public:
         });
         makeFunc("eq", 2, 2, [this](FArgs& args) {
             return args.get()->equals(*args.get()) ? makeTrue() : makeNil();
+        });
+        makeFunc("describe-variable", 1, 1, [this](FArgs& args) {
+            std::string descr = "test";
+            return std::make_unique<StringObject>(descr);
         });
     }
 

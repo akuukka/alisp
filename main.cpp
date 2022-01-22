@@ -259,12 +259,17 @@ void testInternFunction()
     ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "abc");
     ASSERT_EQ(m.evaluate("(unintern sym)"), "t");
     ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "nil");
+}
 
-    
+void testDescribeVariableFunction()
+{
+    alisp::Machine m;
+    ASSERT_EQ(m.evaluate("(describe-variable 'a)"), "\"test\"");
 }
 
 void test()
 {
+    testDescribeVariableFunction();
     testInternFunction();
     testEqFunction();
     testAddition();
