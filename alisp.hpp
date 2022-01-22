@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cassert>
 #include <functional>
+#include <optional>
 
 namespace alisp {
 namespace exceptions {
@@ -71,7 +72,7 @@ class Machine;
 struct Object;
 struct Function;
 
-template <typename T> T getValue(const Object &sym);
+template <typename T> std::optional<T> getValue(const Object &sym);
 
 struct Object
 {
@@ -94,7 +95,20 @@ struct Object
 
     friend std::ostream &operator<<(std::ostream &os, const Object &sym);
 
-    template <typename T> T value() const { return getValue<T>(*this); }
+    template <typename T> T value() const
+    {
+        const std::optional<T> opt = getValue<T>(*this);
+        if (opt) {
+            return *opt;
+        }
+        return T();
+    }
+
+    template <typename T> std::optional<T> valueOrNull() const
+    {
+        return getValue<T>(*this);
+    }
+
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Object &sym) {
@@ -390,7 +404,12 @@ inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std
                                                                       FArgs& args)
 {
     using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-    std::get<I>(t) = args.get()->value<T>();
+    const auto arg = args.get();
+    std::optional<T> opt = arg->valueOrNull<T>();
+    if (!opt) {
+        throw exceptions::WrongTypeArgument(arg->toString());
+    }
+    std::get<I>(t) = std::move(*opt);
     writeToTuple<I + 1>(t, args);
 }
 
@@ -494,31 +513,43 @@ void skipWhitespace(const char*& expr)
 }
 
 template<>
-inline double getValue(const Object &sym)
+inline std::optional<double> getValue(const Object &sym)
 {
-    auto s = dynamic_cast<const FloatObject *>(&sym);
-    return s ? s->value : 0.0;
+    auto s = dynamic_cast<const FloatObject*>(&sym);
+    if (s) {
+        return s->value;
+    }
+    return std::nullopt;
 }
 
 template<>
-inline std::int64_t getValue(const Object &sym)
+inline std::optional<std::int64_t> getValue(const Object &sym)
 {
-    auto s = dynamic_cast<const IntObject *>(&sym);
-    return s ? s->value : 0.0;
+    auto s = dynamic_cast<const IntObject*>(&sym);
+    if (s) {
+        return s->value;
+    }
+    return std::nullopt;
 }
 
 template<>
-inline std::string getValue(const Object& sym)
+inline std::optional<std::string> getValue(const Object& sym)
 {
     auto s = dynamic_cast<const StringObject*>(&sym);
-    return s ? s->value : "";
+    if (s) {
+        return s->value;
+    }
+    return std::nullopt;
 }
 
 template<>
-inline const Symbol* getValue(const Object& sym)
+inline std::optional<const Symbol*> getValue(const Object& sym)
 {
     auto s = dynamic_cast<const SymbolObject*>(&sym);
-    return s ? s->sym.get() : nullptr;
+    if (s) {
+        return s->sym.get();
+    }
+    return std::nullopt;
 }
 
 template <typename T>

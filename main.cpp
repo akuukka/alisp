@@ -327,6 +327,7 @@ void testBasicArithmetic()
 {
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "(% 5 2)", "1");
+    ASSERT_EXCEPTION(m, "(% 5 2.0)", alisp::exceptions::WrongTypeArgument);
 }
 
 void test()
