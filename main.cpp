@@ -179,6 +179,7 @@ void testSyntaxErrorDetection()
 void testStrings()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(concat \"ab\" \"cd\")", "\"abcd\"");
     assert(m.evaluate("\"abc\"")->toString() == "\"abc\"");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
     assert(m.evaluate("(stringp \"abc\")")->toString() == "t");

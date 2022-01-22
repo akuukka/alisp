@@ -545,19 +545,19 @@ auto lambda_to_func(F f) {
     return lambda_to_func_impl(f, std::make_index_sequence<traits::arity>{}, traits{});
 }
 
-template <typename T>
-std::unique_ptr<Object> makeObject(T);
-
-template<>
-std::unique_ptr<Object> makeObject(std::int64_t i)
-{
-    return makeInt(i);
-}
-
 class Machine
 {
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
     std::function<void(std::string)> m_msgHandler;
+
+    template <typename T>
+    std::unique_ptr<Object> makeObject(T);
+
+    template<> std::unique_ptr<Object> makeObject(std::int64_t i) { return makeInt(i); }
+    template<> std::unique_ptr<Object> makeObject(std::string str)
+    {
+        return std::make_unique<StringObject>(str);
+    }
     
     template<typename R, typename ...Args>
     void makeFuncInternal(const char* name, std::function<R(Args...)> f)
@@ -758,15 +758,8 @@ public:
         setVariable("nil", makeNil());
         setVariable("t", std::make_unique<SymbolObject>(getSymbol("t"), false));
         
-        makeFunc("null", 1, 1, [this](FArgs &args) {
-            std::unique_ptr<Object> r;
-            auto sym = eval(args.cc->obj);
-            if (!(*sym)) {
-                r = makeTrue();
-            } else {
-                r = makeNil();
-            }
-            return r;
+        makeFunc("null", 1, 1, [this](FArgs& args) { 
+            return !(*args.get()) ? makeTrue() : makeNil();
         });
         makeFunc("car", 1, 1, [this](FArgs &args) {
             auto arg = eval(args.cc->obj);
@@ -1020,6 +1013,7 @@ public:
             return std::make_unique<StringObject>(descr);
         });
         defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
+        defun("concat", [](std::string str1, std::string str2) { return str1 + str2; });
     }
 
     template<typename F>
