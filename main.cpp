@@ -168,6 +168,7 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 0 3)", "\"abc\"");
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 2)", "\"cdefg\"");
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\")", "\"abcdefg\"");
+    ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" -3 -1)", "\"ef\"");
     ASSERT_OUTPUT_EQ(m, "(concat \"ab\" \"cd\")", "\"abcd\"");
     assert(m.evaluate("\"abc\"")->toString() == "\"abc\"");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
@@ -322,6 +323,7 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(* 3 4)", "12");
     ASSERT_OUTPUT_EQ(m, "(*)", "1");
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
+    ASSERT_OUTPUT_EQ(m, "(+ 1 -1)", "0");
 }
 
 void test()

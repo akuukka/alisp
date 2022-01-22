@@ -1093,6 +1093,12 @@ public:
         defun("substring", [](std::string str,
                               std::optional<std::int64_t> start,
                               std::optional<std::int64_t> end) {
+            if (start && *start < 0) {
+                *start = static_cast<std::int64_t>(str.size()) + *start;
+            }
+            if (end && *end < 0) {
+                *end = static_cast<std::int64_t>(str.size()) + *end;
+            }
             return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
         });
     }
