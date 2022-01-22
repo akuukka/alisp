@@ -284,6 +284,7 @@ void testEqFunction()
 void testInternFunction()
 {
     alisp::Machine m;
+    m.setMessageHandler([](std::string msg){});
     ASSERT_EQ(m.evaluate("(setq sym (intern \"foo\"))"), "foo");
     ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "t");
     ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "nil");
@@ -302,7 +303,11 @@ void testInternFunction()
     ASSERT_OUTPUT_EQ(m, "(setq abra 500)", "500");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'abra)", "abra's value is 500");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "abra's value is 500");
-    
+    ASSERT_OUTPUT_EQ(m, "(message \"%d\" abra)", "\"500\"");
+    ASSERT_EXCEPTION(m, "(message \"%d\" sym)", alisp::exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, "(unintern sym)", "t"); // this removes abra from objarray
+    ASSERT_EXCEPTION(m, "(message \"%d\" abra)", alisp::exceptions::VoidVariable);
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "abra's value is 500");
 }
 
 void testDescribeVariableFunction()

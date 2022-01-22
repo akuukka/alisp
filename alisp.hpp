@@ -773,7 +773,7 @@ public:
             else {
                 std::cout << str << std::endl;
             }
-            return arg;
+            return std::make_unique<StringObject>(str);
         });
         makeFunc("/", 1, 0xffff, [](FArgs& args) {
             std::int64_t i = 0;
