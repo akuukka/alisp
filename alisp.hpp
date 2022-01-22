@@ -488,7 +488,7 @@ std::unique_ptr<Object> parseNumericalSymbol(const char *&str)
     bool fp = false;
     int dots = 0;
     std::string r;
-    while (((*str) >= '0' && (*str) <= '9') || (*str) == '.') {
+    while (((*str) >= '0' && (*str) <= '9') || (*str) == '.' || (*str) == '-') {
         if ((*str) == '.') {
             dots++;
             if (dots >= 2) {
@@ -704,11 +704,13 @@ class Machine
         // Skip whitespace until next symbol
         while (*expr) {
             const char c = *expr;
+            const char n = *(expr+1);
             if (isWhiteSpace(c)) {
                 expr++;
                 continue;
             }
-            if (c >= '0' && c <= '9') {
+            if ((c >= '0' && c <= '9') ||
+                (c =='-' && (n >= '0' && n <= '9'))) {
                 return parseNumericalSymbol(expr);
             }
             else if (c == '\"') {

@@ -64,20 +64,6 @@ void testEmptyList()
     assert(m.evaluate("()")->toString() == "nil");
 }
 
-void testAddition()
-{
-    alisp::Machine m;
-    ASSERT_EQ(m.evaluate("(+ 1 1)"), "2");
-    ASSERT_EQ(m.evaluate("(+)"), "0");
-}
-
-void testMultiplication()
-{
-    alisp::Machine m;
-    ASSERT_EQ(m.evaluate("(* 3 4)"), "12");
-    ASSERT_EQ(m.evaluate("(*)"), "1");
-}
-
 void testNestedLists()
 {
     alisp::ConsCell c;
@@ -331,6 +317,11 @@ void testBasicArithmetic()
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "(% 5 2)", "1");
     ASSERT_EXCEPTION(m, "(% 5 2.0)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(+ 1 1)", "2");
+    ASSERT_OUTPUT_EQ(m, "(+)", "0");
+    ASSERT_OUTPUT_EQ(m, "(* 3 4)", "12");
+    ASSERT_OUTPUT_EQ(m, "(*)", "1");
+    ASSERT_OUTPUT_EQ(m, "-1", "-1");
 }
 
 void test()
@@ -339,8 +330,6 @@ void test()
     testDescribeVariableFunction();
     testInternFunction();
     testEqFunction();
-    testAddition();
-    testMultiplication();
     testVariables();
     testSymbols();
     testDivision();
