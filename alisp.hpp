@@ -146,7 +146,6 @@ struct Function
     std::string name;
     int minArgs = 0;
     int maxArgs = 0xffff;
-    // std::unique_ptr<Object> (*func)(FArgs&);
     std::function<std::unique_ptr<Object>(FArgs&)> func;
 };
 
@@ -402,6 +401,7 @@ void cons(std::unique_ptr<Object> sym, const std::unique_ptr<ListObject> &list)
 bool isPartOfSymName(const char c)
 {
     if (c=='+') return true;
+    if (c=='%') return true;
     if (c=='*') return true;
     if (c=='/') return true;
     if (c=='-') return true;
@@ -497,6 +497,39 @@ inline const Symbol* getValue(const Object& sym)
 {
     auto s = dynamic_cast<const SymbolObject*>(&sym);
     return s ? s->sym.get() : nullptr;
+}
+
+template <typename T>
+struct function_traits : public function_traits<decltype(&T::operator())>
+{};
+
+template <typename ClassType, typename ReturnType, typename... Args>
+struct function_traits<ReturnType(ClassType::*)(Args...) const>
+// we specialize for pointers to member function
+{
+    using result_type = ReturnType;
+    using arg_tuple = std::tuple<Args...>;
+    static constexpr auto arity = sizeof...(Args);
+};
+
+template <class F, std::size_t ... Is, class T>
+auto lambda_to_func_impl(F f, std::index_sequence<Is...>, T) {
+    return std::function<typename T::result_type(std::tuple_element_t<Is, typename T::arg_tuple>...)>(f);
+}
+
+template <class F>
+auto lambda_to_func(F f) {
+    using traits = function_traits<F>;
+    return lambda_to_func_impl(f, std::make_index_sequence<traits::arity>{}, traits{});
+}
+
+template <typename T>
+std::unique_ptr<Object> makeObject(T);
+
+template<>
+std::unique_ptr<Object> makeObject(std::int64_t i)
+{
+    return makeInt(i);
 }
 
 class Machine
@@ -948,6 +981,51 @@ public:
             }
             return std::make_unique<StringObject>(descr);
         });
+        makeFunc("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
+    }
+
+    template<typename F>
+    void makeFunc(const char* name, F&& f)
+    {
+        makeFuncInternal(name, lambda_to_func(f));
+    }
+
+    template<size_t I, typename ...Args>
+    typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
+                                                                           FArgs&)
+    {}
+
+    template<size_t I, typename ...Args>
+    typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
+                                                                          FArgs& args)
+    {
+        using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
+        std::get<I>(t) = args.get()->value<T>();
+        writeToTuple<I + 1>(t, args);
+    }
+
+    template<typename ...Args>
+    std::tuple<Args...> toTuple(FArgs& args)
+    {
+        std::tuple<Args...> tuple;
+        writeToTuple<0>(tuple, args);
+        return tuple;
+    }
+
+    template<typename R, typename ...Args>
+    void makeFuncInternal(const char* name, std::function<R(Args...)> f)
+    {
+        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
+            std::tuple<Args...> t = toTuple<Args...>(args);
+            return makeObject<R>(std::apply(f, t));
+        };
+
+        auto func = std::make_unique<Function>();
+        func->name = name;
+        func->minArgs = sizeof...(Args);
+        func->maxArgs = sizeof...(Args);
+        func->func = w;
+        getSymbol(name)->function = std::move(func);
     }
 
     void setVariable(std::string name, std::unique_ptr<Object> obj)

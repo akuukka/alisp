@@ -322,8 +322,15 @@ void testDescribeVariableFunction()
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 't)", "t's value is t");
 }
 
+void testBasicArithmetic()
+{
+    alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(% 5 2)", "1");
+}
+
 void test()
 {
+    testBasicArithmetic();
     testDescribeVariableFunction();
     testInternFunction();
     testEqFunction();
