@@ -354,19 +354,15 @@ y
 void testNthFunction()
 {
     alisp::Machine m;
-    ASSERT_OUTPUT_EQ(m, "(setq x '(\"a\" \"b\" 3))", "(\"a\" \"b\" 3)");
+    ASSERT_OUTPUT_EQ(m, "(setq x '(\"a\" \"b\"))", "(\"a\" \"b\")");
     ASSERT_OUTPUT_EQ(m, "(nth 0 x)", "\"a\"");
     ASSERT_OUTPUT_EQ(m, "(nth 1 x)", "\"b\"");
-    ASSERT_OUTPUT_EQ(m, "(nth 2 x)", "3");
-    ASSERT_OUTPUT_EQ(m, "(nth 3 x)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(nth 2 x)", "nil");
     ASSERT_OUTPUT_EQ(m, "(eq (nth 1 x) (nth 1 x))", "t");
-    /*
-(eq (nth 1 x) (nth 1 x)) ; t
-(setq y (cons "c" x))
-(nth 1 x) ; b 
-(nth 2 y) ; b
-(eq (nth 1 x) (nth 2 y) ) ; t
-     */
+    ASSERT_OUTPUT_EQ(m, "(setq y (cons \"c\" x))", "(\"c\" \"a\" \"b\")");
+    ASSERT_OUTPUT_EQ(m, "(nth 1 x)", "\"b\"");
+    ASSERT_OUTPUT_EQ(m, "(nth 2 y)", "\"b\"");
+    ASSERT_OUTPUT_EQ(m, "(eq (nth 1 x) (nth 2 y) )", "t");
 }
 
 void testConsFunction()
