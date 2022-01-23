@@ -610,6 +610,16 @@ inline std::optional<double> getValue(const Object &sym)
 }
 
 template<>
+inline std::optional<ListObject> getValue(const Object& sym)
+{
+    auto s = dynamic_cast<const ListObject*>(&sym);
+    if (s) {
+        return *s;
+    }
+    return std::nullopt;
+}
+
+template<>
 inline std::optional<bool> getValue(const Object &sym)
 {
     return !!sym;
@@ -710,6 +720,10 @@ class Machine
     template<> std::unique_ptr<Object> makeObject(bool value)
     {
         return value ? makeTrue() : makeNil();
+    }
+    template<> std::unique_ptr<Object> makeObject(std::unique_ptr<Object> o)
+    {
+        return std::move(o);
     }
     
     template<typename R, typename ...Args>
@@ -1133,6 +1147,18 @@ public:
         });
         defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
         defun("concat", [](std::string str1, std::string str2) { return str1 + str2; });
+        defun("nth", [](std::int64_t index, ListObject list) {
+            auto p = list.car.get();
+            auto obj = list.car->obj.get();
+            for (size_t i=0;i<index;i++) {
+                p = p->cdr.get();
+                if (!p) {
+                    return makeNil();
+                }
+                obj = p->obj.get();
+            }
+            return obj->clone();
+        });
         defun("substring", [](std::string str,
                               std::optional<std::int64_t> start,
                               std::optional<std::int64_t> end) {
