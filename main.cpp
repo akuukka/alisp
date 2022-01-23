@@ -367,11 +367,17 @@ void testNthFunction()
 (nth 2 y) ; b
 (eq (nth 1 x) (nth 2 y) ) ; t
      */
-    
+}
+
+void testConsFunction()
+{
+    alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(cons 1 '(2 3))", "(1 2 3)");
 }
 
 void test()
 {
+    testConsFunction();
     testNthFunction();
     testPopFunction();
     testStrings();

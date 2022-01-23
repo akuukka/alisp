@@ -274,6 +274,26 @@ struct ListObject : Object
         return copy;
     }
 
+    std::unique_ptr<ListObject> deepCopy() const
+    {
+        std::unique_ptr<ListObject> copy = std::make_unique<ListObject>();
+        ConsCell* origPtr = car.get();
+        ConsCell* copyPtr = copy->car.get();
+        assert(origPtr && copyPtr);
+        while (origPtr) {
+            if (origPtr->obj) {
+                copyPtr->obj = origPtr->obj->clone();
+            }
+            origPtr = origPtr->cdr.get();
+            if (origPtr) {
+                copyPtr->cdr = std::make_unique<ConsCell>();
+                copyPtr = copyPtr->cdr.get();
+            }
+        }
+
+        return copy;
+    }
+
     bool equals(const Object& o) const override
     {
         const ListObject* op = dynamic_cast<const ListObject*>(&o);
@@ -1158,6 +1178,16 @@ public:
                 obj = p->obj.get();
             }
             return obj->clone();
+        });
+        makeFunc("cons", 2, 2, [](FArgs& args) {
+            auto obj = args.get();
+            auto listBase = args.get();
+            auto listPtr = dynamic_cast<ListObject*>(listBase.get());
+            assert(listPtr);
+            auto newList = listPtr->deepCopy();
+            assert(newList->car);
+            cons(std::move(obj), newList);
+            return newList;
         });
         defun("substring", [](std::string str,
                               std::optional<std::int64_t> start,
