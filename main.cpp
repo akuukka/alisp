@@ -53,15 +53,12 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res
     }                                                                   \
 }
 
-void testEmptyList()
+void testListBasics()
 {
     alisp::Machine m;
-    
-    auto t3 = m.parse("()");
-    assert(t3 && t3->isList());
-    assert(t3->toString() == "nil");
-
-    assert(m.evaluate("()")->toString() == "nil");
+    ASSERT_OUTPUT_EQ(m, "()", "nil");
+    ASSERT_OUTPUT_EQ(m, "'(1)", "(1)"); 
+    ASSERT_OUTPUT_EQ(m, "'(1 2 3)", "(1 2 3)"); 
 }
 
 template <typename E>
@@ -374,7 +371,9 @@ void testListFunction()
 
 void test()
 {
-    testConsFunction();
+    testListBasics();
+    // testConsFunction();
+    /*
     testListFunction();
     testNthFunction();
     testPopFunction();
@@ -388,14 +387,13 @@ void test()
     testDivision();
     testSyntaxErrorDetection();
     testCloning();
-    testEmptyList();
     testQuotedList();
     testSimpleEvaluations();
     testNullFunction();
     testCarFunction();
     testCdrFunction();
     testPrognFunction();
-
+    */
     // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
     /*
 (symbol-name 2)

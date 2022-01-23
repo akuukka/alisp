@@ -135,7 +135,7 @@ inline std::ostream &operator<<(std::ostream &os,
 struct ConsCell
 {
     std::unique_ptr<Object> obj;
-    std::unique_ptr<ConsCell> cdr;
+    std::unique_ptr<Object> cdr;
 
     std::string toString() const
     {
@@ -146,7 +146,7 @@ struct ConsCell
         const ConsCell *t = this;
         while (t) {
             s += t->obj ? t->obj->toString() : "";
-            t = t->cdr.get();
+            t = t->next();
             if (t) {
                 s += " ";
             }
@@ -155,6 +155,9 @@ struct ConsCell
         return s;
     }
 
+    const ConsCell* next() const;
+    ConsCell* next();
+    
     bool operator!() const { return !obj; }
 };
 
@@ -285,10 +288,10 @@ struct ListObject : Object
             if (origPtr->obj) {
                 copyPtr->obj = origPtr->obj->clone();
             }
-            origPtr = origPtr->cdr.get();
+            origPtr = origPtr->next();
             if (origPtr) {
-                copyPtr->cdr = std::make_unique<ConsCell>();
-                copyPtr = copyPtr->cdr.get();
+                copyPtr->cdr = std::make_unique<ListObject>();
+                copyPtr = copyPtr->next();
             }
         }
 
@@ -381,7 +384,7 @@ int countArgs(const ConsCell* cc)
     int i = 0;
     while (cc) {
         i++;
-        cc = cc->cdr.get();
+        cc = cc->next();
     }
     return i;
 }
@@ -412,7 +415,7 @@ struct FArgs
 
         void operator++()
         {
-            cc = cc->cdr.get();
+            cc = cc->next();
         }
 
         std::unique_ptr<Object> operator*();
@@ -436,7 +439,7 @@ std::unique_ptr<Object> ListObject::eval()
         dynamic_cast<ListObject*>(cloned.get())->quoted = false;
         return cloned;
     }
-    const auto &c = *car;
+    auto &c = *car;
     if (!c) {
         return std::make_unique<ListObject>();
     }
@@ -444,11 +447,11 @@ std::unique_ptr<Object> ListObject::eval()
     if (f) {
         assert(dynamic_cast<const NamedObject*>(c.obj.get()));
         auto& m = *dynamic_cast<const NamedObject*>(c.obj.get())->parent;
-        const int argc = countArgs(c.cdr.get());
+        const int argc = countArgs(c.next());
         if (argc < f->minArgs || argc > f->maxArgs) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
-        FArgs args(*c.cdr, m);
+        FArgs args(*c.next(), m);
         return f->func(args);
     }
     throw exceptions::VoidFunction(c.obj->toString());
@@ -537,9 +540,10 @@ void cons(std::unique_ptr<Object> sym, ConsCell& list)
     }
     ConsCell cdr = std::move(list);
     list.obj = std::move(sym);
-    list.cdr = std::make_unique<ConsCell>();
-    list.cdr->obj = std::move(cdr.obj);
-    list.cdr->cdr = std::move(cdr.cdr);
+    list.cdr = std::make_unique<ListObject>();
+    auto& lo = dynamic_cast<ListObject&>(*list.cdr.get());
+    lo.car->obj = std::move(cdr.obj);
+    lo.car->cdr = std::move(cdr.cdr);
 }
 
 void cons(std::unique_ptr<Object> sym, const std::unique_ptr<ListObject> &list)
@@ -851,8 +855,9 @@ class Machine
                     skipWhitespace(expr);
                     if (lastConsCell->obj) {
                         assert(!lastConsCell->cdr);
-                        lastConsCell->cdr = std::make_unique<ConsCell>();
-                        lastConsCell = lastConsCell->cdr.get();
+                        lastConsCell->cdr = std::make_unique<ListObject>();
+                        assert(lastConsCell != lastConsCell->next());
+                        lastConsCell = lastConsCell->next();
                     }
                     lastConsCell->obj = std::move(sym);
                 }
@@ -1089,10 +1094,12 @@ public:
             }
             auto list = dynamic_cast<ListObject*>(sym.get());
             std::unique_ptr<ListObject> cdr = makeList();
+            /*
             if (list->car->cdr) {
                 cdr->car->obj = std::move(list->car->cdr->obj);
                 cdr->car->cdr = std::move(list->car->cdr->cdr);
             }
+            */
             std::unique_ptr<Object> ret;
             ret = std::move(cdr);
             return ret;
@@ -1140,7 +1147,7 @@ public:
             if (!name) {
                 throw exceptions::WrongTypeArgument(args.cc->obj->toString());
             }
-            auto value = args.cc->cdr->obj->eval();
+            auto value = args.cc->next()->obj->eval();
             name->parent->setVariable(name->name, value->clone());
             return value;
         });
@@ -1172,7 +1179,7 @@ public:
             auto p = list.car.get();
             auto obj = list.car->obj.get();
             for (size_t i=0;i<index;i++) {
-                p = p->cdr.get();
+                p = p->next();
                 if (!p) {
                     return makeNil();
                 }
@@ -1192,12 +1199,12 @@ public:
         });
         makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
             auto newList = makeList();
-            auto lastCc = newList->car.get();
+            ConsCell* lastCc = newList->car.get();
             bool first = true;
             for (auto obj : args) {
                 if (!first) {
-                    lastCc->cdr = std::make_unique<ConsCell>();
-                    lastCc = lastCc->cdr.get();
+                    lastCc->cdr = std::make_unique<ListObject>();
+                    lastCc = lastCc->next();
                 }
                 lastCc->obj = obj->clone();
                 first = false;
@@ -1265,13 +1272,29 @@ std::unique_ptr<Object> FArgs::get()
         return nullptr;
     }
     auto sym = cc->obj->eval();
-    cc = cc->cdr.get();
+    cc = cc->next();
     return sym;
 }
 
-std::unique_ptr<Object> FArgs::Iterator::operator*()
+std::unique_ptr<Object> FArgs::Iterator::operator*() { return cc->obj->eval(); }
+
+const ConsCell* ConsCell::next() const
 {
-    return cc->obj->eval();
+    auto cc = dynamic_cast<ListObject*>(this->cdr.get());
+    if (cc) {
+        return cc->car.get();
+    }
+    return nullptr;
 }
+
+ConsCell* ConsCell::next()
+{
+    auto cc = dynamic_cast<ListObject*>(this->cdr.get());
+    if (cc) {
+        return cc->car.get();
+    }
+    return nullptr;
+}
+
 
 }
