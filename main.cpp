@@ -64,14 +64,6 @@ void testEmptyList()
     assert(m.evaluate("()")->toString() == "nil");
 }
 
-void testNestedLists()
-{
-    alisp::ConsCell c;
-    auto inner = alisp::makeList();
-    alisp::cons(std::move(inner), c);
-    assert(c.toString() == "(nil)");
-}
-
 template <typename E>
 bool expect(std::function<void(void)> code)
 {
@@ -371,9 +363,18 @@ void testConsFunction()
     ASSERT_OUTPUT_EQ(m, "(cons 1 '(2 3))", "(1 2 3)");
 }
 
+void testListFunction()
+{
+    alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(list 1 2 3 4 5)", "(1 2 3 4 5)");
+    ASSERT_OUTPUT_EQ(m, "(list 1 2 '(3 4 5) 'foo)", "(1 2 (3 4 5) foo)");
+    ASSERT_OUTPUT_EQ(m, "(list)", "nil");
+}
+
 void test()
 {
     testConsFunction();
+    testListFunction();
     testNthFunction();
     testPopFunction();
     testStrings();
@@ -389,7 +390,6 @@ void test()
     testEmptyList();
     testQuotedList();
     testSimpleEvaluations();
-    testNestedLists();
     testNullFunction();
     testCarFunction();
     testCdrFunction();

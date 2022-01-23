@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <cstdio>
 #include <sstream>
@@ -1187,6 +1188,20 @@ public:
             auto newList = listPtr->deepCopy();
             assert(newList->car);
             cons(std::move(obj), newList);
+            return newList;
+        });
+        makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
+            auto newList = makeList();
+            auto lastCc = newList->car.get();
+            bool first = true;
+            for (auto obj : args) {
+                if (!first) {
+                    lastCc->cdr = std::make_unique<ConsCell>();
+                    lastCc = lastCc->cdr.get();
+                }
+                lastCc->obj = obj->clone();
+                first = false;
+            }
             return newList;
         });
         defun("substring", [](std::string str,
