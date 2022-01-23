@@ -331,7 +331,6 @@ struct SymbolObject : Object
         return std::make_unique<SymbolObject>(sym, false);
     }
 
-
     bool equals(const Object& o) const override
     {
         const SymbolObject* op = dynamic_cast<const SymbolObject*>(&o);
@@ -610,6 +609,12 @@ inline std::optional<double> getValue(const Object &sym)
 }
 
 template<>
+inline std::optional<bool> getValue(const Object &sym)
+{
+    return !!sym;
+}
+
+template<>
 inline std::optional<std::int64_t> getValue(const Object &sym)
 {
     auto s = dynamic_cast<const IntObject*>(&sym);
@@ -700,6 +705,10 @@ class Machine
     template<> std::unique_ptr<Object> makeObject(std::string str)
     {
         return std::make_unique<StringObject>(str);
+    }
+    template<> std::unique_ptr<Object> makeObject(bool value)
+    {
+        return value ? makeTrue() : makeNil();
     }
     
     template<typename R, typename ...Args>
@@ -870,9 +879,7 @@ public:
         setVariable("nil", makeNil());
         setVariable("t", std::make_unique<SymbolObject>(getSymbol("t"), false));
         
-        makeFunc("null", 1, 1, [this](FArgs& args) { 
-            return !(*args.get()) ? makeTrue() : makeNil();
-        });
+        defun("null", [](bool isNil) { return !isNil; });
         makeFunc("car", 1, 1, [this](FArgs &args) {
             auto arg = args.cc->obj->eval();
             if (!arg->isList()) {
