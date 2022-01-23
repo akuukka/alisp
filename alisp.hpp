@@ -86,7 +86,6 @@ struct Object
     virtual ~Object() {}
 
     virtual bool operator==(std::int64_t value) const { return false; };
-    virtual Object* resolveVariable() { return this; }
     virtual Function* resolveFunction() { return nullptr; }
     virtual std::unique_ptr<Object> clone() const = 0;
     virtual bool equals(const Object& o) const
@@ -112,11 +111,7 @@ struct Object
 
     virtual std::unique_ptr<Object> eval()
     {
-        auto var = resolveVariable();
-        if (!var) {
-            throw exceptions::VoidVariable(toString());
-        }
-        return var->clone();
+        return clone();
     }
 };
 
@@ -299,7 +294,6 @@ struct NamedObject : Object
         return name;
     }
 
-    Object* resolveVariable() override;
     Function* resolveFunction() override;
 
     NamedObject(Machine *parent) : parent(parent) {}
@@ -310,6 +304,8 @@ struct NamedObject : Object
         sym->name = name;
         return sym;
     }
+
+    std::unique_ptr<Object> eval() override;
 };
 
 struct SymbolObject : Object
@@ -1154,9 +1150,13 @@ public:
     }
 };
 
-Object* NamedObject::resolveVariable()
+std::unique_ptr<Object> NamedObject::eval() 
 {
-    return parent->resolveVariable(this);
+    auto var = parent->resolveVariable(this);
+    if (!var) {
+        throw exceptions::VoidVariable(toString());
+    }
+    return var->clone();
 }
 
 Function* NamedObject::resolveFunction()
