@@ -192,8 +192,7 @@ struct StringObject : Object
 
     bool equals(const Object& o) const override
     {
-        const StringObject* op = dynamic_cast<const StringObject*>(&o);
-        return op && op->value == value;
+        return &o == this;
     }
 };
 
@@ -905,8 +904,7 @@ public:
             }
             std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
             symbol->name = arg->value<std::string>();
-            std::unique_ptr<Object> r = std::make_unique<SymbolObject>(symbol, false);
-            return r;
+            return std::make_unique<SymbolObject>(symbol, false);
         });
         makeFunc("symbolp", 1, 1, [this](FArgs& args) {
             return dynamic_cast<SymbolObject*>(args.get().get()) ? makeTrue() : makeNil();

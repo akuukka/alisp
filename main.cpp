@@ -264,6 +264,7 @@ void testSymbols()
 void testEqFunction()
 {
     alisp::Machine m;
+    ASSERT_EQ(m.evaluate("(eq \"a\" \"a\")"), "nil");
     ASSERT_EQ(m.evaluate("(eq 'a 'a)"), "t");
     ASSERT_EQ(m.evaluate("(eq 1 1)"), "t");
     ASSERT_EQ(m.evaluate("(eq 1 1.0)"), "nil");
