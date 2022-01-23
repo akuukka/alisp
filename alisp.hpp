@@ -269,6 +269,7 @@ struct ListObject : Object
     {
         auto copy = std::make_unique<ListObject>();
         copy->car = car;
+        copy->quoted = quoted;
         return copy;
     }
 
@@ -322,8 +323,14 @@ struct SymbolObject : Object
 
     std::unique_ptr<Object> clone() const override
     {
+        return std::make_unique<SymbolObject>(sym, quoted);
+    }
+
+    std::unique_ptr<Object> eval() override
+    {
         return std::make_unique<SymbolObject>(sym, false);
     }
+
 
     bool equals(const Object& o) const override
     {
@@ -403,11 +410,12 @@ struct FArgs
 
 std::unique_ptr<Object> ListObject::eval()
 {
-    auto plist = this;
-    if (plist->quoted) {
-        return clone();
+    if (quoted) {
+        auto cloned = clone();
+        dynamic_cast<ListObject*>(cloned.get())->quoted = false;
+        return cloned;
     }
-    const auto &c = *plist->car;
+    const auto &c = *car;
     if (!c) {
         return std::make_unique<ListObject>();
     }
