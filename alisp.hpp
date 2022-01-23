@@ -110,6 +110,14 @@ struct Object
         return getValue<T>(*this);
     }
 
+    virtual std::unique_ptr<Object> eval()
+    {
+        auto var = resolveVariable();
+        if (!var) {
+            throw exceptions::VoidVariable(toString());
+        }
+        return var->clone();
+    }
 };
 
 inline std::ostream &operator<<(std::ostream &os, const Object &sym) {
@@ -277,6 +285,8 @@ struct ListObject : Object
         }
         return this->car == op->car;
     }
+
+    std::unique_ptr<Object> eval() override;
 };
 
 struct NamedObject : Object
@@ -394,6 +404,30 @@ struct FArgs
         return Iterator{&m, nullptr};
     }
 };
+
+std::unique_ptr<Object> ListObject::eval()
+{
+    auto plist = this;
+    if (plist->quoted) {
+        return clone();
+    }
+    const auto &c = *plist->car;
+    if (!c) {
+        return std::make_unique<ListObject>();
+    }
+    const Function* f = c.obj->resolveFunction();
+    if (f) {
+        assert(dynamic_cast<const NamedObject*>(c.obj.get()));
+        auto& m = *dynamic_cast<const NamedObject*>(c.obj.get())->parent;
+        const int argc = countArgs(c.cdr.get());
+        if (argc < f->minArgs || argc > f->maxArgs) {
+            throw exceptions::WrongNumberOfArguments(argc);
+        }
+        FArgs args(*c.cdr, m);
+        return f->func(args);
+    }
+    throw exceptions::VoidFunction(c.obj->toString());
+}
 
 template<size_t I, typename ...Args>
 inline typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
@@ -795,43 +829,9 @@ public:
         return r;
     }
 
-    std::unique_ptr<Object> eval(const std::unique_ptr<Object>& obj)
-    {
-        // If it's a list, evaluation means function call. Otherwise, return a copy of
-        // the symbol itself.
-        if (!obj->isList()) {
-            auto var = obj->resolveVariable();
-            if (!var) {
-                throw exceptions::VoidVariable(obj->toString());
-            }
-            return var->clone();
-        }
-        auto plist = dynamic_cast<ListObject*>(obj.get());
-        if (plist->quoted) {
-            return obj->clone();
-        }
-        const auto &c = *plist->car;
-        if (!c) {
-            // Remember: () => nil
-            return makeNil();
-        }
-        const Function* f = c.obj->resolveFunction();
-        if (f) {
-            assert(dynamic_cast<const NamedObject*>(c.obj.get()));
-            auto& m = *dynamic_cast<const NamedObject*>(c.obj.get())->parent;
-            const int argc = countArgs(c.cdr.get());
-            if (argc < f->minArgs || argc > f->maxArgs) {
-                throw exceptions::WrongNumberOfArguments(argc);
-            }
-            FArgs args(*c.cdr, m);
-            return f->func(args);
-        }
-        throw exceptions::VoidFunction(c.obj->toString());
-    }
-
     std::unique_ptr<Object> evaluate(const char *expr)
     {
-        return eval(parse(expr));
+        return parse(expr)->eval();
     }
 
     Object* resolveVariable(NamedObject* sym)
@@ -870,7 +870,7 @@ public:
             return !(*args.get()) ? makeTrue() : makeNil();
         });
         makeFunc("car", 1, 1, [this](FArgs &args) {
-            auto arg = eval(args.cc->obj);
+            auto arg = args.cc->obj->eval();
             if (!arg->isList()) {
                 throw exceptions::WrongTypeArgument(args.cc->obj->toString());
             }
@@ -1094,7 +1094,7 @@ public:
             if (!name) {
                 throw exceptions::WrongTypeArgument(args.cc->obj->toString());
             }
-            auto value = eval(args.cc->cdr->obj);
+            auto value = args.cc->cdr->obj->eval();
             name->parent->setVariable(name->name, value->clone());
             return value;
         });
@@ -1169,14 +1169,14 @@ std::unique_ptr<Object> FArgs::get()
     if (!cc) {
         return nullptr;
     }
-    auto sym = m.eval(cc->obj);
+    auto sym = cc->obj->eval();
     cc = cc->cdr.get();
     return sym;
 }
 
 std::unique_ptr<Object> FArgs::Iterator::operator*()
 {
-    return m->eval(cc->obj);
+    return cc->obj->eval();
 }
 
 }
