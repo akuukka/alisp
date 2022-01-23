@@ -412,13 +412,32 @@ struct OptCheck<std::optional<T>> : std::true_type
     using BaseType = T;
 };
 
+template <size_t I, typename... Args>
+inline constexpr typename std::enable_if<I == std::tuple_size_v<std::tuple<Args...>>,
+                               bool>::type
+tupleOptCheck()
+{
+    return true;
+}
+
+template <size_t I, typename... Args>
+inline constexpr typename std::enable_if<I < std::tuple_size_v<std::tuple<Args...>>,
+                                             bool>::type
+tupleOptCheck()
+{
+    using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
+    constexpr bool isOptionalParam = OptCheck<T>::value;
+    return isOptionalParam;
+}
 
 template<size_t I, typename ...Args>
 inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
                                                                       FArgs& args)
 {
     using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-    const bool isOptionalParam = OptCheck<T>::value;
+    constexpr bool isOptionalParam = OptCheck<T>::value;
+    static_assert(!isOptionalParam || tupleOptCheck<I+1, Args...>(),
+                  "Non-optional function param given after optional one. ");
     std::optional<typename OptCheck<T>::BaseType> opt;
     std::unique_ptr<Object> arg;
     bool conversionFailed = false;
