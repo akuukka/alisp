@@ -1144,6 +1144,15 @@ public:
             }
             return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
         });
+        makeFunc("pop", 1, 1, [this](FArgs& args) {
+            auto arg = args.get();
+            ListObject* list = dynamic_cast<ListObject*>(arg.get());
+            if (!list) {
+                throw exceptions::WrongTypeArgument(arg->toString());
+            }
+            auto ret = list->car->obj->clone();
+            return ret;
+        });
     }
 
     template<typename F>

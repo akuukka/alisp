@@ -331,8 +331,29 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(+ 1 -1)", "0");
 }
 
+void testPopFunction()
+{
+    alisp::Machine m;
+    /*
+(setq x '(1 2 3))
+(setq y x)
+(eq y x) ; t
+(pop x)
+(eq y x) ; nil
+x
+y
+     */
+    ASSERT_OUTPUT_EQ(m, "(setq x '(1 2 3))", "(1 2 3)");
+    ASSERT_OUTPUT_EQ(m, "(setq y x)", "(1 2 3)");
+    ASSERT_OUTPUT_EQ(m, "(eq y x)", "t");
+    ASSERT_OUTPUT_EQ(m, "(pop x)", "1");
+    ASSERT_OUTPUT_EQ(m, "y", "(1 2 3)");
+    ASSERT_OUTPUT_EQ(m, "x", "(2 3)");
+}
+
 void test()
 {
+    testPopFunction();
     testStrings();
     testBasicArithmetic();
     testDescribeVariableFunction();
