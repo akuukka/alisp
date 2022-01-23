@@ -146,6 +146,10 @@ struct ConsCell
         const ConsCell *t = this;
         while (t) {
             s += t->obj ? t->obj->toString() : "";
+            if (!t->next() && t->cdr) {
+                s += " . " + cdr->toString();
+                break;
+            }
             t = t->next();
             if (t) {
                 s += " ";
@@ -259,6 +263,15 @@ struct ListObject : Object
     ListObject()
     {
         car = std::make_shared<ConsCell>();
+    }
+
+    ListObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr) : ListObject()
+    {
+        this->car->obj = std::move(car);
+        if (!(*cdr)) {
+            return;
+        }
+        this->car->cdr = std::move(cdr);
     }
 
     std::string toString() const override
@@ -1188,14 +1201,7 @@ public:
             return obj->clone();
         });
         makeFunc("cons", 2, 2, [](FArgs& args) {
-            auto obj = args.get();
-            auto listBase = args.get();
-            auto listPtr = dynamic_cast<ListObject*>(listBase.get());
-            assert(listPtr);
-            auto newList = listPtr->deepCopy();
-            assert(newList->car);
-            cons(std::move(obj), newList);
-            return newList;
+            return std::make_unique<ListObject>(args.get(), args.get());
         });
         makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
             auto newList = makeList();

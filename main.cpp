@@ -359,6 +359,7 @@ void testConsFunction()
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "(cons 1 '(2 3))", "(1 2 3)");
     ASSERT_OUTPUT_EQ(m, "(cons 1 '())", "(1)");
+    ASSERT_OUTPUT_EQ(m, "(cons 1 2)", "(1 . 2)");
 }
 
 void testListFunction()
@@ -372,10 +373,10 @@ void testListFunction()
 void test()
 {
     testListBasics();
-    // testConsFunction();
-    /*
+    testConsFunction();
     testListFunction();
     testNthFunction();
+    /*
     testPopFunction();
     testStrings();
     testBasicArithmetic();
