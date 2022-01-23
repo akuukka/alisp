@@ -264,6 +264,8 @@ void testSymbols()
 void testEqFunction()
 {
     alisp::Machine m;
+    ASSERT_EQ(m.evaluate("(progn (setq x \"a\")(eq x x))"), "t");
+    ASSERT_EQ(m.evaluate("(progn (setq y 1)(eq y y))"), "t");
     ASSERT_EQ(m.evaluate("(eq \"a\" \"a\")"), "nil");
     ASSERT_EQ(m.evaluate("(eq 'a 'a)"), "t");
     ASSERT_EQ(m.evaluate("(eq 1 1)"), "t");

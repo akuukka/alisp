@@ -177,22 +177,24 @@ struct Symbol
 
 struct StringObject : Object
 {
-    std::string value;
+    std::shared_ptr<std::string> value;
 
-    StringObject(std::string value) : value(value) {}
+    StringObject(std::string value) : value(std::make_shared<std::string>(value)) {}
+    StringObject(const StringObject& o) : value(o.value) {}
 
-    std::string toString() const override { return "\"" + value + "\""; }
+    std::string toString() const override { return "\"" + *value + "\""; }
 
     bool isString() const override { return true; }
 
     std::unique_ptr<Object> clone() const override
     {
-        return std::make_unique<StringObject>(value);
+        return std::make_unique<StringObject>(*this);
     }
 
     bool equals(const Object& o) const override
     {
-        return &o == this;
+        const StringObject* str = dynamic_cast<const StringObject*>(&o);
+        return str && str->value == value;
     }
 };
 
@@ -628,7 +630,7 @@ inline std::optional<std::string> getValue(const Object& sym)
 {
     auto s = dynamic_cast<const StringObject*>(&sym);
     if (s) {
-        return s->value;
+        return *s->value;
     }
     return std::nullopt;
 }
@@ -766,7 +768,7 @@ class Machine
     {
         auto sym = std::make_unique<StringObject>("");
         while (*str && *str != '"') {
-            sym->value += *str;
+            *sym->value += *str;
             str++;
         }
         if (!*str) {
@@ -923,7 +925,7 @@ public:
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
             auto strSym = dynamic_cast<StringObject*>(arg.get());
-            std::string str = strSym->value;
+            std::string str = *strSym->value;
             for (size_t i = 0; i < str.size(); i++) {
                 if (str[i] == '%') {
                     if (str[i+1] == '%') {
