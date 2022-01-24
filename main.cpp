@@ -381,21 +381,22 @@ void testListFunction()
     ASSERT_OUTPUT_EQ(m, "(list 1 2 3 4 5)", "(1 2 3 4 5)");
     ASSERT_OUTPUT_EQ(m, "(list 1 2 '(3 4 5) 'foo)", "(1 2 (3 4 5) foo)");
     ASSERT_OUTPUT_EQ(m, "(list)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(cdr (list 'a 'b 'c))", "(b c)");
 }
 
 void test()
 {
     testListBasics();
+    testCarFunction();
+    testCdrFunction();
     testConsFunction();
     testListFunction();
     testNthFunction();
     testStrings();
-    testCarFunction();
-    testCdrFunction();
-    /*
-    testPopFunction();
     testBasicArithmetic();
     testDescribeVariableFunction();
+    /*
+    testPopFunction();
     testInternFunction();
     testEqFunction();
     testVariables();
