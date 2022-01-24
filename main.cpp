@@ -75,6 +75,8 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(nlistp '())", "nil");
     ASSERT_OUTPUT_EQ(m, "(nlistp ())", "nil");
     ASSERT_OUTPUT_EQ(m, "'(a . b)", "(a . b)");
+    ASSERT_OUTPUT_EQ(m, "(car '(a . b))", "a");
+    ASSERT_OUTPUT_EQ(m, "(cdr '(a . b))", "b");
 }
 
 template <typename E>
