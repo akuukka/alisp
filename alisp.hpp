@@ -116,7 +116,8 @@ struct Object
     }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const Object &sym) {
+inline std::ostream &operator<<(std::ostream &os, const Object &sym)
+{
     os << sym.toString();
     return os;
 }
@@ -134,18 +135,18 @@ inline std::ostream &operator<<(std::ostream &os,
 
 struct ConsCell
 {
-    std::unique_ptr<Object> obj;
+    std::unique_ptr<Object> car;
     std::unique_ptr<Object> cdr;
 
     std::string toString() const
     {
-        if (!obj && !cdr) {
+        if (!car && !cdr) {
             return "nil";
         }
         std::string s = "(";
         const ConsCell *t = this;
         while (t) {
-            s += t->obj ? t->obj->toString() : "";
+            s += t->car ? t->car->toString() : "";
             if (!t->next() && t->cdr) {
                 s += " . " + cdr->toString();
                 break;
@@ -161,8 +162,11 @@ struct ConsCell
 
     const ConsCell* next() const;
     ConsCell* next();
-    
-    bool operator!() const { return !obj; }
+
+    bool operator!() const
+    {
+        return !car;
+    }
 };
 
 struct FArgs;
@@ -255,55 +259,49 @@ struct FloatObject : Object
     }
 };
 
-struct ListObject : Object
+struct ConsCellObject : Object
 {
-    std::shared_ptr<ConsCell> car;
+    std::shared_ptr<ConsCell> cc;
     bool quoted = false;
 
-    ListObject()
-    {
-        car = std::make_shared<ConsCell>();
-    }
+    ConsCellObject() { cc = std::make_shared<ConsCell>(); }
 
-    ListObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr) : ListObject()
-    {
-        this->car->obj = std::move(car);
+    ConsCellObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr)
+        : ConsCellObject() {
+        this->cc->car = std::move(car);
         if (!(*cdr)) {
             return;
         }
-        this->car->cdr = std::move(cdr);
+        this->cc->cdr = std::move(cdr);
     }
 
-    std::string toString() const override
-    {
-        return (quoted ? "'" : "") + car->toString();
+    std::string toString() const override {
+        return (quoted ? "'" : "") + cc->toString();
     }
 
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
-    bool operator!() const override { return !(*car); }
+    bool operator!() const override { return !(*cc); }
 
-    std::unique_ptr<Object> clone() const override
-    {
-        auto copy = std::make_unique<ListObject>();
-        copy->car = car;
+    std::unique_ptr<Object> clone() const override {
+        auto copy = std::make_unique<ConsCellObject>();
+        copy->cc = cc;
         copy->quoted = quoted;
         return copy;
     }
 
-    std::unique_ptr<ListObject> deepCopy() const
-    {
-        std::unique_ptr<ListObject> copy = std::make_unique<ListObject>();
-        ConsCell* origPtr = car.get();
-        ConsCell* copyPtr = copy->car.get();
+    std::unique_ptr<ConsCellObject> deepCopy() const {
+        std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>();
+        ConsCell *origPtr = cc.get();
+        ConsCell *copyPtr = copy->cc.get();
         assert(origPtr && copyPtr);
         while (origPtr) {
-            if (origPtr->obj) {
-                copyPtr->obj = origPtr->obj->clone();
+            if (origPtr->car) {
+                copyPtr->car = origPtr->car->clone();
             }
             origPtr = origPtr->next();
             if (origPtr) {
-                copyPtr->cdr = std::make_unique<ListObject>();
+                copyPtr->cdr = std::make_unique<ConsCellObject>();
                 copyPtr = copyPtr->next();
             }
         }
@@ -311,13 +309,12 @@ struct ListObject : Object
         return copy;
     }
 
-    bool equals(const Object& o) const override
-    {
-        const ListObject* op = dynamic_cast<const ListObject*>(&o);
+    bool equals(const Object &o) const override {
+        const ConsCellObject *op = dynamic_cast<const ConsCellObject *>(&o);
         if (op && !(*this) && !(*op)) {
             return true;
         }
-        return this->car == op->car;
+        return this->cc == op->cc;
     }
 
     std::unique_ptr<Object> eval() override;
@@ -377,11 +374,10 @@ struct SymbolObject : Object
 };
 
 // Remember nil = ()
-std::unique_ptr<Object> makeNil() { return std::make_unique<ListObject>(); }
+std::unique_ptr<Object> makeNil() { return std::make_unique<ConsCellObject>(); }
 
-std::unique_ptr<ListObject> makeList()
-{
-    return std::make_unique<ListObject>();
+std::unique_ptr<ConsCellObject> makeList() {
+    return std::make_unique<ConsCellObject>();
 }
 
 std::unique_ptr<IntObject> makeInt(std::int64_t value) {
@@ -445,21 +441,20 @@ struct FArgs
     }
 };
 
-std::unique_ptr<Object> ListObject::eval()
-{
+std::unique_ptr<Object> ConsCellObject::eval() {
     if (quoted) {
         auto cloned = clone();
-        dynamic_cast<ListObject*>(cloned.get())->quoted = false;
+        dynamic_cast<ConsCellObject *>(cloned.get())->quoted = false;
         return cloned;
     }
-    auto &c = *car;
+    auto &c = *cc;
     if (!c) {
-        return std::make_unique<ListObject>();
+        return std::make_unique<ConsCellObject>();
     }
-    const Function* f = c.obj->resolveFunction();
+    const Function *f = c.car->resolveFunction();
     if (f) {
-        assert(dynamic_cast<const NamedObject*>(c.obj.get()));
-        auto& m = *dynamic_cast<const NamedObject*>(c.obj.get())->parent;
+        assert(dynamic_cast<const NamedObject *>(c.car.get()));
+        auto &m = *dynamic_cast<const NamedObject *>(c.car.get())->parent;
         const int argc = countArgs(c.next());
         if (argc < f->minArgs || argc > f->maxArgs) {
             throw exceptions::WrongNumberOfArguments(argc);
@@ -467,12 +462,12 @@ std::unique_ptr<Object> ListObject::eval()
         FArgs args(*c.next(), m);
         return f->func(args);
     }
-    throw exceptions::VoidFunction(c.obj->toString());
+    throw exceptions::VoidFunction(c.car->toString());
 }
 
 template<size_t I, typename ...Args>
 inline typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
-                                                                       FArgs&)
+                                                                              FArgs&)
 {}
 
 template <typename T>
@@ -489,7 +484,7 @@ struct OptCheck<std::optional<T>> : std::true_type
 
 template <size_t I, typename... Args>
 inline constexpr typename std::enable_if<I == std::tuple_size_v<std::tuple<Args...>>,
-                               bool>::type
+                                         bool>::type
 tupleOptCheck()
 {
     return true;
@@ -505,63 +500,63 @@ tupleOptCheck()
     return isOptionalParam;
 }
 
-template<size_t I, typename ...Args>
-inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
-                                                                      FArgs& args)
-{
-    using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-    constexpr bool isOptionalParam = OptCheck<T>::value;
-    static_assert(!isOptionalParam || tupleOptCheck<I+1, Args...>(),
-                  "Non-optional function param given after optional one. ");
-    std::optional<typename OptCheck<T>::BaseType> opt;
-    std::unique_ptr<Object> arg;
-    bool conversionFailed = false;
-    if (args.hasNext()) {
-        arg = args.get();
-        opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
-        if (!opt) {
-            if (isOptionalParam && arg->isNil()) {
-                // nil => std::nullopt makes sense
-            }
-            else {
-                conversionFailed = true;
+    template<size_t I, typename ...Args>
+    inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
+                                                                                 FArgs& args)
+    {
+        using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
+        constexpr bool isOptionalParam = OptCheck<T>::value;
+        static_assert(!isOptionalParam || tupleOptCheck<I+1, Args...>(),
+                      "Non-optional function param given after optional one. ");
+        std::optional<typename OptCheck<T>::BaseType> opt;
+        std::unique_ptr<Object> arg;
+        bool conversionFailed = false;
+        if (args.hasNext()) {
+            arg = args.get();
+            opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
+            if (!opt) {
+                if (isOptionalParam && arg->isNil()) {
+                    // nil => std::nullopt makes sense
+                }
+                else {
+                    conversionFailed = true;
+                }
             }
         }
+        if (!opt && (!isOptionalParam || conversionFailed)) {
+            throw exceptions::WrongTypeArgument(arg->toString());
+        }
+        if (opt) {
+            std::get<I>(t) = std::move(*opt);
+        }
+        writeToTuple<I + 1>(t, args);
     }
-    if (!opt && (!isOptionalParam || conversionFailed)) {
-        throw exceptions::WrongTypeArgument(arg->toString());
-    }
-    if (opt) {
-        std::get<I>(t) = std::move(*opt);
-    }
-    writeToTuple<I + 1>(t, args);
-}
 
-template<typename ...Args>
-std::tuple<Args...> toTuple(FArgs& args)
-{
-    std::tuple<Args...> tuple;
-    writeToTuple<0>(tuple, args);
-    return tuple;
-}
+        template<typename ...Args>
+        std::tuple<Args...> toTuple(FArgs& args)
+        {
+            std::tuple<Args...> tuple;
+            writeToTuple<0>(tuple, args);
+            return tuple;
+        }
 
 void cons(std::unique_ptr<Object> sym, ConsCell& list)
 {
     if (!list) {
-        list.obj = std::move(sym);
+        list.car = std::move(sym);
         return;
     }
     ConsCell cdr = std::move(list);
-    list.obj = std::move(sym);
-    list.cdr = std::make_unique<ListObject>();
-    auto& lo = dynamic_cast<ListObject&>(*list.cdr.get());
-    lo.car->obj = std::move(cdr.obj);
-    lo.car->cdr = std::move(cdr.cdr);
+    list.car = std::move(sym);
+    list.cdr = std::make_unique<ConsCellObject>();
+    auto &lo = dynamic_cast<ConsCellObject &>(*list.cdr.get());
+    lo.cc->car = std::move(cdr.car);
+    lo.cc->cdr = std::move(cdr.cdr);
 }
 
-void cons(std::unique_ptr<Object> sym, const std::unique_ptr<ListObject> &list)
-{
-    cons(std::move(sym), *list->car);
+void cons(std::unique_ptr<Object> sym,
+          const std::unique_ptr<ConsCellObject> &list) {
+    cons(std::move(sym), *list->cc);
 }
 
 bool isPartOfSymName(const char c)
@@ -647,10 +642,8 @@ inline std::optional<double> getValue(const Object &sym)
     return std::nullopt;
 }
 
-template<>
-inline std::optional<ListObject> getValue(const Object& sym)
-{
-    auto s = dynamic_cast<const ListObject*>(&sym);
+template <> inline std::optional<ConsCellObject> getValue(const Object &sym) {
+    auto s = dynamic_cast<const ConsCellObject *>(&sym);
     if (s) {
         return *s;
     }
@@ -736,11 +729,11 @@ inline typename std::enable_if<I < sizeof...(Args), size_t>::type countNonOpts()
     return 1 + countNonOpts<I+1, Args...>();
 }
 
-template <typename... Args>
-inline size_t getMinArgs()
-{
-    return countNonOpts<0, Args...>();
-}
+    template <typename... Args>
+    inline size_t getMinArgs()
+    {
+        return countNonOpts<0, Args...>();
+    }
 
 class Machine
 {
@@ -860,19 +853,19 @@ class Machine
                 auto l = makeList();
                 l->quoted = quoted;
                 quoted = false;
-                auto lastConsCell = l->car.get();
+                auto lastConsCell = l->cc.get();
                 assert(lastConsCell);
                 expr++;
                 while (*expr != ')' && *expr) {
                     auto sym = parseNext(expr);
                     skipWhitespace(expr);
-                    if (lastConsCell->obj) {
+                    if (lastConsCell->car) {
                         assert(!lastConsCell->cdr);
-                        lastConsCell->cdr = std::make_unique<ListObject>();
+                        lastConsCell->cdr = std::make_unique<ConsCellObject>();
                         assert(lastConsCell != lastConsCell->next());
                         lastConsCell = lastConsCell->next();
                     }
-                    lastConsCell->obj = std::move(sym);
+                    lastConsCell->car = std::move(sym);
                 }
                 if (!*expr) {
                     throw exceptions::SyntaxError("End of file during parsing");
@@ -934,16 +927,8 @@ public:
         setVariable("t", std::make_unique<SymbolObject>(getSymbol("t"), false));
         
         defun("null", [](bool isNil) { return !isNil; });
-        makeFunc("car", 1, 1, [this](FArgs &args) {
-            auto arg = args.cc->obj->eval();
-            if (!arg->isList()) {
-                throw exceptions::WrongTypeArgument(args.cc->obj->toString());
-            }
-            auto list = dynamic_cast<ListObject *>(arg.get());
-            if (!list->car->obj) {
-                return makeNil();
-            }
-            return list->car->obj->clone();
+        defun("car", [](ConsCellObject obj) {
+            return obj.cc->car ? obj.cc->car->clone() : makeNil();
         });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
@@ -1105,13 +1090,13 @@ public:
             if (!sym->isList()) {
                 throw exceptions::WrongTypeArgument(sym->toString());
             }
-            auto list = dynamic_cast<ListObject*>(sym.get());
-            std::unique_ptr<ListObject> cdr = makeList();
+            auto list = dynamic_cast<ConsCellObject *>(sym.get());
+            std::unique_ptr<ConsCellObject> cdr = makeList();
             /*
-            if (list->car->cdr) {
-                cdr->car->obj = std::move(list->car->cdr->obj);
-                cdr->car->cdr = std::move(list->car->cdr->cdr);
-            }
+              if (list->car->cdr) {
+              cdr->car->obj = std::move(list->car->cdr->obj);
+              cdr->car->cdr = std::move(list->car->cdr->cdr);
+              }
             */
             std::unique_ptr<Object> ret;
             ret = std::move(cdr);
@@ -1155,12 +1140,12 @@ public:
             return r;
         });
         makeFunc("setq", 2, 2, [this](FArgs &args) {
-            const NamedObject* name =
-                dynamic_cast<NamedObject*>(args.cc->obj.get());
+            const NamedObject *name =
+                dynamic_cast<NamedObject *>(args.cc->car.get());
             if (!name) {
-                throw exceptions::WrongTypeArgument(args.cc->obj->toString());
+                throw exceptions::WrongTypeArgument(args.cc->car->toString());
             }
-            auto value = args.cc->next()->obj->eval();
+            auto value = args.cc->next()->car->eval();
             name->parent->setVariable(name->name, value->clone());
             return value;
         });
@@ -1177,9 +1162,8 @@ public:
                 }
                 else {
                     descr = arg->toString() + "'s value is " + sym->sym->variable->toString();
-                }                        
-            }
-            else if (auto list = dynamic_cast<ListObject*>(arg.get())) {
+                }
+            } else if (auto list = dynamic_cast<ConsCellObject *>(arg.get())) {
                 if (!*list) {
                     descr = arg->toString() + "'s value is " + arg->toString();
                 }
@@ -1188,31 +1172,31 @@ public:
         });
         defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
         defun("concat", [](std::string str1, std::string str2) { return str1 + str2; });
-        defun("nth", [](std::int64_t index, ListObject list) {
-            auto p = list.car.get();
-            auto obj = list.car->obj.get();
-            for (size_t i=0;i<index;i++) {
+        defun("nth", [](std::int64_t index, ConsCellObject list) {
+            auto p = list.cc.get();
+            auto obj = list.cc->car.get();
+            for (size_t i = 0; i < index; i++) {
                 p = p->next();
                 if (!p) {
                     return makeNil();
                 }
-                obj = p->obj.get();
+                obj = p->car.get();
             }
             return obj->clone();
         });
-        makeFunc("cons", 2, 2, [](FArgs& args) {
-            return std::make_unique<ListObject>(args.get(), args.get());
+        makeFunc("cons", 2, 2, [](FArgs &args) {
+            return std::make_unique<ConsCellObject>(args.get(), args.get());
         });
         makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
             auto newList = makeList();
-            ConsCell* lastCc = newList->car.get();
+            ConsCell *lastCc = newList->cc.get();
             bool first = true;
             for (auto obj : args) {
                 if (!first) {
-                    lastCc->cdr = std::make_unique<ListObject>();
+                    lastCc->cdr = std::make_unique<ConsCellObject>();
                     lastCc = lastCc->next();
                 }
-                lastCc->obj = obj->clone();
+                lastCc->car = obj->clone();
                 first = false;
             }
             return newList;
@@ -1230,11 +1214,11 @@ public:
         });
         makeFunc("pop", 1, 1, [this](FArgs& args) {
             auto arg = args.get();
-            ListObject* list = dynamic_cast<ListObject*>(arg.get());
+            ConsCellObject *list = dynamic_cast<ConsCellObject *>(arg.get());
             if (!list) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
-            auto ret = list->car->obj->clone();
+            auto ret = list->cc->car->clone();
             return ret;
         });
     }
@@ -1277,27 +1261,27 @@ std::unique_ptr<Object> FArgs::get()
     if (!cc) {
         return nullptr;
     }
-    auto sym = cc->obj->eval();
+    auto sym = cc->car->eval();
     cc = cc->next();
     return sym;
 }
 
-std::unique_ptr<Object> FArgs::Iterator::operator*() { return cc->obj->eval(); }
+std::unique_ptr<Object> FArgs::Iterator::operator*() { return cc->car->eval(); }
 
 const ConsCell* ConsCell::next() const
 {
-    auto cc = dynamic_cast<ListObject*>(this->cdr.get());
+    auto cc = dynamic_cast<ConsCellObject *>(this->cdr.get());
     if (cc) {
-        return cc->car.get();
+        return cc->cc.get();
     }
     return nullptr;
 }
 
 ConsCell* ConsCell::next()
 {
-    auto cc = dynamic_cast<ListObject*>(this->cdr.get());
+    auto cc = dynamic_cast<ConsCellObject *>(this->cdr.get());
     if (cc) {
-        return cc->car.get();
+        return cc->cc.get();
     }
     return nullptr;
 }

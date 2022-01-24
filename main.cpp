@@ -376,9 +376,10 @@ void test()
     testConsFunction();
     testListFunction();
     testNthFunction();
+    testStrings();
+    testCarFunction();
     /*
     testPopFunction();
-    testStrings();
     testBasicArithmetic();
     testDescribeVariableFunction();
     testInternFunction();
@@ -391,7 +392,6 @@ void test()
     testQuotedList();
     testSimpleEvaluations();
     testNullFunction();
-    testCarFunction();
     testCdrFunction();
     testPrognFunction();
     */
