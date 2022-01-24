@@ -562,6 +562,7 @@ void cons(std::unique_ptr<Object> sym,
 
 bool isPartOfSymName(const char c)
 {
+    if (c=='.') return true;
     if (c=='+') return true;
     if (c=='%') return true;
     if (c=='*') return true;
@@ -804,19 +805,25 @@ class Machine
         return m_syms[name];
     }
 
-    std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
+    std::string parseNextName(const char*& str)
     {
         std::string name;
         while (*str && isPartOfSymName(*str)) {
             name += *str;
             str++;
         }
+        return name;
+    }
+
+    std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
+    {
+        std::string name = parseNextName(str);
         if (quoted) {
-            return std::make_unique<SymbolObject>(getSymbol(name), true);
+            return std::make_unique<SymbolObject>(getSymbol(std::move(name)), true);
         }
         else {
             auto obj = std::make_unique<NamedObject>(this);
-            obj->name = name;
+            obj->name = std::move(name);
             return obj;
         }
     }
@@ -865,26 +872,46 @@ class Machine
                 auto l = makeList();
                 l->quoted = quoted;
                 quoted = false;
+                bool dot = false;
                 auto lastConsCell = l->cc.get();
                 assert(lastConsCell);
                 expr++;
+                skipWhitespace(expr);
                 while (*expr != ')' && *expr) {
+                    assert(!dot);
+                    if (*expr == '.') {
+                        auto old = expr;
+                        const std::string nextName = parseNextName(expr);
+                        if (nextName == ".") {
+                            dot = true;
+                        }
+                        else {
+                            expr = old;                            
+                        }
+                    }
                     auto sym = parseNext(expr);
                     skipWhitespace(expr);
-                    if (lastConsCell->car) {
-                        assert(!lastConsCell->cdr);
-                        lastConsCell->cdr = std::make_unique<ConsCellObject>();
-                        assert(lastConsCell != lastConsCell->next());
-                        lastConsCell = lastConsCell->next();
+                    if (dot) {
+                        assert(lastConsCell->car);
+                        lastConsCell->cdr = std::move(sym);
                     }
-                    lastConsCell->car = std::move(sym);
+                    else {
+                        if (lastConsCell->car) {
+                            assert(!lastConsCell->cdr);
+                            lastConsCell->cdr = std::make_unique<ConsCellObject>();
+                            assert(lastConsCell != lastConsCell->next());
+                            lastConsCell = lastConsCell->next();
+                        }
+                        lastConsCell->car = std::move(sym);
+                    }
                 }
                 if (!*expr) {
                     throw exceptions::SyntaxError("End of file during parsing");
                 }
                 expr++;
                 return l;
-            } else {
+            }
+            else {
                 std::stringstream os;
                 os << "Unexpected character: " << c;
                 throw std::runtime_error(os.str());
