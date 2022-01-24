@@ -947,6 +947,9 @@ public:
         defun("car", [](ConsCellObject obj) {
             return obj.cc->car ? obj.cc->car->clone() : makeNil();
         });
+        defun("cdr", [](ConsCellObject obj) {
+            return obj.cc->cdr ? obj.cc->cdr->clone() : makeNil();
+        });
         defun("consp", [](std::any obj) {
             if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return false;
             std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
@@ -1108,23 +1111,6 @@ public:
             }
             return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
                 : static_cast<std::unique_ptr<Object>>(makeInt(i));
-        });
-        makeFunc("cdr", 1, 1, [](FArgs& args) {
-            auto sym = args.get();
-            if (!sym->isList()) {
-                throw exceptions::WrongTypeArgument(sym->toString());
-            }
-            auto list = dynamic_cast<ConsCellObject *>(sym.get());
-            std::unique_ptr<ConsCellObject> cdr = makeList();
-            /*
-              if (list->car->cdr) {
-              cdr->car->obj = std::move(list->car->cdr->obj);
-              cdr->car->cdr = std::move(list->car->cdr->cdr);
-              }
-            */
-            std::unique_ptr<Object> ret;
-            ret = std::move(cdr);
-            return ret;
         });
         makeFunc("progn", 0, 0xfffff, [](FArgs &args) {
             std::unique_ptr<Object> ret = makeNil();

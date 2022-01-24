@@ -212,13 +212,11 @@ void testDivision()
 void testCdrFunction()
 {
     alisp::Machine m;
-    assert(m.evaluate("(cdr '(a b c))")->toString() == "(b c)");
-    assert(m.evaluate("(cdr '())")->toString() == "nil");
-    assert(m.evaluate("(cdr '(a))")->toString() == "nil");
-    assert(m.evaluate("(cdr (cdr '(a b c)))")->toString() == "(c)");
-    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
-        m.evaluate("(cdr 1)");
-    }));
+    ASSERT_OUTPUT_EQ(m, "(cdr '(a b c))", "(b c)");
+    ASSERT_OUTPUT_EQ(m, "(cdr '(a))", "nil");
+    ASSERT_OUTPUT_EQ(m, "(cdr '())", "nil");
+    ASSERT_OUTPUT_EQ(m, "(cdr (cdr '(a b c)))", "(c)");
+    ASSERT_EXCEPTION(m, "(cdr 1)", alisp::exceptions::WrongTypeArgument);
 }
 
 void testPrognFunction()
@@ -393,6 +391,7 @@ void test()
     testNthFunction();
     testStrings();
     testCarFunction();
+    testCdrFunction();
     /*
     testPopFunction();
     testBasicArithmetic();
@@ -407,7 +406,6 @@ void test()
     testQuotedList();
     testSimpleEvaluations();
     testNullFunction();
-    testCdrFunction();
     testPrognFunction();
     */
     // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
