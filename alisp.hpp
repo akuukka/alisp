@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <any>
 #include <limits>
 #include <map>
 #include <cstdio>
@@ -657,6 +658,17 @@ inline std::optional<bool> getValue(const Object &sym)
 }
 
 template<>
+inline std::optional<std::any> getValue(const Object& sym)
+{
+    auto s = dynamic_cast<const ConsCellObject*>(&sym);
+    if (s) {
+        std::shared_ptr<ConsCell> cc = s->cc;
+        return cc;
+    }
+    return std::any();
+}
+
+template<>
 inline std::optional<std::int64_t> getValue(const Object &sym)
 {
     auto s = dynamic_cast<const IntObject*>(&sym);
@@ -926,11 +938,20 @@ public:
         setVariable("nil", makeNil());
         setVariable("t", std::make_unique<SymbolObject>(getSymbol("t"), false));
         
+        defun("atom", [](std::any obj) {
+            if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
+            std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
+            return !(cc && !!(*cc));
+        });
         defun("null", [](bool isNil) { return !isNil; });
         defun("car", [](ConsCellObject obj) {
             return obj.cc->car ? obj.cc->car->clone() : makeNil();
         });
-        defun("consp", [](std::optional<ConsCellObject> obj) { return obj && !obj->isNil(); });
+        defun("consp", [](std::any obj) {
+            if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return false;
+            std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
+            return cc && !!(*cc);
+        });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
         });
