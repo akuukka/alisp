@@ -78,6 +78,8 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(car '(a . b))", "a");
     ASSERT_OUTPUT_EQ(m, "(cdr '(a . b))", "b");
     ASSERT_OUTPUT_EQ(m, "(consp '(a . b))", "t");
+    ASSERT_OUTPUT_EQ(m, "(car '(a b . c))", "a");
+    ASSERT_OUTPUT_EQ(m, "(cdr '(a b . c))", "(b . c)");
 }
 
 template <typename E>
