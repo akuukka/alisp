@@ -130,10 +130,11 @@ void testNullFunction()
     assert(m.evaluate("(null (null (null nil)))")->toString() == "t");
 }
 
-void testQuotedList()
+void testQuote()
 {
     alisp::Machine m;
-    assert(m.evaluate("'()")->toString() == "nil");
+    ASSERT_OUTPUT_EQ(m, "'()", "nil");
+    ASSERT_OUTPUT_EQ(m, "(quote a)", "a");
 }
 
 void testCloning()
@@ -402,6 +403,7 @@ void testListFunction()
 void test()
 {
     testListBasics();
+    testQuote();
     testCarFunction();
     testCdrFunction();
     testConsFunction();
@@ -419,7 +421,6 @@ void test()
     testDivision();
     testSyntaxErrorDetection();
     testCloning();
-    testQuotedList();
     testSimpleEvaluations();
     testNullFunction();
     testPrognFunction();

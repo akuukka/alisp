@@ -1000,6 +1000,9 @@ public:
             r = makeInt(count);
             return r;
         });
+        makeFunc("quote", 1, 1, [](FArgs& args) {
+            return args.cc->car ? args.cc->car->clone() : makeNil();
+        });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
         });
