@@ -244,8 +244,8 @@ void testVariables()
 void testSymbols()
 {
     alisp::Machine m;
-    assert(m.evaluate("'('a 'b)")->toString() == "('a 'b)");
-    assert(m.evaluate("'('a'b)")->toString() == "('a 'b)");
+    ASSERT_OUTPUT_EQ(m, "'('a 'b)", "('a 'b)");
+    ASSERT_OUTPUT_EQ(m, "'('a'b)", "('a 'b)");
     assert(m.evaluate("(symbolp 'abc)")->toString() == "t");
     assert(m.evaluate("(symbol-name 'abc)")->toString() == "\"abc\"");
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
@@ -261,6 +261,7 @@ void testSymbols()
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
         m.evaluate("(eq 'a a)");
     }));
+    ASSERT_EQ(m.evaluate("(symbolp (car (list 'a)))"), "t");
 }
 
 void testEqFunction()
@@ -396,12 +397,12 @@ void test()
     testStrings();
     testBasicArithmetic();
     testDescribeVariableFunction();
+    testSymbols();
     /*
     testPopFunction();
     testInternFunction();
     testEqFunction();
     testVariables();
-    testSymbols();
     testDivision();
     testSyntaxErrorDetection();
     testCloning();
