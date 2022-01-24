@@ -80,6 +80,13 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(consp '(a . b))", "t");
     ASSERT_OUTPUT_EQ(m, "(car '(a b . c))", "a");
     ASSERT_OUTPUT_EQ(m, "(cdr '(a b . c))", "(b . c)");
+    ASSERT_OUTPUT_EQ(m, "(proper-list-p 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(proper-list-p nil)", "0");
+    ASSERT_OUTPUT_EQ(m, "(proper-list-p '(1 2 3 4))", "4");
+    ASSERT_OUTPUT_EQ(m, "(proper-list-p '(a b . c))", "nil");
+    ASSERT_OUTPUT_EQ(m, "(progn (setq x '(\"a\" \"b\")) (setq y (cons x x))"
+                     "(eq (car (car y)) (car (cdr y))))", "t");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'y)", "((\"a\" \"b\") \"a\" \"b\")");
 }
 
 template <typename E>

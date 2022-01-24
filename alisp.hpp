@@ -984,6 +984,22 @@ public:
         });
         defun("listp", [](std::any o) { return o.type() == typeid(std::shared_ptr<ConsCell>); });
         defun("nlistp", [](std::any o) { return o.type() != typeid(std::shared_ptr<ConsCell>); });
+        defun("proper-list-p", [](std::any obj) {
+            if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return makeNil();
+            std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
+            std::unique_ptr<Object> r;
+            auto p = cc.get();
+            std::int64_t count = p->car ? 1 : 0;
+            while (p->cdr && p->cdr->isList()) {
+                count++;
+                p = dynamic_cast<ConsCellObject*>(p->cdr.get())->cc.get();
+                if (p->cdr && !p->cdr->isList()) {
+                    return makeNil();
+                }
+            }
+            r = makeInt(count);
+            return r;
+        });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
         });
