@@ -65,6 +65,11 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(atom '(1 2))", "nil"); 
     ASSERT_OUTPUT_EQ(m, "(atom 1)", "t"); 
     ASSERT_OUTPUT_EQ(m, "(atom nil)", "t");
+    ASSERT_OUTPUT_EQ(m, "(listp '(1 2))", "t"); 
+    ASSERT_OUTPUT_EQ(m, "(listp 1)", "nil"); 
+    ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
+    ASSERT_OUTPUT_EQ(m, "(listp '())", "t");
+    ASSERT_OUTPUT_EQ(m, "(listp ())", "t");
 }
 
 template <typename E>

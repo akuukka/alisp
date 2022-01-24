@@ -952,6 +952,7 @@ public:
             std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
             return cc && !!(*cc);
         });
+        defun("listp", [](std::any o) { return o.type() == typeid(std::shared_ptr<ConsCell>); });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
         });
