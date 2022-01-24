@@ -70,6 +70,10 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
     ASSERT_OUTPUT_EQ(m, "(listp '())", "t");
     ASSERT_OUTPUT_EQ(m, "(listp ())", "t");
+    ASSERT_OUTPUT_EQ(m, "(nlistp 1)", "t"); 
+    ASSERT_OUTPUT_EQ(m, "(nlistp nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(nlistp '())", "nil");
+    ASSERT_OUTPUT_EQ(m, "(nlistp ())", "nil");
 }
 
 template <typename E>
