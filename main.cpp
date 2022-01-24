@@ -378,6 +378,7 @@ void testConsFunction()
 void testListFunction()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(list 'a 'b)", "(a b)");
     ASSERT_OUTPUT_EQ(m, "(list 1 2 3 4 5)", "(1 2 3 4 5)");
     ASSERT_OUTPUT_EQ(m, "(list 1 2 '(3 4 5) 'foo)", "(1 2 (3 4 5) foo)");
     ASSERT_OUTPUT_EQ(m, "(list)", "nil");
