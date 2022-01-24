@@ -930,6 +930,7 @@ public:
         defun("car", [](ConsCellObject obj) {
             return obj.cc->car ? obj.cc->car->clone() : makeNil();
         });
+        defun("consp", [](std::optional<ConsCellObject> obj) { return obj && !obj->isNil(); });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
         });
