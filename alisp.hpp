@@ -228,24 +228,6 @@ struct ConsCell
     }
 };
 
-struct FArgs;
-
-struct Function
-{
-    std::string name;
-    int minArgs = 0;
-    int maxArgs = 0xffff;
-    std::function<std::unique_ptr<Object>(FArgs&)> func;
-};
-
-struct Symbol
-{
-    Machine* parent = nullptr;
-    std::string name;
-    std::unique_ptr<Object> variable;
-    std::unique_ptr<Function> function;
-};
-
 struct StringObject : Object
 {
     std::shared_ptr<std::string> value;
@@ -370,6 +352,26 @@ struct ConsCellObject : Object
     {
         return cc->end();
     }
+};
+
+struct FArgs;
+
+struct Function
+{
+    std::string name;
+    int minArgs = 0;
+    int maxArgs = 0xffff;
+    bool isMacro = false;
+    std::unique_ptr<ConsCellObject> macroCode;
+    std::function<std::unique_ptr<Object>(FArgs&)> func;
+};
+
+struct Symbol
+{
+    Machine* parent = nullptr;
+    std::string name;
+    std::unique_ptr<Object> variable;
+    std::unique_ptr<Function> function;
 };
 
 struct SymbolObject : Object
@@ -1134,6 +1136,8 @@ public:
                          }
                          return res;
                      });
+            auto sym = getSymbol(macroName);
+            sym->function->isMacro = true;
             return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
         });
         makeFunc("quote", 1, 1, [](FArgs& args) {
