@@ -389,11 +389,22 @@ void testListFunction()
     ASSERT_OUTPUT_EQ(m, "(cdr (list 'a 'b 'c))", "(b c)");
 }
 
+void testEvalFunction()
+{
+    alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(eval 1)", "1");
+    ASSERT_OUTPUT_EQ(m, "(setq foo 'bar)", "bar");
+    ASSERT_OUTPUT_EQ(m, "(setq bar 'baz)", "baz");
+    ASSERT_OUTPUT_EQ(m, "(eval 'foo)", "bar");
+    ASSERT_OUTPUT_EQ(m, "(eval foo)", "baz");
+}
+
 void test()
 {
     testSymbols();
     testQuote();
     testListBasics();
+    testEvalFunction();
     testCarFunction();
     testCdrFunction();
     testConsFunction();
