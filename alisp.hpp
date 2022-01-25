@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <variant>
 #include <any>
 #include <limits>
 #include <map>
@@ -74,7 +75,18 @@ class Machine;
 struct Object;
 struct Function;
 
-template <typename T> std::optional<T> getValue(const Object &sym);
+template < template <typename...> class Template, typename T >
+struct is_instantiation_of : std::false_type {};
+
+template < template <typename...> class Template, typename... Args >
+struct is_instantiation_of< Template, Template<Args...> > : std::true_type {};
+
+static_assert(is_instantiation_of<std::variant, std::variant<std::int64_t, double>>::value,
+              "Our template mechanism is not working.");
+
+template <typename T>
+//typename std::enable_if<true, std::optional<T>>::type getValue(const Object &sym);
+std::optional<T> getValue(const Object &sym);
 
 struct Object
 {
@@ -523,6 +535,7 @@ bool isPartOfSymName(const char c)
     if (c=='-') return true;
     if (c>='a' && c<='z') return true;
     if (c>='A' && c<='Z') return true;
+    if (c>='0' && c<='9') return true;
     return false;
 }
 
@@ -539,34 +552,6 @@ std::string parseSymbolName(const char*& str)
         str++;
     }
     return r;
-}
-
-std::unique_ptr<Object> parseNumericalSymbol(const char *&str)
-{
-    bool fp = false;
-    int dots = 0;
-    std::string r;
-    while (((*str) >= '0' && (*str) <= '9') || (*str) == '.' || (*str) == '-') {
-        if ((*str) == '.') {
-            dots++;
-            if (dots >= 2) {
-                throw std::runtime_error("Two dots!");
-            }
-        }
-        r += *str;
-        str++;
-    }
-    std::stringstream ss(r);
-    if (dots) {
-        double value;
-        ss >> value;
-        return makeFloat(value);
-    }
-    else {
-        std::int64_t value;
-        ss >> value;
-        return makeInt(value);
-    }
 }
 
 bool onlyWhitespace(const char* expr)
@@ -651,6 +636,15 @@ inline std::optional<const Symbol*> getValue(const Object& sym)
     }
     return std::nullopt;
 }
+
+/*
+template<typename... Args>
+inline std::optional<std::variant<Args...>> getValue(const Object& sym)
+{
+    std::optional<std::variant<Args...>> r;
+    return r;
+}
+*/
 
 template <typename T>
 struct function_traits : public function_traits<decltype(&T::operator())>
@@ -764,9 +758,59 @@ class Machine
         return name;
     }
 
+    std::unique_ptr<Object> getNumericConstant(const std::string& str) const
+    {
+        size_t dotCount = 0;
+        size_t digits = 0;
+        for (size_t i = 0;i < str.size(); i++) {
+            const char c = str[i];
+            if (c == '.') {
+                dotCount++;
+                if (dotCount == 2) {
+                    return nullptr;
+                }
+            }
+            else if (c == '+') {
+                if (i > 0) {
+                    return nullptr;
+                }
+            }
+            else if (c == '-') {
+                if (i > 0) {
+                    return nullptr;
+                }
+            }
+            else if (c >= '0' && c <= '9') {
+                digits++;
+            }
+            else {
+                return nullptr;
+            }
+        }
+        if (!digits) {
+            return nullptr;
+        }
+        std::stringstream ss(str);
+        if (dotCount) {
+            double value;
+            ss >> value;
+            return makeFloat(value);
+        }
+        else {
+            std::int64_t value;
+            ss >> value;
+            return makeInt(value);
+        }
+    }
+
     std::unique_ptr<Object> parseNamedObject(const char*& str)
     {
-        return std::make_unique<SymbolObject>(this, nullptr, parseNextName(str));
+        const std::string next = parseNextName(str);
+        auto num = getNumericConstant(next);
+        if (num) {
+            return num;
+        }
+        return std::make_unique<SymbolObject>(this, nullptr, next);
     }
     
     std::unique_ptr<StringObject> parseString(const char *&str)
@@ -802,11 +846,7 @@ class Machine
                 expr++;
                 continue;
             }
-            if ((c >= '0' && c <= '9') ||
-                (c =='-' && (n >= '0' && n <= '9'))) {
-                return parseNumericalSymbol(expr);
-            }
-            else if (c == '\"') {
+            if (c == '\"') {
                 return parseString(++expr);
             }
             else if (isPartOfSymName(c))

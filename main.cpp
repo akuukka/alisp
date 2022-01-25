@@ -330,14 +330,16 @@ void testDescribeVariableFunction()
 void testBasicArithmetic()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "-1", "-1");
     ASSERT_OUTPUT_EQ(m, "(% 5 2)", "1");
     ASSERT_EXCEPTION(m, "(% 5 2.0)", alisp::exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(+ 1 1)", "2");
     ASSERT_OUTPUT_EQ(m, "(+)", "0");
     ASSERT_OUTPUT_EQ(m, "(* 3 4)", "12");
     ASSERT_OUTPUT_EQ(m, "(*)", "1");
-    ASSERT_OUTPUT_EQ(m, "-1", "-1");
     ASSERT_OUTPUT_EQ(m, "(+ 1 -1)", "0");
+    ASSERT_OUTPUT_EQ(m, "(1+ 0)", "1");
+    ASSERT_OUTPUT_EQ(m, "(1+ 0.0)", "1.0");
 }
 
 void testPopFunction()
@@ -404,6 +406,7 @@ void testEvalFunction()
 
 void test()
 {
+    testBasicArithmetic();
     testSymbols();
     testQuote();
     testListBasics();
@@ -414,7 +417,6 @@ void test()
     testListFunction();
     testNthFunction();
     testStrings();
-    testBasicArithmetic();
     testDescribeVariableFunction();
     testInternFunction();
     testPopFunction();
