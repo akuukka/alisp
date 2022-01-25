@@ -1295,11 +1295,22 @@ public:
             return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
                 : static_cast<std::unique_ptr<Object>>(makeInt(i));
         });
-        makeFunc("progn", 0, 0xfffff, [](FArgs &args) {
+        makeFunc("progn", 0, 0xfffff, [](FArgs& args) {
             std::unique_ptr<Object> ret = makeNil();
             for (auto obj : args) {
                 ret = std::move(obj);
             }
+            return ret;
+        });
+        makeFunc("prog1", 0, 0xfffff, [](FArgs& args) {
+            std::unique_ptr<Object> ret;
+            for (auto obj : args) {
+                assert(obj);
+                if (!ret) {
+                    ret = std::move(obj);
+                }
+            }
+            if (!ret) ret = makeNil();
             return ret;
         });
         makeFunc("intern", 1, 1, [this](FArgs& args) {

@@ -225,14 +225,15 @@ void testPrognFunction()
 {
     alisp::Machine m;
     std::set<std::string> expectedMsgs = {
-        "A", "B"
+        "A", "B", "C", "D"
     };
     m.setMessageHandler([&](std::string msg) {
         expectedMsgs.erase(msg);
     });
-    assert(m.evaluate("(progn (message \"A\") (message \"B\") 2)")->toString() == "2");
+    ASSERT_OUTPUT_EQ(m, "(progn (message \"A\") (message \"B\") 2)", "2");
+    ASSERT_OUTPUT_EQ(m, "(progn)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(prog1 5 (message \"C\") (message \"D\") 2)", "5");
     assert(expectedMsgs.empty());
-    assert(m.evaluate("(progn)")->toString() == "nil");
 }
 
 void testVariables()
