@@ -406,8 +406,20 @@ void testEvalFunction()
     ASSERT_OUTPUT_EQ(m, "(eval foo)", "baz");
 }
 
+void testMacros()
+{
+    alisp::Machine m;
+    /*
+(defmacro inc (var) (list 'setq var (list '1+ var)))
+     */
+    ASSERT_OUTPUT_EQ(m, "(defmacro inc (var) (list 'setq var (list '1+ var)))", "inc");
+    ASSERT_OUTPUT_EQ(m, "(setq x 1)", "1");
+    ASSERT_OUTPUT_EQ(m, "(inc x)", "2");
+}
+
 void test()
 {
+    testMacros();
     testBasicArithmetic();
     testSymbols();
     testQuote();

@@ -988,6 +988,26 @@ class Machine
         }
         return nullptr;
     }
+
+    void renameSymbols(ConsCellObject& obj, std::map<std::string, std::string> conv)
+    {
+        auto p = obj.cc.get();
+        while (p) {
+            auto& obj = *p->car.get();
+            SymbolObject* sym = dynamic_cast<SymbolObject*>(&obj);
+            if (sym && conv.count(sym->name)) {
+                sym->name = conv[sym->name];
+                p->car = quote(obj.clone());
+            }
+            ConsCellObject* cc = dynamic_cast<ConsCellObject*>(&obj);
+            if (cc) {
+                renameSymbols(*cc, conv);
+            }
+
+            p = p->next();
+        }
+    }
+
 public:
     std::unique_ptr<Object> parse(const char *expr) {
         auto r = parseNext(expr);
@@ -1019,13 +1039,13 @@ public:
     }
 
     void makeFunc(const char *name, int minArgs, int maxArgs,
-                  std::function<std::unique_ptr<Object>(FArgs &)> f)
+                  const std::function<std::unique_ptr<Object>(FArgs &)>& f)
     {
         auto func = std::make_unique<Function>();
         func->name = name;
         func->minArgs = minArgs;
         func->maxArgs = maxArgs;
-        func->func = f;
+        func->func = std::move(f);
         getSymbol(name)->function = std::move(func);
     }
 
@@ -1078,6 +1098,35 @@ public:
             }
             r = makeInt(count);
             return r;
+        });
+        makeFunc("defmacro", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
+            const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
+            assert(nameSym);
+            std::string macroName = nameSym->name;
+            args.skip();
+            ConsCellObject argList = dynamic_cast<ConsCellObject&>(*args.cc->car);
+            const int argc = countArgs(argList.cc.get());
+            args.skip();
+            ConsCellObject code = dynamic_cast<ConsCellObject&>(*args.cc->car);
+            makeFunc(macroName.c_str(),
+                     argc,
+                     argc,
+                     [this, macroName, argList, code](FArgs& a) mutable {
+                         size_t i = 0;
+                         std::map<std::string, std::string> conv;
+                         for (const auto& obj : argList) {
+                             const SymbolObject* from = dynamic_cast<const SymbolObject*>(&obj);
+                             const SymbolObject* to = dynamic_cast<const SymbolObject*>(a.cc->car.get());
+                             a.skip();
+                             conv[from->name] = to->name;
+                         }
+                         auto e = code.clone();
+                         auto& code = dynamic_cast<ConsCellObject&>(*e.get());
+                         renameSymbols(code, conv);
+                         auto expanded = code.eval();
+                         return expanded->eval();
+                     });
+            return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
         });
         makeFunc("quote", 1, 1, [](FArgs& args) {
             return args.cc->car ? args.cc->car->clone() : makeNil();
