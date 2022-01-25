@@ -783,23 +783,18 @@ class Machine
         return sym;
     }
 
+    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj)
+    {
+        std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>();
+        list->cc->car = std::make_unique<SymbolObject>(this, nullptr, "quote");
+        std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>();
+        cdr->cc->car = std::move(obj);
+        list->cc->cdr = std::move(cdr);
+        return list;
+    }
+
     std::unique_ptr<Object> parseNext(const char *&expr)
     {
-        bool quoted = false;
-        auto getReturnValue = [this, &quoted](std::unique_ptr<Object> obj) {
-            if (!quoted) {
-                return obj;
-            }
-            std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>();
-            list->cc->car = std::make_unique<SymbolObject>(this, nullptr, "quote");
-            std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>();
-            cdr->cc->car = std::move(obj);
-            list->cc->cdr = std::move(cdr);
-            std::unique_ptr<Object> r = std::move(list);
-            return r;
-        };
-        
-        // Skip whitespace until next symbol
         while (*expr) {
             const char c = *expr;
             const char n = *(expr+1);
@@ -809,18 +804,18 @@ class Machine
             }
             if ((c >= '0' && c <= '9') ||
                 (c =='-' && (n >= '0' && n <= '9'))) {
-                return getReturnValue(parseNumericalSymbol(expr));
+                return parseNumericalSymbol(expr);
             }
             else if (c == '\"') {
-                return getReturnValue(parseString(++expr));
+                return parseString(++expr);
             }
             else if (isPartOfSymName(c))
             {
-                return getReturnValue(parseNamedObject(expr));
+                return parseNamedObject(expr);
             }
             else if (c == '\'') {
-                quoted = true;
                 expr++;
+                return quote(parseNext(expr));
             }
             else if (c == '(') {
                 auto l = makeList();
@@ -861,7 +856,7 @@ class Machine
                     throw exceptions::SyntaxError("End of file during parsing");
                 }
                 expr++;
-                return getReturnValue(std::move(l));
+                return l;
             }
             else {
                 std::stringstream os;

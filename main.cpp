@@ -134,9 +134,12 @@ void testQuote()
 {
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "'()", "nil");
-    ASSERT_OUTPUT_EQ(m, "'a", "a");
-    ASSERT_OUTPUT_EQ(m, "(quote a)", "a");
     ASSERT_OUTPUT_EQ(m, "'(1 2 3)", "(1 2 3)");
+    ASSERT_OUTPUT_EQ(m, "(quote (+ 1 2))", "(+ 1 2)");
+    ASSERT_OUTPUT_EQ(m, "(quote foo)", "foo");
+    ASSERT_OUTPUT_EQ(m, "'foo", "foo");
+    ASSERT_OUTPUT_EQ(m, "''foo", "'foo");
+    ASSERT_OUTPUT_EQ(m, "'(quote foo)", "'foo");
 }
 
 void testCarFunction()
