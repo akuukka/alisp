@@ -345,26 +345,6 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_CONTAINS(m, "(+ +.1 -0.1)", "0.0");
 }
 
-void testPopFunction()
-{
-    alisp::Machine m;
-    /*
-(setq x '(1 2 3))
-(setq y x)
-(eq y x) ; t
-(pop x)
-(eq y x) ; nil
-x
-y
-     */
-    ASSERT_OUTPUT_EQ(m, "(setq x '(1 2 3))", "(1 2 3)");
-    ASSERT_OUTPUT_EQ(m, "(setq y x)", "(1 2 3)");
-    ASSERT_OUTPUT_EQ(m, "(eq y x)", "t");
-    //ASSERT_OUTPUT_EQ(m, "(pop x)", "1");
-    //ASSERT_OUTPUT_EQ(m, "y", "(1 2 3)");
-    //ASSERT_OUTPUT_EQ(m, "x", "(2 3)");
-}
-
 void testNthFunction()
 {
     alisp::Machine m;
@@ -417,6 +397,11 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(setq x 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(inc x)", "2");
     ASSERT_EXCEPTION(m, "(inc 1)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(setq li '(1 2 3))", "(1 2 3)");
+    ASSERT_OUTPUT_EQ(m, "(pop li)", "1");
+    ASSERT_OUTPUT_EQ(m, "li", "(2 3)");
+    ASSERT_OUTPUT_EQ(m, "(pop nil)", "nil");
+    ASSERT_EXCEPTION(m, "(pop 1)", alisp::exceptions::WrongTypeArgument);
 }
 
 void test()
@@ -435,7 +420,6 @@ void test()
     testStrings();
     testDescribeVariableFunction();
     testInternFunction();
-    testPopFunction();
     testEqFunction();
     testVariables();
     testDivision();

@@ -1435,6 +1435,10 @@ public:
         });
         evaluate("(defmacro push (element listname)"
                  "  (list 'setq listname (list 'cons element listname)))");
+        evaluate("(defmacro pop (listname)"
+                 "   (list 'prog1 (list 'car listname)"
+                 "   (list 'setq listname "
+                 "   (list 'cdr listname))))");
     }
 
     template<typename F>
