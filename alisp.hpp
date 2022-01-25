@@ -1017,22 +1017,18 @@ class Machine
         return nullptr;
     }
 
-    void renameSymbols(ConsCellObject& obj,
-                       std::map<std::string, std::unique_ptr<Object>>& conv,
-                       std::vector<std::pair<std::unique_ptr<Object>*,
-                       std::unique_ptr<Object>>>& restoreList)
+    void renameSymbols(ConsCellObject& obj, std::map<std::string, std::unique_ptr<Object>>& conv)
     {
         auto p = obj.cc.get();
         while (p) {
             auto& obj = *p->car.get();
             SymbolObject* sym = dynamic_cast<SymbolObject*>(&obj);
             if (sym && conv.count(sym->name)) {
-                restoreList.emplace_back(&p->car, std::move(p->car));
                 p->car = quote(conv[sym->name]->clone());
             }
             ConsCellObject* cc = dynamic_cast<ConsCellObject*>(&obj);
             if (cc) {
-                renameSymbols(*cc, conv, restoreList);
+                renameSymbols(*cc, conv);
             }
             p = p->next();
         }
@@ -1150,16 +1146,11 @@ public:
                              conv[from->name] = a.cc->car.get()->clone();
                              a.skip();
                          }
-                         auto e = code.clone();
+                         auto e = code.deepCopy();
                          auto& code = dynamic_cast<ConsCellObject&>(*e.get());
-                         std::vector<std::pair<std::unique_ptr<Object>*,
-                                               std::unique_ptr<Object>>> rl;
-                         renameSymbols(code, conv, rl);
+                         renameSymbols(code, conv);
                          auto expanded = code.eval();
                          auto res = expanded->eval();
-                         for (auto& p : rl) {
-                             *p.first = std::move(p.second);
-                         }
                          return res;
                      });
             auto sym = getSymbol(macroName);

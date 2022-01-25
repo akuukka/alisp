@@ -433,7 +433,6 @@ void testDeepCopy()
 void test()
 {
     testDeepCopy();
-    return;
     testListBasics();
     testQuote();
     testMacros();
