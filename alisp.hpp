@@ -1422,6 +1422,8 @@ public:
             auto ret = list->cc->car->clone();
             return ret;
         });
+        evaluate("(defmacro push (element listname)"
+                 "  (list 'setq listname (list 'cons element listname)))");
     }
 
     template<typename F>

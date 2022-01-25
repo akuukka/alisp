@@ -409,8 +409,6 @@ void testEvalFunction()
 void testMacros()
 {
     alisp::Machine m;
-    ASSERT_OUTPUT_EQ(m, "(defmacro push (element listname) "
-                     "(list 'setq listname (list 'cons element listname)))", "push");
     ASSERT_OUTPUT_EQ(m, "(setq l '(a b))", "(a b)");
     ASSERT_OUTPUT_EQ(m, "(push 'c l)", "(c a b)");
     ASSERT_OUTPUT_EQ(m, "(push 'd l)", "(d c a b)");
