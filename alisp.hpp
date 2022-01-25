@@ -201,6 +201,31 @@ struct ConsCell
     {
         return !car;
     }
+
+    struct Iterator
+    {
+        ConsCell* ptr;
+        bool operator!=(const Iterator& rhs) const { return ptr != rhs.ptr; }
+        Iterator& operator++()
+        {
+            ptr = ptr->next();
+            return *this;
+        }
+
+        Object& operator*() {
+            return *ptr->car.get();
+        }
+    };
+
+    Iterator begin()
+    {
+        return Iterator{this};
+    }
+
+    Iterator end()
+    {
+        return Iterator{nullptr};
+    }
 };
 
 struct FArgs;
@@ -335,6 +360,16 @@ struct ConsCellObject : Object
     }
 
     std::unique_ptr<Object> eval() override;
+
+    ConsCell::Iterator begin()
+    {
+        return cc->begin();
+    }
+    
+    ConsCell::Iterator end()
+    {
+        return cc->end();
+    }
 };
 
 struct SymbolObject : Object
@@ -419,6 +454,11 @@ struct FArgs
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
     std::unique_ptr<Object> get();
+    
+    void skip()
+    {
+        cc = cc->next();
+    }
 
     bool hasNext() const
     {
