@@ -316,11 +316,7 @@ struct ConsCellObject : Object
         this->cc->cdr = std::move(cdr);
     }
 
-    std::string toString() const override
-    {
-        return cc->toString();
-    }
-
+    std::string toString() const override { return cc->toString(); }
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
     bool operator!() const override { return !(*cc); }
@@ -351,6 +347,36 @@ struct ConsCellObject : Object
     ConsCell::Iterator end()
     {
         return cc->end();
+    }
+
+    std::unique_ptr<ConsCellObject> deepCopy() const
+    {
+        std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>();
+        ConsCell *origPtr = cc.get();
+        ConsCell *copyPtr = copy->cc.get();
+        assert(origPtr && copyPtr);
+        while (origPtr) {
+            if (origPtr->car) {
+                if (origPtr->car->isList()) {
+                    const auto list = dynamic_cast<ConsCellObject*>(origPtr->car.get());
+                    copyPtr->car = list->deepCopy();
+                }
+                else {
+                    copyPtr->car = origPtr->car->clone();
+                }
+            }
+            auto cdr = origPtr->cdr.get();
+            origPtr = origPtr->next();
+            if (origPtr) {
+                copyPtr->cdr = std::make_unique<ConsCellObject>();
+                copyPtr = copyPtr->next();
+            }
+            else if (cdr) {
+                assert(!cdr->isList());
+                copyPtr->cdr = cdr->clone(); 
+            }
+        }
+        return copy;
     }
 };
 
@@ -1535,11 +1561,11 @@ std::string ConsCell::toString() const
     std::string s = "(";
     const ConsCell *t = this;
     while (t) {
-        s += t->car ? t->car->toString() : "";
         if (!t->next() && t->cdr) {
-            s += " . " + cdr->toString();
+            s += t->car->toString() + " . " + t->cdr->toString();
             break;
         }
+        s += t->car ? t->car->toString() : "";
         t = t->next();
         if (t) {
             s += " ";

@@ -56,6 +56,7 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res
 void testListBasics()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "'(1 2 . 3)", "(1 2 . 3)");
     ASSERT_OUTPUT_EQ(m, "()", "nil");
     ASSERT_OUTPUT_EQ(m, "'(1)", "(1)"); 
     ASSERT_OUTPUT_EQ(m, "'(1 2 3)", "(1 2 3)"); 
@@ -404,13 +405,40 @@ void testMacros()
     ASSERT_EXCEPTION(m, "(pop 1)", alisp::exceptions::WrongTypeArgument);
 }
 
+void testDeepCopy()
+{
+    alisp::Machine m;
+    // Cloning
+    auto storage = m.evaluate("'(1 2 3 4)");
+    auto list = dynamic_cast<alisp::ConsCellObject*>(storage.get());
+    assert(list);
+    auto cloned = list->clone();
+    list->cc->car = alisp::makeInt(5);
+    ASSERT_EQ(list->toString(), "(5 2 3 4)");
+    ASSERT_EQ(cloned->toString(), "(5 2 3 4)");
+    // Deepcopying
+    auto copied = list->deepCopy();
+    list->cc->car = alisp::makeInt(1);
+    ASSERT_EQ(list->toString(), "(1 2 3 4)");
+    ASSERT_EQ(copied->toString(), "(5 2 3 4)");
+    // Should work dotted pairs as well
+    storage = m.evaluate("'(1 2 . 3)");
+    list = dynamic_cast<alisp::ConsCellObject*>(storage.get());
+    assert(list);
+    ASSERT_EQ(list->toString(), "(1 2 . 3)");
+    copied = list->deepCopy();
+    ASSERT_EQ(copied->toString(), "(1 2 . 3)");
+}
+
 void test()
 {
+    testDeepCopy();
+    return;
+    testListBasics();
+    testQuote();
     testMacros();
     testBasicArithmetic();
     testSymbols();
-    testQuote();
-    testListBasics();
     testEvalFunction();
     testCarFunction();
     testCdrFunction();
@@ -427,6 +455,7 @@ void test()
     testSimpleEvaluations();
     testNullFunction();
     testPrognFunction();
+
     /*
 foo                 ; A symbol named ‘foo’.
 FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
