@@ -85,8 +85,49 @@ static_assert(is_instantiation_of<std::variant, std::variant<std::int64_t, doubl
               "Our template mechanism is not working.");
 
 template <typename T>
-//typename std::enable_if<true, std::optional<T>>::type getValue(const Object &sym);
 std::optional<T> getValue(const Object &sym);
+
+template <typename T, typename T2 = void>
+struct Converter
+{
+    std::optional<T> operator()(const Object& obj)
+    {
+        return getValue<T>(obj);
+    }
+};
+
+template <typename T>
+struct Converter<T, typename std::enable_if<is_instantiation_of<std::variant, T>::value>::type>
+{
+    template<size_t I>
+    typename std::enable_if<I == std::variant_size_v<T>, void>::type tryGetValue(const Object& o,
+                                                                                std::optional<T>& v)
+    {
+        
+    }
+
+    template<size_t I>
+    typename std::enable_if<I < std::variant_size_v<T>, void>::type tryGetValue(const Object& o,
+                                                                                std::optional<T>& v)
+    {
+        using TT = std::variant_alternative_t<I, T>;
+        std::optional<TT> opt = getValue<TT>(o);
+        if (opt) {
+            T variant;
+            variant = *opt;
+            v = variant;
+            return;
+        }
+        tryGetValue<I+1>(o, v);
+    }
+    
+    std::optional<T> operator()(const Object& obj)
+    {
+        std::optional<T> t;
+        tryGetValue<0>(obj, t);
+        return t;
+    }
+};
 
 struct Object
 {
@@ -111,7 +152,7 @@ struct Object
 
     template <typename T> T value() const
     {
-        const std::optional<T> opt = getValue<T>(*this);
+        const std::optional<T> opt = Converter<T>()(*this);
         if (opt) {
             return *opt;
         }
@@ -120,7 +161,8 @@ struct Object
 
     template <typename T> std::optional<T> valueOrNull() const
     {
-        return getValue<T>(*this);
+        Converter<T> conv;
+        return conv(*this);
     }
 
     virtual std::unique_ptr<Object> eval()
@@ -963,6 +1005,16 @@ public:
         });
         defun("cdr", [](ConsCellObject obj) {
             return obj.cc->cdr ? obj.cc->cdr->clone() : makeNil();
+        });
+        defun("1+", [](std::variant<double, std::int64_t> obj) -> std::unique_ptr<Object> {
+            try {
+                const std::int64_t i = std::get<std::int64_t>(obj);
+                return makeInt(i+1);
+            }
+            catch (std::bad_variant_access&) {
+                const double f = std::get<double>(obj);
+                return makeFloat(f+1.0);
+            }
         });
         defun("consp", [](std::any obj) {
             if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return false;
