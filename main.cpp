@@ -341,6 +341,7 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(1+ 0)", "1");
     ASSERT_OUTPUT_CONTAINS(m, "(1+ 0.0)", "1.0");
     ASSERT_EXCEPTION(m, "(1+ \"a\")", alisp::exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_CONTAINS(m, "(+ +.1 -0.1)", "0.0");
 }
 
 void testPopFunction()
@@ -428,12 +429,7 @@ void test()
     testSimpleEvaluations();
     testNullFunction();
     testPrognFunction();
-    // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
     /*
-(symbol-name 2)
-(setq sym (make-symbol "foo"))
-(symbol-name sym) => foo
-
 foo                 ; A symbol named ‘foo’.
 FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
 1+                  ; A symbol named ‘1+’
@@ -448,24 +444,6 @@ FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
 
 int main(int, char**)
 {
-    /*
-    using namespace alisp;
-    Converter<std::variant<double, std::int64_t>> conv;
-
-    auto f = makeFloat(1.5);
-    auto opt = conv(*f);
-    assert(opt);
-    std::cout << std::get<double>(*opt) << std::endl;
-
-    auto i = makeInt(5);
-    opt = conv(*i);
-    assert(opt);
-    std::cout << std::get<std::int64_t>(*opt) << std::endl;
-
-    auto n = makeNil();
-    opt = conv(*n);
-    assert(!opt);
-    */
     test();
     return 0;
 }
