@@ -1127,16 +1127,16 @@ public:
         });
         makeFunc("defmacro", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
             const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
-            assert(nameSym);
+            if (!nameSym || nameSym->name.empty()) {
+                throw exceptions::WrongTypeArgument(args.cc->car->toString());
+            }
             std::string macroName = nameSym->name;
             args.skip();
             ConsCellObject argList = dynamic_cast<ConsCellObject&>(*args.cc->car);
             const int argc = countArgs(argList.cc.get());
             args.skip();
             ConsCellObject code = dynamic_cast<ConsCellObject&>(*args.cc->car);
-            makeFunc(macroName.c_str(),
-                     argc,
-                     argc,
+            makeFunc(macroName.c_str(), argc, argc,
                      [this, macroName, argList, code](FArgs& a) mutable {
                          size_t i = 0;
                          std::map<std::string, std::unique_ptr<Object>> conv;
@@ -1146,12 +1146,9 @@ public:
                              conv[from->name] = a.cc->car.get()->clone();
                              a.skip();
                          }
-                         auto e = code.deepCopy();
-                         auto& code = dynamic_cast<ConsCellObject&>(*e.get());
-                         renameSymbols(code, conv);
-                         auto expanded = code.eval();
-                         auto res = expanded->eval();
-                         return res;
+                         auto copied = code.deepCopy();
+                         renameSymbols(*copied, conv);
+                         return copied->eval()->eval();
                      });
             auto sym = getSymbol(macroName);
             sym->function->isMacro = true;
