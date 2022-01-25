@@ -139,28 +139,7 @@ struct ConsCell
     std::unique_ptr<Object> car;
     std::unique_ptr<Object> cdr;
 
-    std::string toString() const
-    {
-        if (!car && !cdr) {
-            return "nil";
-        }
-        std::string s = "(";
-        const ConsCell *t = this;
-        while (t) {
-            s += t->car ? t->car->toString() : "";
-            if (!t->next() && t->cdr) {
-                s += " . " + cdr->toString();
-                break;
-            }
-            t = t->next();
-            if (t) {
-                s += " ";
-            }
-        }
-        s += ")";
-        return s;
-    }
-
+    std::string toString() const;
     const ConsCell* next() const;
     ConsCell* next();
 
@@ -263,12 +242,12 @@ struct FloatObject : Object
 struct ConsCellObject : Object
 {
     std::shared_ptr<ConsCell> cc;
-    bool quoted = false;
 
     ConsCellObject() { cc = std::make_shared<ConsCell>(); }
 
-    ConsCellObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr)
-        : ConsCellObject() {
+    ConsCellObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr) :
+        ConsCellObject()
+    {
         this->cc->car = std::move(car);
         if (!(*cdr)) {
             return;
@@ -276,41 +255,24 @@ struct ConsCellObject : Object
         this->cc->cdr = std::move(cdr);
     }
 
-    std::string toString() const override {
-        return (quoted ? "'" : "") + cc->toString();
+    std::string toString() const override
+    {
+        return cc->toString();
     }
 
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
     bool operator!() const override { return !(*cc); }
 
-    std::unique_ptr<Object> clone() const override {
+    std::unique_ptr<Object> clone() const override
+    {
         auto copy = std::make_unique<ConsCellObject>();
         copy->cc = cc;
-        copy->quoted = quoted;
         return copy;
     }
 
-    std::unique_ptr<ConsCellObject> deepCopy() const {
-        std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>();
-        ConsCell *origPtr = cc.get();
-        ConsCell *copyPtr = copy->cc.get();
-        assert(origPtr && copyPtr);
-        while (origPtr) {
-            if (origPtr->car) {
-                copyPtr->car = origPtr->car->clone();
-            }
-            origPtr = origPtr->next();
-            if (origPtr) {
-                copyPtr->cdr = std::make_unique<ConsCellObject>();
-                copyPtr = copyPtr->next();
-            }
-        }
-
-        return copy;
-    }
-
-    bool equals(const Object &o) const override {
+    bool equals(const Object &o) const override
+    {
         const ConsCellObject *op = dynamic_cast<const ConsCellObject *>(&o);
         if (op && !(*this) && !(*op)) {
             return true;
@@ -321,56 +283,52 @@ struct ConsCellObject : Object
     std::unique_ptr<Object> eval() override;
 };
 
-struct NamedObject : Object
-{
-    Machine* parent;
-    std::string name;
-
-    std::string toString() const override
-    {
-        return name;
-    }
-
-    Function* resolveFunction() override;
-
-    NamedObject(Machine *parent) : parent(parent) {}
-
-    std::unique_ptr<Object> clone() const override
-    {
-        auto sym = std::make_unique<NamedObject>(parent);
-        sym->name = name;
-        return sym;
-    }
-
-    std::unique_ptr<Object> eval() override;
-};
-
 struct SymbolObject : Object
 {
     std::shared_ptr<Symbol> sym;
-    bool quoted = false;
+    std::string name;
+    Machine* parent;
 
-    SymbolObject(std::shared_ptr<Symbol> sym, bool quoted) : sym(sym), quoted(quoted) {}
+    SymbolObject(Machine* parent,
+                 std::shared_ptr<Symbol> sym = nullptr,
+                 std::string name = "") :
+        parent(parent),
+        sym(sym),
+        name(name)
+    {
+        assert(sym || name.size());
+    }
+
+    const std::string getSymbolName()
+    {
+        return sym ? sym->name : name;
+    };
+
+    Symbol* getSymbol() const;
+
+    Function* resolveFunction() override;
 
     std::string toString() const override
     {
-        return (quoted ? "'" : "") + sym->name;
+        return sym ? sym->name : name;
     }
 
     std::unique_ptr<Object> clone() const override
     {
-        return std::make_unique<SymbolObject>(sym, quoted);
+        return std::make_unique<SymbolObject>(parent, sym, name);
     }
 
-    std::unique_ptr<Object> eval() override
-    {
-        return std::make_unique<SymbolObject>(sym, false);
-    }
+    std::unique_ptr<Object> eval() override;
 
     bool equals(const Object& o) const override
     {
         const SymbolObject* op = dynamic_cast<const SymbolObject*>(&o);
-        return op && op->sym == sym;
+        if (!op) {
+            return false;
+        }
+        const Symbol* lhs = getSymbol();
+        const Symbol* rhs = op->getSymbol();
+        return lhs == rhs;
     }
 };
 
@@ -442,20 +400,15 @@ struct FArgs
     }
 };
 
-std::unique_ptr<Object> ConsCellObject::eval() {
-    if (quoted) {
-        auto cloned = clone();
-        dynamic_cast<ConsCellObject *>(cloned.get())->quoted = false;
-        return cloned;
-    }
+std::unique_ptr<Object> ConsCellObject::eval()
+{
     auto &c = *cc;
     if (!c) {
         return std::make_unique<ConsCellObject>();
     }
-    const Function *f = c.car->resolveFunction();
+    const Function* f = c.car->resolveFunction();
     if (f) {
-        assert(dynamic_cast<const NamedObject *>(c.car.get()));
-        auto &m = *dynamic_cast<const NamedObject *>(c.car.get())->parent;
+        auto &m = *dynamic_cast<const SymbolObject*>(c.car.get())->parent;
         const int argc = countArgs(c.next());
         if (argc < f->minArgs || argc > f->maxArgs) {
             throw exceptions::WrongNumberOfArguments(argc);
@@ -783,16 +736,12 @@ class Machine
         func->minArgs = getMinArgs<Args...>();
         func->maxArgs = sizeof...(Args);
         func->func = w;
-        // std::cout << name << " " << func->minArgs << " " << func->maxArgs << std::endl;
         getSymbol(name)->function = std::move(func);
     }
 
     std::unique_ptr<Object> makeTrue()
     {
-        assert(m_syms.count("t"));
-        auto r = std::make_unique<NamedObject>(this);
-        r->name = "t";
-        return r;
+        return std::make_unique<SymbolObject>(this, nullptr, "t");
     }
 
     std::shared_ptr<Symbol> getSymbol(std::string name)
@@ -815,17 +764,9 @@ class Machine
         return name;
     }
 
-    std::unique_ptr<Object> parseNamedObject(const char*& str, bool quoted)
+    std::unique_ptr<Object> parseNamedObject(const char*& str)
     {
-        std::string name = parseNextName(str);
-        if (quoted) {
-            return std::make_unique<SymbolObject>(getSymbol(std::move(name)), true);
-        }
-        else {
-            auto obj = std::make_unique<NamedObject>(this);
-            obj->name = std::move(name);
-            return obj;
-        }
+        return std::make_unique<SymbolObject>(this, nullptr, parseNextName(str));
     }
     
     std::unique_ptr<StringObject> parseString(const char *&str)
@@ -845,6 +786,19 @@ class Machine
     std::unique_ptr<Object> parseNext(const char *&expr)
     {
         bool quoted = false;
+        auto getReturnValue = [this, &quoted](std::unique_ptr<Object> obj) {
+            if (!quoted) {
+                return obj;
+            }
+            std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>();
+            list->cc->car = std::make_unique<SymbolObject>(this, nullptr, "quote");
+            std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>();
+            cdr->cc->car = std::move(obj);
+            list->cc->cdr = std::move(cdr);
+            std::unique_ptr<Object> r = std::move(list);
+            return r;
+        };
+        
         // Skip whitespace until next symbol
         while (*expr) {
             const char c = *expr;
@@ -855,14 +809,14 @@ class Machine
             }
             if ((c >= '0' && c <= '9') ||
                 (c =='-' && (n >= '0' && n <= '9'))) {
-                return parseNumericalSymbol(expr);
+                return getReturnValue(parseNumericalSymbol(expr));
             }
             else if (c == '\"') {
-                return parseString(++expr);
+                return getReturnValue(parseString(++expr));
             }
             else if (isPartOfSymName(c))
             {
-                return parseNamedObject(expr, quoted);
+                return getReturnValue(parseNamedObject(expr));
             }
             else if (c == '\'') {
                 quoted = true;
@@ -870,8 +824,6 @@ class Machine
             }
             else if (c == '(') {
                 auto l = makeList();
-                l->quoted = quoted;
-                quoted = false;
                 bool dot = false;
                 auto lastConsCell = l->cc.get();
                 assert(lastConsCell);
@@ -909,7 +861,7 @@ class Machine
                     throw exceptions::SyntaxError("End of file during parsing");
                 }
                 expr++;
-                return l;
+                return getReturnValue(std::move(l));
             }
             else {
                 std::stringstream os;
@@ -933,18 +885,18 @@ public:
         return parse(expr)->eval();
     }
 
-    Object* resolveVariable(NamedObject* sym)
+    Object* resolveVariable(const std::string& name)
     {
-        if (m_syms.count(sym->name)) {
-            return m_syms[sym->name]->variable.get();
+        if (m_syms.count(name)) {
+            return m_syms[name]->variable.get();
         }
         return nullptr;
     }
 
-    Function* resolveFunction(NamedObject* sym)
+    Function* resolveFunction(const std::string& name)
     {
-        if (m_syms.count(sym->name)) {
-            return m_syms[sym->name]->function.get();
+        if (m_syms.count(name)) {
+            return m_syms[name]->function.get();
         }
         return nullptr;
     }
@@ -963,7 +915,7 @@ public:
     Machine()
     {
         setVariable("nil", makeNil());
-        setVariable("t", std::make_unique<SymbolObject>(getSymbol("t"), false));
+        setVariable("t", std::make_unique<SymbolObject>(this, getSymbol("t"), ""));
         
         defun("atom", [](std::any obj) {
             if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
@@ -1010,14 +962,14 @@ public:
             auto arg = args.get();
             return arg->isInt() || arg->isFloat() ? makeTrue() : makeNil();
         });
-        makeFunc("make-symbol", 1, 1, [](FArgs& args) {
+        makeFunc("make-symbol", 1, 1, [this](FArgs& args) {
             const auto arg = args.get();
             if (!arg->isString()) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
             std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
             symbol->name = arg->value<std::string>();
-            return std::make_unique<SymbolObject>(symbol, false);
+            return std::make_unique<SymbolObject>(this, symbol, "");
         });
         makeFunc("symbolp", 1, 1, [this](FArgs& args) {
             return dynamic_cast<SymbolObject*>(args.get().get()) ? makeTrue() : makeNil();
@@ -1028,8 +980,9 @@ public:
             if (!sym) {
                 throw exceptions::WrongTypeArgument(obj->toString());
             }
-            return std::make_unique<StringObject>(sym->sym->name);
+            return std::make_unique<StringObject>(sym->getSymbolName());
         });
+        makeFunc("eval", 1, 1, [](FArgs& args) { return args.get()->eval(); });
         makeFunc("message", 1, 0xffff, [this](FArgs& args) {
             auto arg = args.get();
             if (!arg->isString()) {
@@ -1105,7 +1058,7 @@ public:
                     }
                 }
                 else {
-                    throw std::runtime_error("Invalid operand " + sym->toString());
+                    throw exceptions::WrongTypeArgument(sym->toString());
                 }
                 first = false;
             }
@@ -1129,7 +1082,7 @@ public:
                     f += v;
                 }
                 else {
-                    throw std::runtime_error("Invalid operand " + sym->toString());
+                    throw exceptions::WrongTypeArgument(sym->toString());
                 }
             }
             return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
@@ -1152,7 +1105,7 @@ public:
                     f *= v;
                 }
                 else {
-                    throw std::runtime_error("Invalid operand " + sym->toString());
+                    throw exceptions::WrongTypeArgument(sym->toString());
                 }
             }
             return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
@@ -1170,7 +1123,7 @@ public:
             if (!arg->isString()) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
-            return std::make_unique<SymbolObject>(getSymbol(arg->value<std::string>()), false);
+            return std::make_unique<SymbolObject>(this, getSymbol(arg->value<std::string>()));
         });
         makeFunc("unintern", 1, 1, [this](FArgs& args) {
             const auto arg = args.get();
@@ -1191,13 +1144,13 @@ public:
                 r = makeNil();
             }
             else {
-                r = std::make_unique<SymbolObject>(getSymbol(arg->value<std::string>()), false);
+                r = std::make_unique<SymbolObject>(this, getSymbol(arg->value<std::string>()));
             }
             return r;
         });
         makeFunc("setq", 2, 2, [this](FArgs &args) {
-            const NamedObject *name =
-                dynamic_cast<NamedObject *>(args.cc->car.get());
+            const SymbolObject* name =
+                dynamic_cast<SymbolObject*>(args.cc->car.get());
             if (!name) {
                 throw exceptions::WrongTypeArgument(args.cc->car->toString());
             }
@@ -1212,14 +1165,22 @@ public:
             const auto arg = args.get();
             std::string descr = "You did not specify a variable.";
             if (auto sym = dynamic_cast<SymbolObject*>(arg.get())) {
-                assert(sym->sym);
-                if (!sym->sym->variable) {
+                const Object* var = nullptr;
+                if (sym->sym) {
+                    var = sym->sym->variable.get();
+                }
+                else {
+                    assert(sym->name.size());
+                    var = resolveVariable(sym->name);
+                }
+                if (!var) {
                     descr = arg->toString() + " is void as a variable.";
                 }
                 else {
-                    descr = arg->toString() + "'s value is " + sym->sym->variable->toString();
+                    descr = arg->toString() + "'s value is " + var->toString();
                 }
-            } else if (auto list = dynamic_cast<ConsCellObject *>(arg.get())) {
+            }
+            else if (auto list = dynamic_cast<ConsCellObject *>(arg.get())) {
                 if (!*list) {
                     descr = arg->toString() + "'s value is " + arg->toString();
                 }
@@ -1296,20 +1257,32 @@ public:
     {
         m_msgHandler = handler;
     }
+    
+    std::shared_ptr<Symbol> getSymbolOrNull(std::string name)
+    {
+        if (!m_syms.count(name)) {
+            return nullptr;
+        }
+        return m_syms[name];
+    }
 };
 
-std::unique_ptr<Object> NamedObject::eval() 
+std::unique_ptr<Object> SymbolObject::eval() 
 {
-    auto var = parent->resolveVariable(this);
+    const auto var = sym ? sym->variable.get() : parent->resolveVariable(name);
     if (!var) {
         throw exceptions::VoidVariable(toString());
     }
     return var->clone();
 }
 
-Function* NamedObject::resolveFunction()
+Function* SymbolObject::resolveFunction()
 {
-    return parent->resolveFunction(this);
+    if (sym) {
+        return sym->function.get();
+    }
+    assert(name.size());
+    return parent->resolveFunction(name);
 }
 
 std::unique_ptr<Object> FArgs::get()
@@ -1340,6 +1313,40 @@ ConsCell* ConsCell::next()
         return cc->cc.get();
     }
     return nullptr;
+}
+
+std::string ConsCell::toString() const
+{
+    if (!car && !cdr) {
+        return "nil";
+    }
+
+    const SymbolObject* carSym = dynamic_cast<const SymbolObject*>(car.get());
+    const bool quote = carSym && carSym->name == "quote";
+    if (quote) {
+        return "'" + (next() ? next()->car->toString() : std::string(""));
+    }
+        
+    std::string s = "(";
+    const ConsCell *t = this;
+    while (t) {
+        s += t->car ? t->car->toString() : "";
+        if (!t->next() && t->cdr) {
+            s += " . " + cdr->toString();
+            break;
+        }
+        t = t->next();
+        if (t) {
+            s += " ";
+        }
+    }
+    s += ")";
+    return s;
+}
+
+Symbol* SymbolObject::getSymbol() const
+{
+    return sym ? sym.get() : parent->getSymbolOrNull(name).get();
 }
 
 

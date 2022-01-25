@@ -134,24 +134,9 @@ void testQuote()
 {
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "'()", "nil");
+    ASSERT_OUTPUT_EQ(m, "'a", "a");
     ASSERT_OUTPUT_EQ(m, "(quote a)", "a");
-}
-
-void testCloning()
-{
-    auto l1 = alisp::makeList();
-    alisp::cons(alisp::makeInt(3), l1);
-    alisp::cons(alisp::makeInt(2), l1);
-    alisp::cons(alisp::makeInt(1), l1);
-    auto l1c = l1->clone();
-    assert(l1->toString() == "(1 2 3)");
-    assert(l1c->toString() == l1->toString());
-
-    alisp::Machine m;
-    auto e1 = "(2 (1 (1 2 3) 1) 2)";
-    auto l2 = m.parse(e1);
-    auto l2c = l2->clone();
-    assert(l2c->toString() == e1);
+    ASSERT_OUTPUT_EQ(m, "'(1 2 3)", "(1 2 3)");
 }
 
 void testCarFunction()
@@ -268,7 +253,9 @@ void testSymbols()
     assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
         m.evaluate("(symbol-name 2)");
     }));
-    assert(m.evaluate("(make-symbol \"test\")")->toString() == "test");
+    ASSERT_OUTPUT_EQ(m, "(make-symbol \"test\")", "test");
+    ASSERT_OUTPUT_EQ(m, "(symbolp (make-symbol \"test\"))", "t");
+    ASSERT_EXCEPTION(m, "(+ 1 (make-symbol \"newint\"))", alisp::exceptions::WrongTypeArgument);
     ASSERT_EQ(m.evaluate("(progn (setq sym (make-symbol \"foo\"))(symbol-name sym))"), "\"foo\"");
     ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "nil");
     ASSERT_EQ(m.evaluate("'t"), "t");
@@ -276,6 +263,8 @@ void testSymbols()
         m.evaluate("(eq 'a a)");
     }));
     ASSERT_EQ(m.evaluate("(symbolp (car (list 'a)))"), "t");
+    ASSERT_EXCEPTION(m, "(progn (setq testint (make-symbol \"abracadabra\"))"
+                     "(+ 1 (eval testint)))", alisp::exceptions::VoidVariable);
 }
 
 void testEqFunction()
@@ -298,8 +287,8 @@ void testInternFunction()
 {
     alisp::Machine m;
     m.setMessageHandler([](std::string msg){});
-    ASSERT_EQ(m.evaluate("(setq sym (intern \"foo\"))"), "foo");
-    ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "t");
+    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"foo\"))", "foo");
+    ASSERT_OUTPUT_EQ(m, "(eq sym 'foo)", "t");
     ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "nil");
     ASSERT_EQ(m.evaluate("(setq sym (intern \"frazzle\"))"), "frazzle");
     ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "frazzle");
@@ -402,8 +391,9 @@ void testListFunction()
 
 void test()
 {
-    testListBasics();
+    testSymbols();
     testQuote();
+    testListBasics();
     testCarFunction();
     testCdrFunction();
     testConsFunction();
@@ -412,19 +402,15 @@ void test()
     testStrings();
     testBasicArithmetic();
     testDescribeVariableFunction();
-    testSymbols();
-    /*
-    testPopFunction();
     testInternFunction();
+    testPopFunction();
     testEqFunction();
     testVariables();
     testDivision();
     testSyntaxErrorDetection();
-    testCloning();
     testSimpleEvaluations();
     testNullFunction();
     testPrognFunction();
-    */
     // std::cout << m.evaluate("(+ +.1 -0.1)") << std::endl;
     /*
 (symbol-name 2)
