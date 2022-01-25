@@ -989,21 +989,23 @@ class Machine
         return nullptr;
     }
 
-    void renameSymbols(ConsCellObject& obj, std::map<std::string, std::string> conv)
+    void renameSymbols(ConsCellObject& obj,
+                       std::map<std::string, std::unique_ptr<Object>>& conv,
+                       std::vector<std::pair<std::unique_ptr<Object>*,
+                       std::unique_ptr<Object>>>& restoreList)
     {
         auto p = obj.cc.get();
         while (p) {
             auto& obj = *p->car.get();
             SymbolObject* sym = dynamic_cast<SymbolObject*>(&obj);
             if (sym && conv.count(sym->name)) {
-                sym->name = conv[sym->name];
-                p->car = quote(obj.clone());
+                restoreList.emplace_back(&p->car, std::move(p->car));
+                p->car = quote(conv[sym->name]->clone());
             }
             ConsCellObject* cc = dynamic_cast<ConsCellObject*>(&obj);
             if (cc) {
-                renameSymbols(*cc, conv);
+                renameSymbols(*cc, conv, restoreList);
             }
-
             p = p->next();
         }
     }
@@ -1113,18 +1115,24 @@ public:
                      argc,
                      [this, macroName, argList, code](FArgs& a) mutable {
                          size_t i = 0;
-                         std::map<std::string, std::string> conv;
+                         std::map<std::string, std::unique_ptr<Object>> conv;
                          for (const auto& obj : argList) {
-                             const SymbolObject* from = dynamic_cast<const SymbolObject*>(&obj);
-                             const SymbolObject* to = dynamic_cast<const SymbolObject*>(a.cc->car.get());
+                             const SymbolObject* from =
+                                 dynamic_cast<const SymbolObject*>(&obj);
+                             conv[from->name] = a.cc->car.get()->clone();
                              a.skip();
-                             conv[from->name] = to->name;
                          }
                          auto e = code.clone();
                          auto& code = dynamic_cast<ConsCellObject&>(*e.get());
-                         renameSymbols(code, conv);
+                         std::vector<std::pair<std::unique_ptr<Object>*,
+                                               std::unique_ptr<Object>>> rl;
+                         renameSymbols(code, conv, rl);
                          auto expanded = code.eval();
-                         return expanded->eval();
+                         auto res = expanded->eval();
+                         for (auto& p : rl) {
+                             *p.first = std::move(p.second);
+                         }
+                         return res;
                      });
             return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
         });

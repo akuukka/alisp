@@ -409,12 +409,15 @@ void testEvalFunction()
 void testMacros()
 {
     alisp::Machine m;
-    /*
-(defmacro inc (var) (list 'setq var (list '1+ var)))
-     */
+    ASSERT_OUTPUT_EQ(m, "(defmacro push (element listname) "
+                     "(list 'setq listname (list 'cons element listname)))", "push");
+    ASSERT_OUTPUT_EQ(m, "(setq l '(a b))", "(a b)");
+    ASSERT_OUTPUT_EQ(m, "(push 'c l)", "(c a b)");
+    ASSERT_OUTPUT_EQ(m, "(push 'd l)", "(d c a b)");
     ASSERT_OUTPUT_EQ(m, "(defmacro inc (var) (list 'setq var (list '1+ var)))", "inc");
     ASSERT_OUTPUT_EQ(m, "(setq x 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(inc x)", "2");
+    ASSERT_EXCEPTION(m, "(inc 1)", alisp::exceptions::WrongTypeArgument);
 }
 
 void test()
