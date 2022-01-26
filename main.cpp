@@ -64,6 +64,8 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res
 void testListBasics()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(make-list 3 'pigs)", "(pigs pigs pigs)");
+    ASSERT_OUTPUT_EQ(m, "(make-list 0 'pigs)", "nil");
     ASSERT_OUTPUT_EQ(m, "(listp (quote nil))", "t");
     ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
     ASSERT_OUTPUT_EQ(m, "(listp 'nil)", "t");

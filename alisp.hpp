@@ -243,7 +243,7 @@ struct ConsCellObject : Object
         ConsCellObject()
     {
         this->cc->car = std::move(car);
-        if (!(*cdr)) {
+        if (!cdr || !(*cdr)) {
             return;
         }
         this->cc->cdr = std::move(cdr);
@@ -599,11 +599,11 @@ void skipWhitespace(const char*& expr)
     }
 }
 
-/*template<>
+template<>
 inline std::optional<std::shared_ptr<Object>> getValue(const Object& sym)
 {
     return std::shared_ptr<Object>(sym.clone().release());
-    }*/
+}
 
 template<>
 inline std::optional<double> getValue(const Object &sym)
@@ -1085,9 +1085,13 @@ public:
             }
             return res;
         });
-//        defun("make-list", [this](std::int64_t n, std::shared_ptr<Object> ptr) {
-//            return n;
-//        });
+        defun("make-list", [this](std::int64_t n, std::shared_ptr<Object> ptr) {
+            std::unique_ptr<Object> r = makeNil();
+            for (std::int64_t i=0; i < n; i++) {
+                r = std::make_unique<ConsCellObject>(ptr->clone(), r->clone());
+            }
+            return r;
+        });
         makeFunc("defun", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
             const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
             if (!nameSym || nameSym->name.empty()) {
