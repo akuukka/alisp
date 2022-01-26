@@ -696,6 +696,9 @@ class Machine
         // std::cout << "popped " << name << " with value=" <<
         // m_locals[name].back()->toString() << std::endl;
         m_locals[name].pop_back();
+        if (m_locals[name].empty()) {
+            m_locals.erase(name);
+        }
         return true;
     }
 
@@ -1059,18 +1062,26 @@ public:
             }
             return makeNil();
         });
-        makeFunc("let", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
+        auto let = [this](FArgs& args, bool star) {
             std::vector<std::string> varList;
+            std::vector<std::pair<std::string, std::unique_ptr<Object>>> pushList;
             for (auto& arg : *args.cc->car->asList()) {
-                // std::cout << arg << std::endl;
                 assert(arg.isList());
                 auto list = arg.asList();
                 auto cc = list->cc.get();
-                // std::cout << cc->car << " = " << cc->cdr->asList()->cc->car->eval() << std::endl;
                 const auto sym = dynamic_cast<const SymbolObject*>(cc->car.get());
                 assert(sym && sym->name.size());
-                pushLocalVariable(sym->name, cc->cdr->asList()->cc->car->eval());
-                varList.push_back(sym->name);
+                if (star) {
+                    pushLocalVariable(sym->name, cc->cdr->asList()->cc->car->eval());
+                    varList.push_back(sym->name);
+                }
+                else {
+                    pushList.emplace_back(sym->name, cc->cdr->asList()->cc->car->eval());
+                }
+            }
+            for (auto& push : pushList) {
+                pushLocalVariable(push.first, std::move(push.second));
+                varList.push_back(push.first);
             }
             AtScopeExit onExit([this, varList]() {
                 for (auto it = varList.rbegin(); it != varList.rend(); ++it) {
@@ -1080,11 +1091,14 @@ public:
             args.skip();
             std::unique_ptr<Object> res = makeNil();
             for (auto& obj : *args.cc) {
-                // std::cout << "exec:" << obj.toString() << std::endl;
                 res = obj.eval();
             }
             return res;
-        });
+        };
+        makeFunc("let", 2, std::numeric_limits<int>::max(),
+                 std::bind(let, std::placeholders::_1, false));
+        makeFunc("let*", 2, std::numeric_limits<int>::max(),
+                 std::bind(let, std::placeholders::_1, true));
         defun("make-list", [this](std::int64_t n, std::shared_ptr<Object> ptr) {
             std::unique_ptr<Object> r = makeNil();
             for (std::int64_t i=0; i < n; i++) {
