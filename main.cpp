@@ -20,11 +20,17 @@ void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
 void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, const char* res)
 {
     // std::cout << expr << std::endl;
-    const std::string out = m.evaluate(expr)->toString();
-    if (out != res) {
-        std::cerr << "Expected '" << expr << "' to output '" << res << "' but ";
-        std::cerr << " got '" << out << "' instead.\n";
-        exit(1);
+    try {
+        const std::string out = m.evaluate(expr)->toString();
+        if (out != res) {
+            std::cerr << "Expected '" << expr << "' to output '" << res << "' but ";
+            std::cerr << " got '" << out << "' instead.\n";
+            exit(1);
+        }
+    }
+    catch (std::runtime_error& ex) {
+        std::cerr << "Exception thrown while evaluating " << expr << std::endl;
+        throw;
     }
     // std::cout << " => " << out << std::endl;
 }
@@ -58,6 +64,9 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res
 void testListBasics()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(listp (quote nil))", "t");
+    ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
+    ASSERT_OUTPUT_EQ(m, "(listp 'nil)", "t");
     ASSERT_OUTPUT_EQ(m, "'(1 2 . 3)", "(1 2 . 3)");
     ASSERT_OUTPUT_EQ(m, "()", "nil");
     ASSERT_OUTPUT_EQ(m, "'(1)", "(1)"); 
@@ -70,7 +79,6 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(atom nil)", "t");
     ASSERT_OUTPUT_EQ(m, "(listp '(1 2))", "t"); 
     ASSERT_OUTPUT_EQ(m, "(listp 1)", "nil"); 
-    ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
     ASSERT_OUTPUT_EQ(m, "(listp '())", "t");
     ASSERT_OUTPUT_EQ(m, "(listp ())", "t");
     ASSERT_OUTPUT_EQ(m, "(nlistp 1)", "t"); 
@@ -395,6 +403,7 @@ void testEvalFunction()
 void testMacros()
 {
     alisp::Machine m;
+    ASSERT_EXCEPTION(m, "(pop nil)", alisp::exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(setq l '(a b))", "(a b)");
     ASSERT_OUTPUT_EQ(m, "(push 'c l)", "(c a b)");
     ASSERT_OUTPUT_EQ(m, "(push 'd l)", "(d c a b)");
@@ -405,7 +414,6 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(setq li '(1 2 3))", "(1 2 3)");
     ASSERT_OUTPUT_EQ(m, "(pop li)", "1");
     ASSERT_OUTPUT_EQ(m, "li", "(2 3)");
-    ASSERT_OUTPUT_EQ(m, "(pop nil)", "nil");
     ASSERT_EXCEPTION(m, "(pop 1)", alisp::exceptions::WrongTypeArgument);
 }
 
@@ -441,6 +449,9 @@ void testFunctions()
         "foo", "abc"
     };
     m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    ASSERT_OUTPUT_EQ(m, "(car (car nil))", "nil");
+    ASSERT_OUTPUT_EQ(m, "(car (car 'nil))", "nil");
+    ASSERT_OUTPUT_EQ(m, "(caar 'nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(defun foo () (message \"foo\") 5)", "foo");
     ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (message msg) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
@@ -456,7 +467,6 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(cdar nil)", "nil");
     ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", alisp::exceptions::WrongTypeArgument);    
     ASSERT_OUTPUT_EQ(m, "(caar '((8) 2 3))", "8");
-    ASSERT_OUTPUT_EQ(m, "(caar 'nil)", "nil");
     assert(expectedMsgs.empty());
     /*
 (defun test (z)
@@ -488,15 +498,15 @@ void testIf()
 
 void test()
 {
+    testListBasics();
+    testQuote();
+    testSymbols();
+    testMacros();
     testFunctions();
     testIf();
     testLet();
     testDeepCopy();
-    testListBasics();
-    testQuote();
-    testMacros();
     testBasicArithmetic();
-    testSymbols();
     testEvalFunction();
     testCarFunction();
     testCdrFunction();

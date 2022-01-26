@@ -329,6 +329,7 @@ struct Function
 struct Symbol
 {
     Machine* parent = nullptr;
+    bool constant = false;
     std::string name;
     std::unique_ptr<Object> variable;
     std::unique_ptr<Function> function;
@@ -580,16 +581,6 @@ bool isWhiteSpace(const char c)
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
-std::string parseSymbolName(const char*& str)
-{
-    std::string r;
-    while (isPartOfSymName(*str)) {
-        r += *str;
-        str++;
-    }
-    return r;
-}
-
 bool onlyWhitespace(const char* expr)
 {
     while (*expr) {
@@ -608,6 +599,12 @@ void skipWhitespace(const char*& expr)
     }
 }
 
+/*template<>
+inline std::optional<std::shared_ptr<Object>> getValue(const Object& sym)
+{
+    return std::shared_ptr<Object>(sym.clone().release());
+    }*/
+
 template<>
 inline std::optional<double> getValue(const Object &sym)
 {
@@ -618,8 +615,9 @@ inline std::optional<double> getValue(const Object &sym)
     return std::nullopt;
 }
 
-template <> inline std::optional<ConsCellObject> getValue(const Object &sym) {
-    auto s = dynamic_cast<const ConsCellObject *>(&sym);
+template <> inline std::optional<ConsCellObject> getValue(const Object& sym)
+{
+    auto s = dynamic_cast<const ConsCellObject*>(&sym);
     if (s) {
         return *s;
     }
@@ -801,6 +799,13 @@ class Machine
         if (num) {
             return num;
         }
+        if (next == "nil") {
+            // It's optimal to return nil already at this point.
+            // Note that even the GNU elisp manual says:
+            // 'After the Lisp reader has read either `()' or `nil', there is no way to determine
+            //  which representation was actually written by the programmer.'
+            return makeNil();
+        }
         return std::make_unique<SymbolObject>(this, nullptr, next);
     }
     
@@ -965,7 +970,7 @@ public:
 
     Machine()
     {
-        setVariable("nil", makeNil());
+        setVariable("nil", makeNil(), true);
         setVariable("t", std::make_unique<SymbolObject>(this, getSymbol("t"), ""));
         
         defun("atom", [](std::any obj) {
@@ -1080,6 +1085,9 @@ public:
             }
             return res;
         });
+//        defun("make-list", [this](std::int64_t n, std::shared_ptr<Object> ptr) {
+//            return n;
+//        });
         makeFunc("defun", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
             const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
             if (!nameSym || nameSym->name.empty()) {
@@ -1102,10 +1110,10 @@ public:
             // std::cout << funcName << " defined as: " << *code << " (argc=" << argc << ")\n";
             makeFunc(funcName.c_str(), argc, argc,
                      [this, funcName, argList, code](FArgs& a) {
-                         //if (argList.size()) {
-                         //    std::cout << funcName << " being called with args="
-                         //              << a.cc->toString() << std::endl;
-                         //}
+                         /*if (argList.size()) {
+                             std::cout << funcName << " being called with args="
+                                       << a.cc->toString() << std::endl;
+                                       }*/
                          size_t i = 0;
                          for (size_t i = 0; i < argList.size(); i++) {
                              pushLocalVariable(argList[i], std::move(a.get()));
@@ -1118,15 +1126,16 @@ public:
                          assert(code->asList());
                          std::unique_ptr<Object> ret = makeNil();
                          for (auto& obj : *code->asList()) {
-                             // std::cout << "exec: " << obj.toString() << std::endl;
+                             //std::cout << "exec: " << obj.toString() << std::endl;
                              ret = obj.eval();
+                             //std::cout << " => " << ret->toString() << std::endl;
                          }
                          return ret;
                      });
             return std::make_unique<SymbolObject>(this, nullptr, std::move(funcName));
         });
         makeFunc("quote", 1, 1, [](FArgs& args) {
-            return args.cc->car ? args.cc->car->clone() : makeNil();
+            return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
         });
         makeFunc("stringp", 1, 1, [this](FArgs& args) {
             return (args.get()->isString()) ? makeTrue() : makeNil();
@@ -1332,17 +1341,20 @@ public:
             }
             return r;
         });
-        makeFunc("set", 2, 2, [](FArgs& args) {
+        makeFunc("set", 2, 2, [this](FArgs& args) {
+            const SymbolObject nil(this, nullptr, "nil");
             const auto& p1 = args.get();
-            const SymbolObject* name =
-                dynamic_cast<SymbolObject*>(p1.get());
+            const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1.get());
             if (!name) {
                 throw exceptions::WrongTypeArgument(p1->toString());
             }
             auto sym = name->getSymbol();
             assert(sym);
-            name->getSymbolOrNull()->variable = std::move(args.get());
-            return name->getSymbolOrNull()->variable->clone();
+            if (sym->constant) {
+                throw exceptions::Error("setting-constant " + name->toString());
+            }
+            sym->variable = std::move(args.get());
+            return sym->variable->clone();
         });
         makeFunc("eq", 2, 2, [this](FArgs& args) {
             return args.get()->equals(*args.get()) ? makeTrue() : makeNil();
@@ -1433,11 +1445,12 @@ public:
         makeFuncInternal(name, lambda_to_func(f));
     }
 
-    void setVariable(std::string name, std::unique_ptr<Object> obj)
+    void setVariable(std::string name, std::unique_ptr<Object> obj, bool constant = false)
     {
         assert(obj);
         auto s = getSymbol(name);
         s->variable = std::move(obj);
+        s->constant = constant;
     }
 
     void setMessageHandler(std::function<void(std::string)> handler)
