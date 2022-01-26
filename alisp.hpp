@@ -240,7 +240,7 @@ struct FloatObject : Object
     }
 };
 
-struct ConsCellObject : Object
+struct ConsCellObject : Object, Sequence
 {
     std::shared_ptr<ConsCell> cc;
 
@@ -276,6 +276,19 @@ struct ConsCellObject : Object
             return true;
         }
         return this->cc == op->cc;
+    }
+
+    size_t length() const override
+    {
+        if (!*this) {
+            return 0;
+        }
+        size_t l = 1;
+        auto p = cc.get();
+        while ((p = p->next())) {
+            l++;
+        }
+        return l;
     }
 
     std::unique_ptr<Object> eval() override;
@@ -681,8 +694,10 @@ inline std::optional<const Symbol*> getValue(const Object& sym)
 template<>
 inline std::optional<const Sequence*> getValue(const Object& sym)
 {
-    if (sym.isString()) { return dynamic_cast<const Sequence*>(&sym); }
-    return nullptr;
+    if (sym.isString() || sym.isList()) {
+        return dynamic_cast<const Sequence*>(&sym);
+    }
+    return std::nullopt;
 }
 
 template <typename... Args>

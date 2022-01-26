@@ -102,6 +102,10 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(progn (setq x '(\"a\" \"b\")) (setq y (cons x x))"
                      "(eq (car (car y)) (car (cdr y))))", "t");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'y)", "((\"a\" \"b\") \"a\" \"b\")");
+    ASSERT_OUTPUT_EQ(m, "(length '(1 2 3 4))", "4");
+    ASSERT_OUTPUT_EQ(m, "(length '(1))", "1");
+    ASSERT_OUTPUT_EQ(m, "(length nil)", "0");
+    ASSERT_OUTPUT_EQ(m, "(length ())", "0");
 }
 
 template <typename E>
@@ -505,8 +509,8 @@ void testIf()
 
 void test()
 {
-    testLet();
     testListBasics();
+    testLet();
     testQuote();
     testSymbols();
     testMacros();
@@ -530,7 +534,6 @@ void test()
     testSimpleEvaluations();
     testNullFunction();
     testPrognFunction();
-
     /*
 foo                 ; A symbol named ‘foo’.
 FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
