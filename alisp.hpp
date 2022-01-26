@@ -688,7 +688,7 @@ class Machine
 
     void pushLocalVariable(std::string name, std::unique_ptr<Object> obj)
     {
-        //std::cout << "Push " << name << "=" << obj->toString() << std::endl;
+        // std::cout << "Push " << name << "=" << obj->toString() << std::endl;
         m_locals[name].push_back(std::move(obj));
     }
 
@@ -1044,7 +1044,7 @@ public:
         });
         makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
             if (!!*args.get()) {
-                return args.get()->eval();
+                return args.get();
             }
             args.skip();
             while (auto res = args.get()) {
@@ -1067,7 +1067,7 @@ public:
                 pushLocalVariable(sym->name, cc->cdr->asList()->cc->car->eval());
                 varList.push_back(sym->name);
             }
-            AtScopeExit onExit([this, varList = std::move(varList)]() {
+            AtScopeExit onExit([this, varList]() {
                 for (auto it = varList.rbegin(); it != varList.rend(); ++it) {
                     popLocalVariable(*it);
                 }
@@ -1101,12 +1101,16 @@ public:
             code.reset(args.cc->cdr.release());
             // std::cout << funcName << " defined as: " << *code << " (argc=" << argc << ")\n";
             makeFunc(funcName.c_str(), argc, argc,
-                     [this, funcName, argList, code](FArgs& a) mutable {
+                     [this, funcName, argList, code](FArgs& a) {
+                         //if (argList.size()) {
+                         //    std::cout << funcName << " being called with args="
+                         //              << a.cc->toString() << std::endl;
+                         //}
                          size_t i = 0;
                          for (size_t i = 0; i < argList.size(); i++) {
                              pushLocalVariable(argList[i], std::move(a.get()));
                          }
-                         AtScopeExit onExit([this, argList = std::move(argList)]() {
+                         AtScopeExit onExit([this, argList]() {
                              for (auto it = argList.rbegin(); it != argList.rend(); ++it) {
                                  popLocalVariable(*it);
                              }

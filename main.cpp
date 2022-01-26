@@ -19,12 +19,14 @@ void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
 
 void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, const char* res)
 {
+    std::cout << expr << std::endl;
     const std::string out = m.evaluate(expr)->toString();
     if (out != res) {
         std::cerr << "Expected '" << expr << "' to output '" << res << "' but ";
         std::cerr << " got '" << out << "' instead.\n";
         exit(1);
     }
+    std::cout << " => " << out << std::endl;
 }
 
 void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res)
@@ -220,7 +222,6 @@ void testCdrFunction()
     ASSERT_OUTPUT_EQ(m, "(cdr '())", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr (cdr '(a b c)))", "(c)");
     ASSERT_EXCEPTION(m, "(cdr 1)", alisp::exceptions::WrongTypeArgument);
-    // ASSERT_OUTPUT_EQ(m, "(cdr-safe 1)", "nil");
     // ASSERT_OUTPUT_EQ(m, "(cdr-safe '(a b c))", "(b c)");
 }
 
@@ -467,6 +468,8 @@ void testIf()
 {
     alisp::Machine m;
     m.setMessageHandler([&](std::string msg) { assert(msg != "problem"); });
+    ASSERT_OUTPUT_EQ(m, "(cdr-safe '(1 2 3))", "(2 3)");
+    ASSERT_OUTPUT_EQ(m, "(cdr-safe 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(if t 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(if (eq 1 1) 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(if nil 1)", "nil");
@@ -476,9 +479,9 @@ void testIf()
 
 void test()
 {
+    testFunctions();
     testIf();
     testLet();
-    testFunctions();
     testDeepCopy();
     testListBasics();
     testQuote();

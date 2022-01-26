@@ -2,9 +2,9 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 
 (defun cdr-safe (object)
   (let ((x object))
-  (if (consp x)
-      (cdr x)
-    nil)))
+    (if (consp x)
+        (cdr x)
+      nil)))
 
 (defmacro pop (listname)
   (list 'prog1 (list 'car listname)
