@@ -971,7 +971,7 @@ public:
     Machine()
     {
         setVariable("nil", makeNil(), true);
-        setVariable("t", std::make_unique<SymbolObject>(this, getSymbol("t"), ""));
+        setVariable("t", std::make_unique<SymbolObject>(this, getSymbol("t"), ""), true);
         
         defun("atom", [](std::any obj) {
             if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;

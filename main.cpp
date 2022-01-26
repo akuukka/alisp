@@ -66,6 +66,8 @@ void testListBasics()
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "(make-list 3 'pigs)", "(pigs pigs pigs)");
     ASSERT_OUTPUT_EQ(m, "(make-list 0 'pigs)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(setq l (make-list 3 '(a b)))", "((a b) (a b) (a b))");
+    ASSERT_OUTPUT_EQ(m, "(eq (car l) (cadr l))", "t");
     ASSERT_OUTPUT_EQ(m, "(listp (quote nil))", "t");
     ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
     ASSERT_OUTPUT_EQ(m, "(listp 'nil)", "t");
