@@ -452,6 +452,9 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(cdr-safe 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(car-safe '(1 2 3))", "1");
     ASSERT_OUTPUT_EQ(m, "(car-safe 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(cdar '((1 4) 2 3))", "(4)");    
+    ASSERT_OUTPUT_EQ(m, "(cdar nil)", "nil");
+    ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", alisp::exceptions::WrongTypeArgument);    
     assert(expectedMsgs.empty());
     /*
 (defun test (z)
