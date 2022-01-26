@@ -434,11 +434,14 @@ void testFunctions()
 {
     alisp::Machine m;
     std::set<std::string> expectedMsgs = {
-        "foo"
+        "foo", "abc"
     };
     m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
     ASSERT_OUTPUT_EQ(m, "(defun foo () (message \"foo\") 5)", "foo");
+    ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (message msg) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
+    ASSERT_EXCEPTION(m, "(foo2)", alisp::exceptions::WrongNumberOfArguments);
+    ASSERT_OUTPUT_EQ(m, "(foo2 \"abc\")", "\"abc\"");
     assert(expectedMsgs.empty());
 }
 

@@ -13,6 +13,7 @@
 #include <cassert>
 #include <functional>
 #include <optional>
+#include "AtScopeExit.h"
 
 namespace alisp {
 namespace exceptions {
@@ -199,11 +200,7 @@ struct ConsCell
     std::string toString() const;
     const ConsCell* next() const;
     ConsCell* next();
-
-    bool operator!() const
-    {
-        return !car;
-    }
+    bool operator!() const { return !car; }
 
     struct Iterator
     {
@@ -220,15 +217,8 @@ struct ConsCell
         }
     };
 
-    Iterator begin()
-    {
-        return Iterator{this};
-    }
-
-    Iterator end()
-    {
-        return Iterator{nullptr};
-    }
+    Iterator begin() { return !*this ? end() : Iterator{this}; }
+    Iterator end() { return Iterator{nullptr}; }
 };
 
 struct StringObject : Object
@@ -817,6 +807,23 @@ class Machine
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
     std::function<void(std::string)> m_msgHandler;
 
+    std::map<std::string, std::vector<std::unique_ptr<Object>>> m_locals;
+
+    void pushLocalVariable(std::string name, std::unique_ptr<Object> obj)
+    {
+        //std::cout << "Push " << name << "=" << obj->toString() << std::endl;
+        m_locals[name].push_back(std::move(obj));
+    }
+
+    bool popLocalVariable(std::string name)
+    {
+        assert(m_locals[name].size());
+        // std::cout << "popped " << name << " with value=" <<
+        // m_locals[name].back()->toString() << std::endl;
+        m_locals[name].pop_back();
+        return true;
+    }
+
     template <typename T>
     std::unique_ptr<Object> makeObject(T);
 
@@ -1057,6 +1064,9 @@ public:
 
     Object* resolveVariable(const std::string& name)
     {
+        if (m_locals.count(name)) {
+            return m_locals[name].back().get();
+        }
         if (m_syms.count(name)) {
             return m_syms[name]->variable.get();
         }
@@ -1168,38 +1178,36 @@ public:
             }
             std::string funcName = nameSym->name;
             args.skip();
-            ConsCellObject argList = dynamic_cast<ConsCellObject&>(*args.cc->car);
-            const int argc = countArgs(argList.cc.get());
+            std::vector<std::string> argList;
+            int argc = 0;
+            for (auto& arg : *args.cc->car->asList()) {
+                const auto sym = dynamic_cast<const SymbolObject*>(&arg);
+                if (!sym) {
+                    throw exceptions::Error("Malformed arglist: " + args.cc->car->toString());
+                }
+                argList.push_back(sym->name);
+                argc++;
+            }
             std::shared_ptr<Object> code;
             code.reset(args.cc->cdr.release());
-            std::cout << funcName << " defined as: " << *code << std::endl;
+            // std::cout << funcName << " defined as: " << *code << " (argc=" << argc << ")\n";
             makeFunc(funcName.c_str(), argc, argc,
                      [this, funcName, argList, code](FArgs& a) mutable {
+                         size_t i = 0;
+                         for (size_t i = 0; i < argList.size(); i++) {
+                             pushLocalVariable(argList[i], std::move(a.get()));
+                         }
+                         AtScopeExit onExit([this, argList = std::move(argList)]() {
+                             for (auto it = argList.rbegin(); it != argList.rend(); ++it) {
+                                 popLocalVariable(*it);
+                             }
+                         });
                          assert(code->asList());
                          std::unique_ptr<Object> ret = makeNil();
                          for (auto& obj : *code->asList()) {
-                             std::cout << "exec: " << obj.toString() << std::endl;
+                             // std::cout << "exec: " << obj.toString() << std::endl;
                              ret = obj.eval();
                          }
-                         /*
-                         size_t i = 0;
-                         std::map<std::string, std::unique_ptr<Object>> conv;
-                         for (const auto& obj : argList) {
-                             const SymbolObject* from =
-                                 dynamic_cast<const SymbolObject*>(&obj);
-                             conv[from->name] = a.get();
-                         }
-                         std::unique_ptr<Object> copied;
-                         if (code->isList()) {
-                             copied = dynamic_cast<ConsCellObject*>(code.get())->deepCopy();
-                         }
-                         else {
-                             code->clone();
-                         }
-                         //auto copied =  code->deepCopy();
-                         renameSymbols(*copied, conv);
-                         return copied->eval()->eval();
-                         */
                          return ret;
                      });
             return std::make_unique<SymbolObject>(this, nullptr, std::move(funcName));
