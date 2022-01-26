@@ -19,14 +19,14 @@ void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
 
 void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, const char* res)
 {
-    std::cout << expr << std::endl;
+    // std::cout << expr << std::endl;
     const std::string out = m.evaluate(expr)->toString();
     if (out != res) {
         std::cerr << "Expected '" << expr << "' to output '" << res << "' but ";
         std::cerr << " got '" << out << "' instead.\n";
         exit(1);
     }
-    std::cout << " => " << out << std::endl;
+    // std::cout << " => " << out << std::endl;
 }
 
 void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res)
@@ -446,8 +446,11 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
     ASSERT_EXCEPTION(m, "(foo2)", alisp::exceptions::WrongNumberOfArguments);
     ASSERT_OUTPUT_EQ(m, "(foo2 \"abc\")", "\"abc\"");
+    ASSERT_OUTPUT_EQ(m, "(cdr-safe '(1 2 3))", "(2 3)");
+    ASSERT_OUTPUT_EQ(m, "(cdr-safe 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(car-safe '(1 2 3))", "1");
+    ASSERT_OUTPUT_EQ(m, "(car-safe 1)", "nil");
     assert(expectedMsgs.empty());
-
     /*
 (defun test (z)
   (set 'z (+ z 1))
@@ -468,8 +471,6 @@ void testIf()
 {
     alisp::Machine m;
     m.setMessageHandler([&](std::string msg) { assert(msg != "problem"); });
-    ASSERT_OUTPUT_EQ(m, "(cdr-safe '(1 2 3))", "(2 3)");
-    ASSERT_OUTPUT_EQ(m, "(cdr-safe 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(if t 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(if (eq 1 1) 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(if nil 1)", "nil");
