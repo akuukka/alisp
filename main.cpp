@@ -464,6 +464,7 @@ void testFunctions()
 void testLet()
 {
     alisp::Machine m;
+    m.setMessageHandler([&](std::string msg) {});
     ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (message \"%d\" x) (+ x y))", "4");
 }
 
