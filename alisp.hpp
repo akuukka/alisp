@@ -73,6 +73,7 @@ struct ArithError : std::runtime_error
 
 class Machine;
 struct Object;
+struct ConsCellObject;
 struct Function;
 
 template < template <typename...> class Template, typename T >
@@ -147,6 +148,8 @@ struct Object
     {
         return false;
     }
+
+    virtual ConsCellObject* asList() { return nullptr; }
 
     friend std::ostream &operator<<(std::ostream &os, const Object &sym);
 
@@ -320,6 +323,7 @@ struct ConsCellObject : Object
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
     bool operator!() const override { return !(*cc); }
+    ConsCellObject* asList() override { return this; }
 
     std::unique_ptr<Object> clone() const override
     {
@@ -466,6 +470,9 @@ std::unique_ptr<FloatObject> makeFloat(double value) {
 
 int countArgs(const ConsCell* cc)
 {
+    if (!cc || !(*cc)) {
+        return 0;
+    }
     int i = 0;
     while (cc) {
         i++;
@@ -1153,6 +1160,49 @@ public:
             auto sym = getSymbol(macroName);
             sym->function->isMacro = true;
             return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
+        });
+        makeFunc("defun", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
+            const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
+            if (!nameSym || nameSym->name.empty()) {
+                throw exceptions::WrongTypeArgument(args.cc->car->toString());
+            }
+            std::string funcName = nameSym->name;
+            args.skip();
+            ConsCellObject argList = dynamic_cast<ConsCellObject&>(*args.cc->car);
+            const int argc = countArgs(argList.cc.get());
+            std::shared_ptr<Object> code;
+            code.reset(args.cc->cdr.release());
+            std::cout << funcName << " defined as: " << *code << std::endl;
+            makeFunc(funcName.c_str(), argc, argc,
+                     [this, funcName, argList, code](FArgs& a) mutable {
+                         assert(code->asList());
+                         std::unique_ptr<Object> ret = makeNil();
+                         for (auto& obj : *code->asList()) {
+                             std::cout << "exec: " << obj.toString() << std::endl;
+                             ret = obj.eval();
+                         }
+                         /*
+                         size_t i = 0;
+                         std::map<std::string, std::unique_ptr<Object>> conv;
+                         for (const auto& obj : argList) {
+                             const SymbolObject* from =
+                                 dynamic_cast<const SymbolObject*>(&obj);
+                             conv[from->name] = a.get();
+                         }
+                         std::unique_ptr<Object> copied;
+                         if (code->isList()) {
+                             copied = dynamic_cast<ConsCellObject*>(code.get())->deepCopy();
+                         }
+                         else {
+                             code->clone();
+                         }
+                         //auto copied =  code->deepCopy();
+                         renameSymbols(*copied, conv);
+                         return copied->eval()->eval();
+                         */
+                         return ret;
+                     });
+            return std::make_unique<SymbolObject>(this, nullptr, std::move(funcName));
         });
         makeFunc("quote", 1, 1, [](FArgs& args) {
             return args.cc->car ? args.cc->car->clone() : makeNil();

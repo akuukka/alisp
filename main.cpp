@@ -430,8 +430,21 @@ void testDeepCopy()
     ASSERT_EQ(copied->toString(), "(1 2 . 3)");
 }
 
+void testFunctions()
+{
+    alisp::Machine m;
+    std::set<std::string> expectedMsgs = {
+        "foo"
+    };
+    m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    ASSERT_OUTPUT_EQ(m, "(defun foo () (message \"foo\") 5)", "foo");
+    ASSERT_OUTPUT_EQ(m, "(foo)", "5");
+    assert(expectedMsgs.empty());
+}
+
 void test()
 {
+    testFunctions();
     testDeepCopy();
     testListBasics();
     testQuote();
