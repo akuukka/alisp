@@ -443,6 +443,15 @@ void testFunctions()
     ASSERT_EXCEPTION(m, "(foo2)", alisp::exceptions::WrongNumberOfArguments);
     ASSERT_OUTPUT_EQ(m, "(foo2 \"abc\")", "\"abc\"");
     assert(expectedMsgs.empty());
+
+    /*
+(defun test (z)
+  (set 'z (+ z 1))
+  (message "%d" z)
+  z)
+(test 1) ; 1
+(message "%d" z) ; 2
+     */
 }
 
 void test()

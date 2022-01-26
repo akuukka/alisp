@@ -13,8 +13,10 @@
 #include <cassert>
 #include <functional>
 #include <optional>
+
 #include "AtScopeExit.h"
-#include "Init.h"
+#include "Init.hpp"
+#include "Template.hpp"
 
 namespace alisp {
 namespace exceptions {
@@ -78,15 +80,6 @@ struct Object;
 struct ConsCellObject;
 struct Function;
 
-template < template <typename...> class Template, typename T >
-struct is_instantiation_of : std::false_type {};
-
-template < template <typename...> class Template, typename... Args >
-struct is_instantiation_of< Template, Template<Args...> > : std::true_type {};
-
-static_assert(is_instantiation_of<std::variant, std::variant<std::int64_t, double>>::value,
-              "Our template mechanism is not working.");
-
 template <typename T>
 std::optional<T> getValue(const Object &sym);
 
@@ -100,7 +93,7 @@ struct Converter
 };
 
 template <typename T>
-struct Converter<T, typename std::enable_if<is_instantiation_of<std::variant, T>::value>::type>
+struct Converter<T, typename std::enable_if<IsInstantiationOf<std::variant, T>::value>::type>
 {
     template<size_t I>
     typename std::enable_if<I == std::variant_size_v<T>, void>::type tryGetValue(const Object& o,
