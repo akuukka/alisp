@@ -1042,6 +1042,18 @@ public:
             sym->function->isMacro = true;
             return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
         });
+        makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
+            if (!!*args.get()) {
+                return args.get()->eval();
+            }
+            args.skip();
+            while (auto res = args.get()) {
+                if (!args.hasNext()) {
+                    return res;
+                }
+            }
+            return makeNil();
+        });
         makeFunc("let", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
             std::vector<std::string> varList;
             for (auto& arg : *args.cc->car->asList()) {

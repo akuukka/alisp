@@ -220,6 +220,8 @@ void testCdrFunction()
     ASSERT_OUTPUT_EQ(m, "(cdr '())", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr (cdr '(a b c)))", "(c)");
     ASSERT_EXCEPTION(m, "(cdr 1)", alisp::exceptions::WrongTypeArgument);
+    // ASSERT_OUTPUT_EQ(m, "(cdr-safe 1)", "nil");
+    // ASSERT_OUTPUT_EQ(m, "(cdr-safe '(a b c))", "(b c)");
 }
 
 void testPrognFunction()
@@ -461,9 +463,21 @@ void testLet()
     ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (message \"%d\" x) (+ x y))", "4");
 }
 
+void testIf()
+{
+    alisp::Machine m;
+    m.setMessageHandler([&](std::string msg) { assert(msg != "problem"); });
+    ASSERT_OUTPUT_EQ(m, "(if t 1)", "1");
+    ASSERT_OUTPUT_EQ(m, "(if (eq 1 1) 1)", "1");
+    ASSERT_OUTPUT_EQ(m, "(if nil 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(if nil (message \"problem\") 2 3 4)", "4");
+    ASSERT_OUTPUT_EQ(m, "(if nil 1 2 3)", "3");
+}
+
 void test()
 {
-    return testLet();
+    testIf();
+    testLet();
     testFunctions();
     testDeepCopy();
     testListBasics();
