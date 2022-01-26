@@ -1302,16 +1302,6 @@ public:
             name->getSymbolOrNull()->variable = std::move(args.get());
             return name->getSymbolOrNull()->variable->clone();
         });
-        makeFunc("setq", 2, 2, [this](FArgs &args) {
-            const SymbolObject* name =
-                dynamic_cast<SymbolObject*>(args.cc->car.get());
-            if (!name) {
-                throw exceptions::WrongTypeArgument(args.cc->car->toString());
-            }
-            auto value = args.cc->next()->car->eval();
-            name->parent->setVariable(name->name, value->clone());
-            return value;
-        });
         makeFunc("eq", 2, 2, [this](FArgs& args) {
             return args.get()->equals(*args.get()) ? makeTrue() : makeNil();
         });

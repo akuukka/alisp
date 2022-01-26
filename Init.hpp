@@ -1,5 +1,7 @@
 namespace alisp { inline const char* getInitCode() { return R"code(
 
+(defmacro setq (sym var)
+  (list 'set (list 'quote sym) var))
 
 (defmacro pop (listname)
   (list 'prog1 (list 'car listname)
