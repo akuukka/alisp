@@ -455,6 +455,8 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(cdar '((1 4) 2 3))", "(4)");    
     ASSERT_OUTPUT_EQ(m, "(cdar nil)", "nil");
     ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", alisp::exceptions::WrongTypeArgument);    
+    ASSERT_OUTPUT_EQ(m, "(caar '((8) 2 3))", "8");
+    ASSERT_OUTPUT_EQ(m, "(caar 'nil)", "nil");
     assert(expectedMsgs.empty());
     /*
 (defun test (z)
