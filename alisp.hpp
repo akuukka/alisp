@@ -14,6 +14,7 @@
 #include <functional>
 #include <optional>
 #include "AtScopeExit.h"
+#include "Init.h"
 
 namespace alisp {
 namespace exceptions {
@@ -648,7 +649,7 @@ bool isPartOfSymName(const char c)
 
 bool isWhiteSpace(const char c)
 {
-    return c == ' ';
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
 std::string parseSymbolName(const char*& str)
@@ -1049,7 +1050,8 @@ class Machine
     }
 
 public:
-    std::unique_ptr<Object> parse(const char *expr) {
+    std::unique_ptr<Object> parse(const char *expr)
+    {
         auto r = parseNext(expr);
         if (!onlyWhitespace(expr)) {
             throw std::runtime_error("Unexpected: " + std::string(expr));
@@ -1512,12 +1514,7 @@ public:
             auto ret = list->cc->car->clone();
             return ret;
         });
-        evaluate("(defmacro push (element listname)"
-                 "  (list 'setq listname (list 'cons element listname)))");
-        evaluate("(defmacro pop (listname)"
-                 "   (list 'prog1 (list 'car listname)"
-                 "   (list 'setq listname "
-                 "   (list 'cdr listname))))");
+        evaluate(getInitCode());
     }
 
     template<typename F>
