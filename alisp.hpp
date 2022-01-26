@@ -356,6 +356,7 @@ struct SymbolObject : Object
     };
 
     Symbol* getSymbol() const;
+    Symbol* getSymbolOrNull() const;
 
     Function* resolveFunction() override;
 
@@ -377,8 +378,8 @@ struct SymbolObject : Object
         if (!op) {
             return false;
         }
-        const Symbol* lhs = getSymbol();
-        const Symbol* rhs = op->getSymbol();
+        const Symbol* lhs = getSymbolOrNull();
+        const Symbol* rhs = op->getSymbolOrNull();
         return lhs == rhs;
     }
 };
@@ -736,16 +737,6 @@ class Machine
     std::unique_ptr<Object> makeTrue()
     {
         return std::make_unique<SymbolObject>(this, nullptr, "t");
-    }
-
-    std::shared_ptr<Symbol> getSymbol(std::string name)
-    {
-        if (!m_syms.count(name)) {
-            m_syms[name] = std::make_shared<Symbol>();
-            m_syms[name]->name = name;
-            m_syms[name]->parent = this;
-        }
-        return m_syms[name];
     }
 
     std::string parseNextName(const char*& str)
@@ -1299,6 +1290,18 @@ public:
             }
             return r;
         });
+        makeFunc("set", 2, 2, [](FArgs& args) {
+            const auto& p1 = args.get();
+            const SymbolObject* name =
+                dynamic_cast<SymbolObject*>(p1.get());
+            if (!name) {
+                throw exceptions::WrongTypeArgument(p1->toString());
+            }
+            auto sym = name->getSymbol();
+            assert(sym);
+            name->getSymbolOrNull()->variable = std::move(args.get());
+            return name->getSymbolOrNull()->variable->clone();
+        });
         makeFunc("setq", 2, 2, [this](FArgs &args) {
             const SymbolObject* name =
                 dynamic_cast<SymbolObject*>(args.cc->car.get());
@@ -1417,6 +1420,16 @@ public:
         }
         return m_syms[name];
     }
+
+    std::shared_ptr<Symbol> getSymbol(std::string name)
+    {
+        if (!m_syms.count(name)) {
+            m_syms[name] = std::make_shared<Symbol>();
+            m_syms[name]->name = name;
+            m_syms[name]->parent = this;
+        }
+        return m_syms[name];
+    }
 };
 
 std::unique_ptr<Object> SymbolObject::eval() 
@@ -1496,10 +1509,14 @@ std::string ConsCell::toString() const
     return s;
 }
 
-Symbol* SymbolObject::getSymbol() const
+Symbol* SymbolObject::getSymbolOrNull() const
 {
     return sym ? sym.get() : parent->getSymbolOrNull(name).get();
 }
 
+Symbol* SymbolObject::getSymbol() const
+{
+    return sym ? sym.get() : parent->getSymbol(name).get();
+}
 
 }

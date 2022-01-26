@@ -243,6 +243,7 @@ void testVariables()
     m.evaluate("(setq x 2)");
     assert(m.evaluate("(/ 1.0 x)")->value<double>() == 0.5);
     assert(m.evaluate("(+ 1 x)")->value<std::int64_t>() == 3);
+    ASSERT_OUTPUT_EQ(m, "(set 'y 15)", "15");
 }
 
 void testSymbols()
