@@ -1042,6 +1042,32 @@ public:
             sym->function->isMacro = true;
             return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
         });
+        makeFunc("let", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
+            std::vector<std::string> varList;
+            for (auto& arg : *args.cc->car->asList()) {
+                // std::cout << arg << std::endl;
+                assert(arg.isList());
+                auto list = arg.asList();
+                auto cc = list->cc.get();
+                // std::cout << cc->car << " = " << cc->cdr->asList()->cc->car->eval() << std::endl;
+                const auto sym = dynamic_cast<const SymbolObject*>(cc->car.get());
+                assert(sym && sym->name.size());
+                pushLocalVariable(sym->name, cc->cdr->asList()->cc->car->eval());
+                varList.push_back(sym->name);
+            }
+            AtScopeExit onExit([this, varList = std::move(varList)]() {
+                for (auto it = varList.rbegin(); it != varList.rend(); ++it) {
+                    popLocalVariable(*it);
+                }
+            });
+            args.skip();
+            std::unique_ptr<Object> res = makeNil();
+            for (auto& obj : *args.cc) {
+                // std::cout << "exec:" << obj.toString() << std::endl;
+                res = obj.eval();
+            }
+            return res;
+        });
         makeFunc("defun", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
             const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
             if (!nameSym || nameSym->name.empty()) {

@@ -455,8 +455,15 @@ void testFunctions()
      */
 }
 
+void testLet()
+{
+    alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (message \"%d\" x) (+ x y))", "4");
+}
+
 void test()
 {
+    return testLet();
     testFunctions();
     testDeepCopy();
     testListBasics();
