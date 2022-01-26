@@ -537,18 +537,6 @@ inline typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(st
                                                                               FArgs&)
 {}
 
-template <typename T>
-struct OptCheck : std::false_type
-{
-    using BaseType = T;
-};
-
-template <typename T>
-struct OptCheck<std::optional<T>> : std::true_type
-{
-    using BaseType = T;
-};
-
 template <size_t I, typename... Args>
 inline constexpr typename std::enable_if<I == std::tuple_size_v<std::tuple<Args...>>,
                                          bool>::type
@@ -566,7 +554,7 @@ tupleOptCheck()
     constexpr bool isOptionalParam = OptCheck<T>::value;
     return isOptionalParam;
 }
-
+    
     template<size_t I, typename ...Args>
     inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
                                                                                  FArgs& args)
@@ -738,63 +726,11 @@ inline std::optional<const Symbol*> getValue(const Object& sym)
     return std::nullopt;
 }
 
-/*
-template<typename... Args>
-inline std::optional<std::variant<Args...>> getValue(const Object& sym)
+template <typename... Args>
+inline size_t getMinArgs()
 {
-    std::optional<std::variant<Args...>> r;
-    return r;
+    return countNonOpts<0, Args...>();
 }
-*/
-
-template <typename T>
-struct function_traits : public function_traits<decltype(&T::operator())>
-{};
-
-template <typename ClassType, typename ReturnType, typename... Args>
-struct function_traits<ReturnType(ClassType::*)(Args...) const>
-// we specialize for pointers to member function
-{
-    using result_type = ReturnType;
-    using arg_tuple = std::tuple<Args...>;
-    static constexpr auto arity = sizeof...(Args);
-};
-
-template <class F, std::size_t ... Is, class T>
-auto lambda_to_func_impl(F f, std::index_sequence<Is...>, T) {
-    return std::function<typename T::result_type(std::tuple_element_t<Is, typename T::arg_tuple>...)>(f);
-}
-
-template <class F>
-auto lambda_to_func(F f) {
-    using traits = function_traits<F>;
-    return lambda_to_func_impl(f, std::make_index_sequence<traits::arity>{}, traits{});
-}
-
-template<int N, typename... Ts>
-using NthTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
-
-template <size_t I, typename... Args>
-inline typename std::enable_if<I == sizeof...(Args), size_t>::type countNonOpts()
-{
-    return 0;
-}
-
-template <size_t I, typename... Args>
-inline typename std::enable_if<I < sizeof...(Args), size_t>::type countNonOpts()
-{
-    using ThisType = NthTypeOf<I, Args...>;
-    if (OptCheck<ThisType>::value) {
-        return 0;
-    }
-    return 1 + countNonOpts<I+1, Args...>();
-}
-
-    template <typename... Args>
-    inline size_t getMinArgs()
-    {
-        return countNonOpts<0, Args...>();
-    }
 
 class Machine
 {
