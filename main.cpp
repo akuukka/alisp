@@ -193,6 +193,7 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" -3 -1)", "\"ef\"");
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" -3 nil)", "\"efg\"");
     ASSERT_OUTPUT_EQ(m, "(concat \"ab\" \"cd\")", "\"abcd\"");
+    ASSERT_OUTPUT_EQ(m, "(length \"abc\")", "3");
     assert(m.evaluate("\"abc\"")->toString() == "\"abc\"");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
     assert(m.evaluate("(stringp \"abc\")")->toString() == "t");

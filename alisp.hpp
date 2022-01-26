@@ -115,6 +115,11 @@ struct Object
     }
 };
 
+struct Sequence
+{
+    virtual size_t length() const = 0;
+};
+
 inline std::ostream &operator<<(std::ostream &os, const Object &sym)
 {
     os << sym.toString();
@@ -161,7 +166,7 @@ struct ConsCell
     Iterator end() { return Iterator{nullptr}; }
 };
 
-struct StringObject : Object
+struct StringObject : Object, Sequence
 {
     std::shared_ptr<std::string> value;
 
@@ -182,6 +187,8 @@ struct StringObject : Object
         const StringObject* str = dynamic_cast<const StringObject*>(&o);
         return str && str->value == value;
     }
+
+    size_t length() const override { return value->size(); }
 };
 
 struct IntObject : Object {
@@ -671,6 +678,13 @@ inline std::optional<const Symbol*> getValue(const Object& sym)
     return std::nullopt;
 }
 
+template<>
+inline std::optional<const Sequence*> getValue(const Object& sym)
+{
+    if (sym.isString()) { return dynamic_cast<const Sequence*>(&sym); }
+    return nullptr;
+}
+
 template <typename... Args>
 inline size_t getMinArgs()
 {
@@ -706,6 +720,8 @@ class Machine
     std::unique_ptr<Object> makeObject(T);
 
     template<> std::unique_ptr<Object> makeObject(std::int64_t i) { return makeInt(i); }
+    template<> std::unique_ptr<Object> makeObject(int i) { return makeInt(i); }
+    template<> std::unique_ptr<Object> makeObject(size_t i) { return makeInt((std::int64_t)i); }
     template<> std::unique_ptr<Object> makeObject(std::string str)
     {
         return std::make_unique<StringObject>(str);
@@ -1095,6 +1111,7 @@ public:
             }
             return res;
         };
+        defun("length", [](const Sequence* ptr) { return ptr->length(); });
         makeFunc("let", 2, std::numeric_limits<int>::max(),
                  std::bind(let, std::placeholders::_1, false));
         makeFunc("let*", 2, std::numeric_limits<int>::max(),
