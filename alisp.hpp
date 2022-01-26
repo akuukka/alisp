@@ -200,12 +200,12 @@ struct ValueObject : Object
         const ValueObject<T>* op = dynamic_cast<const ValueObject<T>*>(&o);
         return op && op->value == value;
     }
+    std::string toString() const override { return std::to_string(value); }
 };
 
 struct IntObject : ValueObject<std::int64_t>
 {
     IntObject(std::int64_t value) : ValueObject<std::int64_t>(value) {}
-    std::string toString() const override { return std::to_string(value); }
     bool isInt() const override { return true; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<IntObject>(value); }
 };
@@ -213,7 +213,6 @@ struct IntObject : ValueObject<std::int64_t>
 struct FloatObject : ValueObject<double>
 {
     FloatObject(double value) : ValueObject<double>(value) {}
-    std::string toString() const override { return std::to_string(value); }
     bool isFloat() const override { return true; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
 };
