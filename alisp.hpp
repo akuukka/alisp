@@ -17,63 +17,9 @@
 #include "AtScopeExit.h"
 #include "Init.hpp"
 #include "Template.hpp"
+#include "Exception.hpp"
 
 namespace alisp {
-namespace exceptions {
-
-struct UnableToEvaluate : std::runtime_error
-{
-    UnableToEvaluate(std::string msg) : std::runtime_error(msg) {}
-};
-
-struct Error : std::runtime_error
-{
-    Error(std::string msg) : std::runtime_error(msg) {}
-};
-
-struct VoidFunction : std::runtime_error
-{
-    VoidFunction(std::string fname) : std::runtime_error("void-function " + fname) {}
-};
-
-struct VoidVariable : std::runtime_error
-{
-    VoidVariable(std::string vname) : std::runtime_error("void-variable " + vname) {}
-};
-
-struct WrongNumberOfArguments : std::runtime_error
-{
-    WrongNumberOfArguments(int num) :
-        std::runtime_error("wrong-number-of-arguments: " + std::to_string(num))
-    {
-
-    }
-};
-
-struct SyntaxError : std::runtime_error
-{
-    SyntaxError(std::string err) : std::runtime_error(err) { }
-};
-
-struct WrongTypeArgument : std::runtime_error
-{
-    WrongTypeArgument(std::string arg) :
-        std::runtime_error("wrong-type-argument: " + arg)
-    {
-
-    }
-};
-
-struct ArithError : std::runtime_error
-{
-    ArithError(std::string err) :
-        std::runtime_error("arith-error: " + err)
-    {
-
-    }
-};
-
-} // namespace exceptions
 
 class Machine;
 struct Object;
