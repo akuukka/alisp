@@ -1059,7 +1059,10 @@ public:
 
     std::unique_ptr<Object> evaluate(const char *expr)
     {
-        return parse(expr)->eval();
+        std::string code = "(progn ";
+        code += expr;
+        code += ")";
+        return parse(code.c_str())->eval();
     }
 
     Object* resolveVariable(const std::string& name)
