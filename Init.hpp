@@ -1,5 +1,8 @@
 namespace alisp { inline const char* getInitCode() { return R"code(
 
+(defun cadr (conscell)
+  (nth 1 conscell))
+
 (defun car-safe (object)
   (let ((x object))
     (if (consp x)

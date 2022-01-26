@@ -446,6 +446,8 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
     ASSERT_EXCEPTION(m, "(foo2)", alisp::exceptions::WrongNumberOfArguments);
     ASSERT_OUTPUT_EQ(m, "(foo2 \"abc\")", "\"abc\"");
+    ASSERT_OUTPUT_EQ(m, "(cadr '(1 2 3))", "2");
+    ASSERT_OUTPUT_EQ(m, "(cadr nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr-safe '(1 2 3))", "(2 3)");
     ASSERT_OUTPUT_EQ(m, "(cdr-safe 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(car-safe '(1 2 3))", "1");
