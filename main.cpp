@@ -120,18 +120,6 @@ bool expect(std::function<void(void)> code)
     return false;
 }
 
-void testSimpleEvaluations()
-{
-    alisp::Machine m;
-    const auto intSym = m.evaluate("1");
-    assert(intSym->isInt() && *intSym == 1);
-
-    assert(m.evaluate("()")->toString() == "nil");
-    assert(expect<alisp::exceptions::VoidFunction>([&]() {
-        m.evaluate("(nil)");
-    }));
-}
-
 void testNullFunction()
 {
     alisp::Machine m;
@@ -531,7 +519,6 @@ void test()
     testVariables();
     testDivision();
     testSyntaxErrorDetection();
-    testSimpleEvaluations();
     testNullFunction();
     testPrognFunction();
     /*

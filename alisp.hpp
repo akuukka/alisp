@@ -82,7 +82,6 @@ struct Object
     virtual bool operator!() const { return false; }
     virtual ~Object() {}
 
-    virtual bool operator==(std::int64_t value) const { return false; };
     virtual Function* resolveFunction() { return nullptr; }
     virtual std::unique_ptr<Object> clone() const = 0;
     virtual bool equals(const Object& o) const
@@ -191,53 +190,32 @@ struct StringObject : Object, Sequence
     size_t length() const override { return value->size(); }
 };
 
-struct IntObject : Object {
-    std::int64_t value;
-
-    IntObject(std::int64_t value) : value(value) {}
-
-    std::string toString() const override { return std::to_string(value); }
-    bool isInt() const override { return true; }
-    bool operator==(std::int64_t value) const override {
-        return this->value == value;
-    };
-
-    std::unique_ptr<Object> clone() const override {
-        return std::make_unique<IntObject>(value);
-    }
-
+template<typename T>
+struct ValueObject : Object
+{
+    T value;
+    ValueObject(T t) : value(t) {}
     bool equals(const Object& o) const override
     {
-        const IntObject* op = dynamic_cast<const IntObject*>(&o);
+        const ValueObject<T>* op = dynamic_cast<const ValueObject<T>*>(&o);
         return op && op->value == value;
     }
 };
 
-struct FloatObject : Object
+struct IntObject : ValueObject<std::int64_t>
 {
-    double value;
-
-    FloatObject(double value) : value(value) {}
-
+    IntObject(std::int64_t value) : ValueObject<std::int64_t>(value) {}
     std::string toString() const override { return std::to_string(value); }
+    bool isInt() const override { return true; }
+    std::unique_ptr<Object> clone() const override { return std::make_unique<IntObject>(value); }
+};
 
+struct FloatObject : ValueObject<double>
+{
+    FloatObject(double value) : ValueObject<double>(value) {}
+    std::string toString() const override { return std::to_string(value); }
     bool isFloat() const override { return true; }
-
-    bool operator==(std::int64_t value) const override
-    {
-        return this->value == value;
-    };
-
-    std::unique_ptr<Object> clone() const override
-    {
-        return std::make_unique<FloatObject>(value);
-    }
-
-    bool equals(const Object& o) const override
-    {
-        const FloatObject* op = dynamic_cast<const FloatObject*>(&o);
-        return op && op->value == value;
-    }
+    std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
 };
 
 struct ConsCellObject : Object, Sequence
