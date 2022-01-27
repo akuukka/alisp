@@ -912,7 +912,7 @@ class Machine
             else {
                 std::stringstream os;
                 os << "Unexpected character: " << c;
-                throw std::runtime_error(os.str());
+                throw exceptions::SyntaxError(os.str());
             }
         }
         return nullptr;
@@ -940,7 +940,7 @@ public:
     {
         auto r = parseNext(expr);
         if (!onlyWhitespace(expr)) {
-            throw std::runtime_error("Unexpected: " + std::string(expr));
+            throw exceptions::SyntaxError("Unexpectedly encountered: " + std::string(expr));
         }
         return r;
     }
