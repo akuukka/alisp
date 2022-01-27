@@ -504,6 +504,7 @@ void testIf()
 void testCyclicals()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(let ((a (list 1))) (proper-list-p (setcdr a a)))", "nil");
     ASSERT_OUTPUT_EQ(m, "(let ((a (list 1)))(setcdr a a))", "(1 . #0)");
     auto list = m.evaluate("'(0 1 2 3 (4 (5 6) 7 8) 9)");
     std::set<int> ints;

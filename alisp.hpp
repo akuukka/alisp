@@ -1049,6 +1049,9 @@ public:
             std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
             std::unique_ptr<Object> r;
             auto p = cc.get();
+            if (cc->isCyclical()) {
+                return makeNil();
+            }
             std::int64_t count = p->car ? 1 : 0;
             while (p->cdr && p->cdr->isList()) {
                 count++;
