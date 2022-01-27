@@ -13,7 +13,7 @@
 #include <cassert>
 #include <functional>
 #include <optional>
-
+#include <set>
 #include "AtScopeExit.h"
 #include "Init.hpp"
 #include "Template.hpp"
@@ -141,7 +141,6 @@ struct ConsCell
     std::unique_ptr<Object> car;
     std::unique_ptr<Object> cdr;
 
-    std::string toString() const;
     const ConsCell* next() const;
     ConsCell* next();
     bool operator!() const { return !car; }
@@ -233,11 +232,13 @@ struct ConsCellObject : Object, Sequence
         this->cc->cdr = std::move(cdr);
     }
 
-    std::string toString() const override { return cc->toString(); }
+    std::string toString() const override;
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
     bool operator!() const override { return !(*cc); }
     ConsCellObject* asList() override { return this; }
+    Object* car() const { return cc->car.get();  };
+    Object* cdr() const { return cc->cdr.get();  };
 
     std::unique_ptr<Object> clone() const override
     {
@@ -1573,20 +1574,30 @@ ConsCell* ConsCell::next()
     return nullptr;
 }
 
-std::string ConsCell::toString() const
+Symbol* SymbolObject::getSymbolOrNull() const
 {
-    if (!car && !cdr) {
+    return sym ? sym.get() : parent->getSymbolOrNull(name).get();
+}
+
+Symbol* SymbolObject::getSymbol() const
+{
+    return sym ? sym.get() : parent->getSymbol(name).get();
+}
+
+std::string ConsCellObject::toString() const
+{
+    if (!cc->car && !cc->cdr) {
         return "nil";
     }
 
-    const SymbolObject* carSym = dynamic_cast<const SymbolObject*>(car.get());
+    const SymbolObject* carSym = dynamic_cast<const SymbolObject*>(car());
     const bool quote = carSym && carSym->name == "quote";
     if (quote) {
-        return "'" + (next() ? next()->car->toString() : std::string(""));
+        return "'" + (cc->next() ? cc->next()->car->toString() : std::string(""));
     }
         
     std::string s = "(";
-    const ConsCell *t = this;
+    const ConsCell *t = cc.get();
     while (t) {
         if (!t->next() && t->cdr) {
             s += t->car->toString() + " . " + t->cdr->toString();
@@ -1600,16 +1611,6 @@ std::string ConsCell::toString() const
     }
     s += ")";
     return s;
-}
-
-Symbol* SymbolObject::getSymbolOrNull() const
-{
-    return sym ? sym.get() : parent->getSymbolOrNull(name).get();
-}
-
-Symbol* SymbolObject::getSymbol() const
-{
-    return sym ? sym.get() : parent->getSymbol(name).get();
 }
 
 }

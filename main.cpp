@@ -499,8 +499,17 @@ void testIf()
     ASSERT_OUTPUT_EQ(m, "(if nil 1 2 3)", "3");
 }
 
+void testCyclicals()
+{
+    alisp::Machine m;
+    m.evaluate("(setq x (list 1 2 3))");
+    m.evaluate("(setcar x x)");
+    std::cout << m.evaluate("x") << std::endl;
+}
+
 void test()
 {
+    // return testCyclicals();
     testListBasics();
     testLet();
     testQuote();
