@@ -726,6 +726,10 @@ class Machine
     {
         return std::move(o);
     }
+    template<> std::unique_ptr<Object> makeObject(std::shared_ptr<Object> o)
+    {
+        return std::unique_ptr<Object>(o->clone());
+    }
     
     template<typename R, typename ...Args>
     void makeFuncInternal(const char* name, std::function<R(Args...)> f)
@@ -990,6 +994,10 @@ public:
             return !(cc && !!(*cc));
         });
         defun("null", [](bool isNil) { return !isNil; });
+        defun("setcar", [](ConsCellObject obj, std::shared_ptr<Object> newcar) {
+            obj.cc->car.reset(newcar.get());
+            return newcar;
+        });
         defun("car", [](ConsCellObject obj) {
             return obj.cc->car ? obj.cc->car->clone() : makeNil();
         });

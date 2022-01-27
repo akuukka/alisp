@@ -167,6 +167,9 @@ void testCarFunction()
     }));
     assert(m.evaluate("(car '(1 2))")->toString() == "1");
     assert(m.evaluate("(car '((1 2)))")->toString() == "(1 2)");
+    ASSERT_OUTPUT_EQ(m, "(setq test (list 'a 'b' c))", "(a b c)");
+    ASSERT_OUTPUT_EQ(m, "(setcar test 'd)", "d");
+    ASSERT_OUTPUT_EQ(m, "test", "(d b c)");
 }
 
 void testSyntaxErrorDetection()
