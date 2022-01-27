@@ -513,8 +513,16 @@ void testCyclicals()
         }
         return true;
     });
+    assert(!list->asList()->cc->isCyclical());
     assert(ints.empty());
-    //ASSERT_OUTPUT_EQ(m, "(setq x (list 1 2 3))", "(1 2 3)");
+    
+    ASSERT_OUTPUT_EQ(m, "(setq x (list 1 2 3))", "(1 2 3)");
+    list = m.evaluate("(setcar x x)");
+    assert(list->asList()->cc->isCyclical());
+    /*list->asList()->cc->traverse([&](const alisp::ConsCell* cell) {
+        std::cout << cell->car->toString() << std::endl;
+        return true;
+        });*/
     //ASSERT_OUTPUT_EQ(m, "(setcar x x)", "(#0 2 3)");
 }
 

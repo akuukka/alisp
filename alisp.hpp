@@ -165,6 +165,7 @@ struct ConsCell
     Iterator end() { return Iterator{nullptr}; }
 
     void traverse(const std::function<bool(const ConsCell*)>& f) const;
+    bool isCyclical() const;
 };
 
 struct StringObject : Object, Sequence
@@ -1621,13 +1622,29 @@ void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
 {
     const ConsCell* cell = this;
     while (cell) {
-        f(cell);
+        if (!f(cell)) {
+            return;
+        }
         if (cell->car->isList()) {
-            std::cout << "Traverse children!\n";
             cell->car->asList()->cc.get()->traverse(f);
         }
         cell = cell->next();
     }
+}
+
+bool ConsCell::isCyclical() const
+{
+    std::set<const ConsCell*> visited;
+    bool cycled = false;
+    traverse([&](const ConsCell* cell) {
+        if (visited.count(cell)) {
+            cycled = true;
+            return false;
+        }
+        visited.insert(cell);
+        return true;
+    });
+    return cycled;
 }
 
 }
