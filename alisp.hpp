@@ -1679,6 +1679,9 @@ void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
 
 bool ConsCell::isCyclical() const
 {
+    if (!*this) {
+        return false;
+    }
     std::set<const ConsCell*> visited;
     bool cycled = false;
     traverse([&](const ConsCell* cell) {
