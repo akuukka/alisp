@@ -306,6 +306,7 @@ void testInternFunction()
     alisp::Machine m;
     m.setMessageHandler([](std::string msg){});
     ASSERT_OUTPUT_EQ(m, "(intern \"\")", "##");
+    ASSERT_OUTPUT_EQ(m, "(eq (intern \"tt\") 'tt)", "t");
     ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"foo\"))", "foo");
     ASSERT_OUTPUT_EQ(m, "(eq sym 'foo)", "t");
     ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "nil");
