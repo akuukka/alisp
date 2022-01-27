@@ -1638,21 +1638,27 @@ std::string ConsCellObject::toString() const
         
     std::string s = "(";
     const ConsCell *t = cc.get();
-    std::set<const ConsCell*> visited;
+    std::map<const ConsCell*, size_t> visited;
+    std::int64_t index = 0;
+    std::optional<std::int64_t> loopback;
     while (t) {
-        if ((!t->next() || (visited.count(t->next()))) && t->cdr) {
-            if (infinite) {
-                s += ". ";
-                auto it = std::find(cellPtrs.begin(), cellPtrs.end(), t->next());
-                assert(it != cellPtrs.end());
-                const std::int64_t i = std::distance(cellPtrs.begin(), it);
-                s += "#" + std::to_string(i);
-                break;
-            }
+        if (!t->next() && t->cdr) {
             s += t->car->toString() + " . " + t->cdr->toString();
             break;
         }
-        visited.insert(t);
+        else if (infinite && visited[t->next()] == (cellPtrs.size() > 1 ? 2 : 1)) {
+            s += ". ";
+            if (cellPtrs.size() == 1) {
+                loopback = 0;
+            }
+            s += "#" + std::to_string(*loopback);
+            break;
+        }
+        if (infinite && !loopback && visited[t->next()]) {
+            loopback = index;
+        }
+        visited[t]++;
+        index++;
         s += t->car ? carToString(t->car.get()) : "";
         t = t->next();
         if (t) {

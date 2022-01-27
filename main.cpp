@@ -505,8 +505,27 @@ void testCyclicals()
 {
     alisp::Machine m;
     assert(!alisp::makeList()->cc->isCyclical());
+    ASSERT_OUTPUT_EQ(m,
+                     "(progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z)",
+                     "(1 2 3 2 . #2)");
+    ASSERT_OUTPUT_EQ(m,
+                     "(progn (set 'z (list 1 2 3 4 5 6 7))"
+                     "(setcdr (cdr (cdr (cdr (cdr (cdr (cdr z)))))) (cdr z))"
+                     "z)",
+                     "(1 2 3 4 5 6 7 2 3 4 5 6 . #6)");
+    // Unfortunately I haven't been able to reverse engineer how emacs cuts cyclical
+    // list printing. But as long as the number following hashtag is correct and the
+    // patter is visibly clear from inspecting the printed list, this shouldn't be a
+    // huge problem.
+    /*
+    ASSERT_OUTPUT_EQ(m,
+                     "(progn (set 'z (list 1 2 3 4 5 6))"
+                     "(setcdr (cdr (cdr (cdr (cdr (cdr z))))) (cdr (cdr z)))"
+                     "z)", "(1 2 3 4 5 6 3 4 5 6 . #5)");
+    */
     ASSERT_OUTPUT_EQ(m, "(let ((a (list 1))) (proper-list-p (setcdr a a)))", "nil");
     ASSERT_OUTPUT_EQ(m, "(let ((a (list 1)))(setcdr a a))", "(1 . #0)");
+
     auto list = m.evaluate("'(0 1 2 3 (4 (5 6) 7 8) 9)");
     std::set<int> ints;
     for (int i=0;i<10;i++) {
