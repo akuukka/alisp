@@ -1597,7 +1597,13 @@ std::string ConsCellObject::toString() const
 
     std::vector<const ConsCell*> cellPtrs;
     auto p = cc.get();
+    bool infinite = false;
     while (p) {
+        auto it = std::find(cellPtrs.begin(), cellPtrs.end(), p);
+        if (it != cellPtrs.end()) {
+            infinite = true;
+            break;
+        }
         cellPtrs.push_back(p);
         p = p->next();
     }
@@ -1629,11 +1635,21 @@ std::string ConsCellObject::toString() const
         
     std::string s = "(";
     const ConsCell *t = cc.get();
+    std::set<const ConsCell*> visited;
     while (t) {
-        if (!t->next() && t->cdr) {
+        if ((!t->next() || (visited.count(t->next()))) && t->cdr) {
+            if (infinite) {
+                s += ". ";
+                auto it = std::find(cellPtrs.begin(), cellPtrs.end(), t->next());
+                assert(it != cellPtrs.end());
+                const std::int64_t i = std::distance(cellPtrs.begin(), it);
+                s += "#" + std::to_string(i);
+                break;
+            }
             s += t->car->toString() + " . " + t->cdr->toString();
             break;
         }
+        visited.insert(t);
         s += t->car ? carToString(t->car.get()) : "";
         t = t->next();
         if (t) {
