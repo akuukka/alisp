@@ -352,7 +352,7 @@ struct SymbolObject : Object
         sym(sym),
         name(name)
     {
-        assert(sym || name.size());
+
     }
 
     const std::string getSymbolName()
@@ -367,7 +367,10 @@ struct SymbolObject : Object
 
     std::string toString() const override
     {
-        return sym ? sym->name : name;
+        // Interned symbols with empty string as name have special printed form of ##. See:
+        // https://www.gnu.org/software/emacs/manual/html_node/elisp/Special-Read-Syntax.html
+        std::string n = sym ? sym->name : name;
+        return n.size() ? n : "##";
     }
 
     std::unique_ptr<Object> clone() const override
@@ -1366,12 +1369,8 @@ public:
             if (!ret) ret = makeNil();
             return ret;
         });
-        makeFunc("intern", 1, 1, [this](FArgs& args) {
-            const auto arg = args.get();
-            if (!arg->isString()) {
-                throw exceptions::WrongTypeArgument(arg->toString());
-            }
-            return std::make_unique<SymbolObject>(this, getSymbol(arg->value<std::string>()));
+        defun("intern", [this](std::string name) -> std::unique_ptr<Object> {
+            return std::make_unique<SymbolObject>(this, getSymbol(name));
         });
         makeFunc("unintern", 1, 1, [this](FArgs& args) {
             const auto arg = args.get();

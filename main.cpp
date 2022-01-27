@@ -305,6 +305,7 @@ void testInternFunction()
 {
     alisp::Machine m;
     m.setMessageHandler([](std::string msg){});
+    ASSERT_OUTPUT_EQ(m, "(intern \"\")", "##");
     ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"foo\"))", "foo");
     ASSERT_OUTPUT_EQ(m, "(eq sym 'foo)", "t");
     ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "nil");
@@ -515,7 +516,11 @@ void testCyclicals()
     });
     assert(!list->asList()->cc->isCyclical());
     assert(ints.empty());
-    
+
+    /*
+      https://www.gnu.org/software/emacs/manual/html_node/elisp/Special-Read-Syntax.html
+      
+     */
     ASSERT_OUTPUT_EQ(m, "(setq x (list 1 2 3))", "(1 2 3)");
     ASSERT_OUTPUT_EQ(m, "(setcar x x)", "(#0 2 3)");
 }
