@@ -502,14 +502,25 @@ void testIf()
 void testCyclicals()
 {
     alisp::Machine m;
-    m.evaluate("(setq x (list 1 2 3))");
-    m.evaluate("(setcar x x)");
-    std::cout << m.evaluate("x") << std::endl;
+    auto list = m.evaluate("'(0 1 2 3 (4 (5 6) 7 8) 9)");
+    std::set<int> ints;
+    for (int i=0;i<10;i++) {
+        ints.insert(i);
+    }
+    list->asList()->cc->traverse([&](const alisp::ConsCell* cell) {
+        if (cell->car->isInt()) {
+            ints.erase(atoi(cell->car->toString().c_str()));
+        }
+        return true;
+    });
+    assert(ints.empty());
+    //ASSERT_OUTPUT_EQ(m, "(setq x (list 1 2 3))", "(1 2 3)");
+    //ASSERT_OUTPUT_EQ(m, "(setcar x x)", "(#0 2 3)");
 }
 
 void test()
 {
-    // return testCyclicals();
+    testCyclicals(); // Lot of work to do here still...
     testListBasics();
     testLet();
     testQuote();
