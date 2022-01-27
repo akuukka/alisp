@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <string>
 #include <variant>
 #include <any>
 #include <limits>
@@ -1595,11 +1596,37 @@ std::string ConsCellObject::toString() const
         return "nil";
     }
 
+    std::vector<const ConsCell*> cellPtrs;
+    auto p = cc.get();
+    while (p) {
+        cellPtrs.push_back(p);
+        p = p->next();
+    }
+
     const SymbolObject* carSym = dynamic_cast<const SymbolObject*>(car());
     const bool quote = carSym && carSym->name == "quote";
     if (quote) {
         return "'" + (cc->next() ? cc->next()->car->toString() : std::string(""));
     }
+
+    auto carToString = [&](const Object* car) -> std::string {
+        if (car->isList()) {
+            const ConsCell* car2 = car->asList()->cc.get();
+            if (car2->isCyclical()) {
+                std::int64_t i = -1;
+                car2->traverse([&](const ConsCell* cell) {
+                    auto it = std::find(cellPtrs.begin(), cellPtrs.end(), car2);
+                    if (it != cellPtrs.end()) {
+                        i = std::distance(cellPtrs.begin(), it);
+                        return false;
+                    }
+                    return true;
+                });
+                return "#" + std::to_string(i);
+            }
+        }
+        return car->toString();
+    };
         
     std::string s = "(";
     const ConsCell *t = cc.get();
@@ -1608,7 +1635,7 @@ std::string ConsCellObject::toString() const
             s += t->car->toString() + " . " + t->cdr->toString();
             break;
         }
-        s += t->car ? t->car->toString() : "";
+        s += t->car ? carToString(t->car.get()) : "";
         t = t->next();
         if (t) {
             s += " ";
