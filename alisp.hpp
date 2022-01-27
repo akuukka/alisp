@@ -995,14 +995,12 @@ public:
         });
         defun("null", [](bool isNil) { return !isNil; });
         defun("setcar", [](ConsCellObject obj, std::shared_ptr<Object> newcar) {
-            obj.cc->car = newcar->clone();
-            return newcar;
+            return obj.cc->car = newcar->clone(), newcar;
         });
         defun("setcdr", [](ConsCellObject obj, std::shared_ptr<Object> newcdr) {
-            obj.cc->cdr = newcdr->clone();
-            return newcdr;
+            return obj.cc->cdr = newcdr->clone(), newcdr;
         });
-        defun("car", [](ConsCellObject obj) {
+        defun("car", [](ConsCellObject obj) { 
             return obj.cc->car ? obj.cc->car->clone() : makeNil();
         });
         defun("cdr", [](ConsCellObject obj) {

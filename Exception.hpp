@@ -4,9 +4,14 @@
 namespace alisp {
 namespace exceptions {
 
+struct Exception : std::runtime_error
+{
+    Exception(std::string msg) : std::runtime_error(std::move(msg)) {}
+};
+
 #define DEFINE_EXCEPTION(name)                                  \
-    struct name : std::runtime_error {                          \
-        (name)(std::string msg) : std::runtime_error(msg) {}    \
+    struct name : Exception {                                   \
+        (name)(std::string msg) : Exception(msg) {}             \
     };                                                          \
 
 DEFINE_EXCEPTION(UnableToEvaluate)
@@ -14,29 +19,29 @@ DEFINE_EXCEPTION(Error)
 DEFINE_EXCEPTION(SyntaxError)
 DEFINE_EXCEPTION(ArithError)
 
-struct VoidFunction : std::runtime_error
+struct VoidFunction : Exception
 {
-    VoidFunction(std::string fname) : std::runtime_error("void-function: " + fname) {}
+    VoidFunction(std::string fname) : Exception("void-function: " + fname) {}
 };
 
-struct VoidVariable : std::runtime_error
+struct VoidVariable : Exception
 {
-    VoidVariable(std::string vname) : std::runtime_error("void-variable: " + vname) {}
+    VoidVariable(std::string vname) : Exception("void-variable: " + vname) {}
 };
 
-struct WrongNumberOfArguments : std::runtime_error
+struct WrongNumberOfArguments : Exception
 {
     WrongNumberOfArguments(int num) :
-        std::runtime_error("wrong-number-of-arguments: " + std::to_string(num))
+        Exception("wrong-number-of-arguments: " + std::to_string(num))
     {
 
     }
 };
 
-struct WrongTypeArgument : std::runtime_error
+struct WrongTypeArgument : Exception
 {
     WrongTypeArgument(std::string arg) :
-        std::runtime_error("wrong-type-argument: " + arg)
+        Exception("wrong-type-argument: " + arg)
     {
 
     }

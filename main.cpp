@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstdint>
 #include <set>
+#include <string>
 
 void ASSERT_EQ(std::string a, std::string b)
 {
@@ -540,5 +541,17 @@ FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
 int main(int, char**)
 {
     test();
+    std::string expr;
+    alisp::Machine m;
+    while (std::getline(std::cin, expr)) {
+        try {
+            auto res = m.evaluate(expr.c_str());
+            std::cout << " => " << res->toString() << std::endl;
+        }
+        catch (alisp::exceptions::Exception& ex) {
+            std::cerr << "An error was encountered:\n";
+            std::cerr << ex.what() << std::endl;
+        }
+    }
     return 0;
 }
