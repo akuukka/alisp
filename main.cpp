@@ -508,11 +508,13 @@ void testCyclicals()
     ASSERT_OUTPUT_EQ(m,
                      "(progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z)",
                      "(1 2 3 2 . #2)");
+    ASSERT_EXCEPTION(m, "(length z)", alisp::exceptions::Error);
     ASSERT_OUTPUT_EQ(m,
                      "(progn (set 'z (list 1 2 3 4 5 6 7))"
                      "(setcdr (cdr (cdr (cdr (cdr (cdr (cdr z)))))) (cdr z))"
                      "z)",
                      "(1 2 3 4 5 6 7 2 3 4 5 6 . #6)");
+
     // Unfortunately I haven't been able to reverse engineer how emacs cuts cyclical
     // list printing. But as long as the number following hashtag is correct and the
     // patter is visibly clear from inspecting the printed list, this shouldn't be a
