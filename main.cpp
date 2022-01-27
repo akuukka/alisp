@@ -538,9 +538,12 @@ FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
      */
 }
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
-    test();
+    if (argc >= 2 && std::string(argv[1]) == "--test") {
+        test();
+        return 0;
+    }
     std::string expr;
     alisp::Machine m;
     while (std::getline(std::cin, expr)) {

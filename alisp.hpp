@@ -939,18 +939,29 @@ public:
     std::unique_ptr<Object> parse(const char *expr)
     {
         auto r = parseNext(expr);
-        if (!onlyWhitespace(expr)) {
-            throw exceptions::SyntaxError("Unexpectedly encountered: " + std::string(expr));
+        if (onlyWhitespace(expr)) {
+            return r;
         }
-        return r;
+
+        auto prog = makeList();
+        prog->cc->car = std::make_unique<SymbolObject>(this, nullptr, "progn");
+
+        auto consCell = makeList();
+        consCell->cc->car = std::move(r);
+        auto lastCell = consCell->cc.get();
+    
+        while (!onlyWhitespace(expr)) {
+            auto n = parseNext(expr);
+            lastCell->cdr = std::make_unique<ConsCellObject>(std::move(n), nullptr);
+            lastCell = lastCell->next();
+        }
+        prog->cc->cdr = std::move(consCell);
+        return prog;
     }
 
     std::unique_ptr<Object> evaluate(const char *expr)
     {
-        std::string code = "(progn ";
-        code += expr;
-        code += ")";
-        return parse(code.c_str())->eval();
+        return parse(expr)->eval();
     }
 
     Object* resolveVariable(const std::string& name)
