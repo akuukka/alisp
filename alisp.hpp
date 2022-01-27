@@ -90,6 +90,7 @@ struct Object
     }
 
     virtual ConsCellObject* asList() { return nullptr; }
+    virtual const ConsCellObject* asList() const { return nullptr; }
 
     friend std::ostream &operator<<(std::ostream &os, const Object &sym);
 
@@ -162,6 +163,8 @@ struct ConsCell
 
     Iterator begin() { return !*this ? end() : Iterator{this}; }
     Iterator end() { return Iterator{nullptr}; }
+
+    void traverse(const std::function<bool(const ConsCell*)>& f) const;
 };
 
 struct StringObject : Object, Sequence
@@ -237,6 +240,7 @@ struct ConsCellObject : Object, Sequence
     bool isNil() const override { return !(*this); }
     bool operator!() const override { return !(*cc); }
     ConsCellObject* asList() override { return this; }
+    const ConsCellObject* asList() const override { return this; }
     Object* car() const { return cc->car.get();  };
     Object* cdr() const { return cc->cdr.get();  };
 
@@ -271,12 +275,12 @@ struct ConsCellObject : Object, Sequence
 
     std::unique_ptr<Object> eval() override;
 
-    ConsCell::Iterator begin()
+    ConsCell::Iterator begin() const
     {
         return cc->begin();
     }
     
-    ConsCell::Iterator end()
+    ConsCell::Iterator end() const
     {
         return cc->end();
     }
@@ -1611,6 +1615,19 @@ std::string ConsCellObject::toString() const
     }
     s += ")";
     return s;
+}
+
+void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
+{
+    const ConsCell* cell = this;
+    while (cell) {
+        f(cell);
+        if (cell->car->isList()) {
+            std::cout << "Traverse children!\n";
+            cell->car->asList()->cc.get()->traverse(f);
+        }
+        cell = cell->next();
+    }
 }
 
 }
