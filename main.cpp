@@ -107,6 +107,11 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(length '(1))", "1");
     ASSERT_OUTPUT_EQ(m, "(length nil)", "0");
     ASSERT_OUTPUT_EQ(m, "(length ())", "0");
+    ASSERT_OUTPUT_EQ(m, "(setq x1 (list 'a 'b 'c))", "(a b c)");
+    ASSERT_OUTPUT_EQ(m, "(setq x2 (cons 'z (cdr x1)))", "(z b c)");
+    ASSERT_OUTPUT_EQ(m, "(setcar (cdr x1) 'foo)", "foo");
+    ASSERT_OUTPUT_EQ(m, "x1", "(a foo c)");
+    ASSERT_OUTPUT_EQ(m, "x2", "(z foo c)");
 }
 
 template <typename E>

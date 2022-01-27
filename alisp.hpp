@@ -430,10 +430,11 @@ struct FArgs
 {
     ConsCell* cc;
     Machine& m;
+    std::vector<std::unique_ptr<Object>> argStorage;
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
-    std::unique_ptr<Object> get();
+    Object* get();
     
     void skip()
     {
@@ -525,7 +526,7 @@ tupleOptCheck()
         static_assert(!isOptionalParam || tupleOptCheck<I+1, Args...>(),
                       "Non-optional function param given after optional one. ");
         std::optional<typename OptCheck<T>::BaseType> opt;
-        std::unique_ptr<Object> arg;
+        Object* arg;
         bool conversionFailed = false;
         if (args.hasNext()) {
             arg = args.get();
@@ -1100,12 +1101,12 @@ public:
         });
         makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
             if (!!*args.get()) {
-                return args.get();
+                return args.get()->clone();
             }
             args.skip();
             while (auto res = args.get()) {
                 if (!args.hasNext()) {
-                    return res;
+                    return res->clone();
                 }
             }
             return makeNil();
@@ -1183,7 +1184,7 @@ public:
                                        }*/
                          size_t i = 0;
                          for (size_t i = 0; i < argList.size(); i++) {
-                             pushLocalVariable(argList[i], std::move(a.get()));
+                             pushLocalVariable(argList[i], a.get()->clone());
                          }
                          AtScopeExit onExit([this, argList]() {
                              for (auto it = argList.rbegin(); it != argList.rend(); ++it) {
@@ -1221,11 +1222,11 @@ public:
             return std::make_unique<SymbolObject>(this, symbol, "");
         });
         makeFunc("symbolp", 1, 1, [this](FArgs& args) {
-            return dynamic_cast<SymbolObject*>(args.get().get()) ? makeTrue() : makeNil();
+            return dynamic_cast<SymbolObject*>(args.get()) ? makeTrue() : makeNil();
         });
         makeFunc("symbol-name", 1, 1, [](FArgs& args) {
             const auto obj = args.get();
-            const auto sym = dynamic_cast<SymbolObject*>(obj.get());
+            const auto sym = dynamic_cast<SymbolObject*>(obj);
             if (!sym) {
                 throw exceptions::WrongTypeArgument(obj->toString());
             }
@@ -1237,7 +1238,7 @@ public:
             if (!arg->isString()) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
-            auto strSym = dynamic_cast<StringObject*>(arg.get());
+            auto strSym = dynamic_cast<StringObject*>(arg);
             std::string str = *strSym->value;
             for (size_t i = 0; i < str.size(); i++) {
                 if (str[i] == '%') {
@@ -1383,7 +1384,7 @@ public:
         });
         makeFunc("unintern", 1, 1, [this](FArgs& args) {
             const auto arg = args.get();
-            const auto sym = dynamic_cast<SymbolObject*>(arg.get());
+            const auto sym = dynamic_cast<SymbolObject*>(arg);
             if (!sym) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
@@ -1407,7 +1408,7 @@ public:
         makeFunc("set", 2, 2, [this](FArgs& args) {
             const SymbolObject nil(this, nullptr, "nil");
             const auto& p1 = args.get();
-            const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1.get());
+            const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
             if (!name) {
                 throw exceptions::WrongTypeArgument(p1->toString());
             }
@@ -1416,7 +1417,7 @@ public:
             if (sym->constant) {
                 throw exceptions::Error("setting-constant " + name->toString());
             }
-            sym->variable = std::move(args.get());
+            sym->variable = args.get()->clone();
             return sym->variable->clone();
         });
         makeFunc("eq", 2, 2, [this](FArgs& args) {
@@ -1425,7 +1426,7 @@ public:
         makeFunc("describe-variable", 1, 1, [this](FArgs& args) {
             const auto arg = args.get();
             std::string descr = "You did not specify a variable.";
-            if (auto sym = dynamic_cast<SymbolObject*>(arg.get())) {
+            if (auto sym = dynamic_cast<SymbolObject*>(arg)) {
                 const Object* var = nullptr;
                 if (sym->sym) {
                     var = sym->sym->variable.get();
@@ -1441,7 +1442,7 @@ public:
                     descr = arg->toString() + "'s value is " + var->toString();
                 }
             }
-            else if (auto list = dynamic_cast<ConsCellObject *>(arg.get())) {
+            else if (auto list = dynamic_cast<ConsCellObject *>(arg)) {
                 if (!*list) {
                     descr = arg->toString() + "'s value is " + arg->toString();
                 }
@@ -1463,7 +1464,7 @@ public:
             return obj->clone();
         });
         makeFunc("cons", 2, 2, [](FArgs &args) {
-            return std::make_unique<ConsCellObject>(args.get(), args.get());
+            return std::make_unique<ConsCellObject>(args.get()->clone(), args.get()->clone());
         });
         makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
             auto newList = makeList();
@@ -1492,7 +1493,7 @@ public:
         });
         makeFunc("pop", 1, 1, [this](FArgs& args) {
             auto arg = args.get();
-            ConsCellObject *list = dynamic_cast<ConsCellObject *>(arg.get());
+            ConsCellObject *list = dynamic_cast<ConsCellObject *>(arg);
             if (!list) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
@@ -1558,14 +1559,14 @@ Function* SymbolObject::resolveFunction()
     return parent->resolveFunction(name);
 }
 
-std::unique_ptr<Object> FArgs::get()
+Object* FArgs::get()
 {
     if (!cc) {
         return nullptr;
     }
-    auto sym = cc->car->eval();
+    argStorage.push_back(cc->car->eval());
     cc = cc->next();
-    return sym;
+    return argStorage.back().get();
 }
 
 std::unique_ptr<Object> FArgs::Iterator::operator*() { return cc->car->eval(); }
