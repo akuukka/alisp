@@ -562,6 +562,7 @@ void testMemoryLeaks()
     using namespace alisp;
     std::unique_ptr<Machine> m = std::make_unique<Machine>();
     assert(Object::getDebugRefCount() > 0);
+    ASSERT_EXCEPTION(*m, "(pop nil)", alisp::exceptions::Error);
     m = nullptr;
     assert(Object::getDebugRefCount() == 0);
 }
@@ -569,12 +570,12 @@ void testMemoryLeaks()
 void test()
 {
     testMemoryLeaks();
+    testMacros();
     testCyclicals(); // Lot of work to do here still...
     testListBasics();
     testLet();
     testQuote();
     testSymbols();
-    testMacros();
     testFunctions();
     testIf();
     testDeepCopy();
