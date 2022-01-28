@@ -138,12 +138,14 @@ struct Object
         return clone();
     }
 
+    void tryDestroySharedData();
     virtual const void* sharedDataPointer() const { return nullptr; }
     virtual size_t sharedDataRefCount() const { return 0; }
     virtual void traverse(const std::function<bool(const Object&)>& f) const
     {
         f(*this);
     }
+
 };
 
 struct Sequence
@@ -1773,7 +1775,7 @@ bool ConsCell::isCyclical() const
     return cycled;
 }
 
-ConsCellObject::~ConsCellObject()
+void Object::tryDestroySharedData()
 {
     if (markedForCycleDeletion) {
         markedForCycleDeletion->erase(this);
@@ -1852,6 +1854,11 @@ ConsCellObject::~ConsCellObject()
     }
     if (Object::destructionDebug())
         std::cout << "Done deleting circular list!\n";
+}
+
+ConsCellObject::~ConsCellObject()
+{
+    tryDestroySharedData();
 }
 
 }
