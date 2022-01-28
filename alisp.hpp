@@ -84,6 +84,8 @@ inline int changeRefCount(int i) {
 
 struct Object
 {
+    std::set<Object*>* markedForCycleDeletion = nullptr;
+
 #ifdef ENABLE_DEBUG_REFCOUNTING
     Object() { changeRefCount(1); }
     virtual ~Object() { changeRefCount(-1); }
@@ -135,6 +137,9 @@ struct Object
     {
         return clone();
     }
+
+    virtual const void* sharedDataPointer() const { return nullptr; }
+    virtual size_t sharedDataRefCount() const { return 0; }
 };
 
 struct Sequence
@@ -245,7 +250,6 @@ struct FloatObject : ValueObject<double>
 struct ConsCellObject : Object, Sequence
 {
     std::shared_ptr<ConsCell> cc;
-    std::set<Object*>* markedForCycleDeletion = nullptr;
 
     ConsCellObject() { cc = std::make_shared<ConsCell>(); }
 
@@ -350,6 +354,9 @@ struct ConsCellObject : Object, Sequence
     }
 
     void traverse(const std::function<bool(const ConsCellObject&)>& f) const;
+
+    const void* sharedDataPointer() const override { return cc.get(); }
+    size_t sharedDataRefCount() const override { return cc.use_count(); }
 };
 
 struct FArgs;
@@ -1784,12 +1791,12 @@ ConsCellObject::~ConsCellObject()
         size_t refsFromCycle = 0;
         size_t totalRefs = 0; // except ref from this->cc as we are possibly about the del it!
     };
-    std::map<const ConsCell*, RefData> referredTimes;
+    std::map<const void*, RefData> referredTimes;
     size_t maxUseCount = 0;
     traverse([&](const ConsCellObject& obj) {
-        auto ptr = obj.cc.get();
+        auto ptr = obj.sharedDataPointer();
         referredTimes[ptr].refsFromCycle++;
-        referredTimes[ptr].totalRefs = obj.cc.use_count();// - (&obj == this ? 1 : 0);
+        referredTimes[ptr].totalRefs = obj.sharedDataRefCount();// - (&obj == this ? 1 : 0);
         if (referredTimes[ptr].refsFromCycle >= 2) {
             return false;
         }
@@ -1797,7 +1804,7 @@ ConsCellObject::~ConsCellObject()
     });
     for (auto& p : referredTimes) {
         if (Object::destructionDebug()) {
-            std::cout << p.first->car->toString() << ": totalRefs=" << p.second.totalRefs
+            std::cout << p.first << ": totalRefs=" << p.second.totalRefs
                       << ", refsFromCycle=" << p.second.refsFromCycle << std::endl;
         }
         if (p.second.totalRefs > p.second.refsFromCycle) {
