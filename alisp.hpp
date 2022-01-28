@@ -1734,7 +1734,7 @@ void ConsCellObject::traverse(const std::function<bool(const ConsCellObject&)>& 
         if (cell->cc->car->isList()) {
             cell->cc->car->asList()->traverse(f);
         }
-        cell = cell->cc->cdr->asList();
+        cell = cell->cc->cdr ? cell->cc->cdr->asList() : nullptr;
     }    
 }
 
@@ -1776,9 +1776,8 @@ ConsCellObject::~ConsCellObject()
         return;
     }
     if (Object::destructionDebug()) {
-        std::cout << "Omg, a shared ptr to cyclical list " << this->toString()
-                  << " was destroyed!" << std::endl;
-        std::cout << "this=" << this << std::endl;
+        std::cout << "A reference to cyclical list " << toString()
+                  << " is about to be reduced. this=" << this << std::endl;
     }
 
     // Traverse through the list. For every cons cell encountered, count how many times

@@ -554,7 +554,6 @@ void testCyclicals()
     });
     /*
       https://www.gnu.org/software/emacs/manual/html_node/elisp/Special-Read-Syntax.html
-      
      */
     ASSERT_OUTPUT_EQ(m, "(setq x (list 1 2 3))", "(1 2 3)");
     ASSERT_OUTPUT_EQ(m, "(setcar x x)", "(#0 2 3)");
@@ -604,7 +603,7 @@ void testMemoryLeaks()
 void test()
 {
     testMemoryLeaks();
-    // testCyclicals(); // Lot of work to do here still...
+    testCyclicals(); // Lot of work to do here still...
     testMacros();
     testListBasics();
     testLet();
