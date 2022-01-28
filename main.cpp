@@ -568,17 +568,47 @@ void testMemoryLeaks()
     const int baseCount = Object::getDebugRefCount();
     ASSERT_EXCEPTION(*m, "(pop nil)", alisp::exceptions::Error);
     assert(Object::getDebugRefCount() == baseCount && "Macro call");
-    auto obj = m->evaluate("(let ((a (list 1)))(setcdr a a))");
-    obj = nullptr;
-    assert(Object::getDebugRefCount() == baseCount && "Circular");
-    
+
+    // A quite simple circular test case:
+    if (false) {
+        auto obj = m->evaluate("(let ((a (list 1)))(setcdr a a))");
+        // std::cout << "Final destruction!\n";
+        assert(Object::getDebugRefCount() > baseCount && "Circular");
+        obj = nullptr;
+        assert(Object::getDebugRefCount() == baseCount && "Circular");
+    }
+
+    // A slightly more complicated one
+    if (true) {
+        assert(Object::getDebugRefCount() == baseCount && "Before progn");
+        auto obj = m->evaluate("(progn (set 'z (list 1 2 3 4 5 6 7))"
+                               "(setcdr (cdr (cdr (cdr (cdr (cdr (cdr z)))))) (cdr z))"
+                               "z)");
+        m->getSymbolOrNull("z");
+        assert(obj->equals(*m->getSymbolOrNull("z")->variable));
+        assert(obj->equals(*m->evaluate("z")));
+        assert(Object::getDebugRefCount() > baseCount && "Circular2");
+        auto clone = obj->clone();
+        Object::destructionDebug() = true;
+        std::cout << "Clone destruction:\n";
+        clone = nullptr;
+        assert(Object::getDebugRefCount() > baseCount && "Circular2");
+        std::cout << "Obj destruction (even at this point variable z points to the list)!\n";
+        obj = nullptr;
+        assert(Object::getDebugRefCount() > baseCount && "Circular2");
+        std::cout << "Uninterning z...\n";
+        m->evaluate("(unintern 'z)");
+        assert(Object::getDebugRefCount() == baseCount && "Circular2");
+    }
+
+    // Of course we should zero objects left after destroying the machine
     m = nullptr;
     assert(Object::getDebugRefCount() == 0);
 }
 
 void test()
 {
-    testMemoryLeaks();
+    return testMemoryLeaks();
     testCyclicals(); // Lot of work to do here still...
     testMacros();
     testListBasics();

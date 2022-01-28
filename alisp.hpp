@@ -88,6 +88,10 @@ struct Object
     Object() { changeRefCount(1); }
     virtual ~Object() { changeRefCount(-1); }
     static int getDebugRefCount() { return changeRefCount(0); }
+    static bool& destructionDebug() {
+        static bool dbg = false;
+        return dbg;
+    }
 #else
     virtual ~Object() {}
 #endif
@@ -241,7 +245,7 @@ struct FloatObject : ValueObject<double>
 struct ConsCellObject : Object, Sequence
 {
     std::shared_ptr<ConsCell> cc;
-    bool markedForCycleDeletion = false;
+    std::set<ConsCellObject*>* markedForCycleDeletion = nullptr;
 
     ConsCellObject() { cc = std::make_shared<ConsCell>(); }
 
@@ -1412,7 +1416,7 @@ public:
             if (!sym) {
                 throw exceptions::WrongTypeArgument(arg->toString());
             }
-            const bool uninterned = m_syms.erase(sym->sym->name);
+            const bool uninterned = m_syms.erase(sym->getSymbolName());
             return uninterned ? makeTrue() : makeNil();
         });
         makeFunc("intern-soft", 1, 1, [this](FArgs& args) {
@@ -1755,38 +1759,77 @@ bool ConsCell::isCyclical() const
 ConsCellObject::~ConsCellObject()
 {
     if (markedForCycleDeletion) {
-        std::cout << "Was marked for cycle deletion\n";
+        markedForCycleDeletion->erase(this);
+        if (Object::destructionDebug()) {
+            std::cout << this << " was deleted.\n";
+        }
         return;
     }
     if (!cc->isCyclical()) {
         return;
     }
-    std::cout << "omg, a shared ptr to cyclical list " << this->toString()
-              << " was destroyed! It's elements are:\n";
-    std::set<const ConsCellObject*> visited;
+    if (Object::destructionDebug()) {
+        std::cout << "Omg, a shared ptr to cyclical list " << this->toString()
+                  << " was destroyed!" << std::endl;
+        std::cout << "this=" << this << std::endl;
+    }
+
+    // Traverse through the list. For every cons cell encountered, count how many times
+    // it is referenced by the list.
+    struct RefData {
+        size_t refsFromCycle = 0;
+        size_t totalRefs = 0; // except ref from this->cc as we are possibly about the del it!
+    };
+    std::map<const ConsCell*, RefData> referredTimes;
     size_t maxUseCount = 0;
     traverse([&](const ConsCellObject& obj) {
-        if (visited.count(&obj)) {
+        auto ptr = obj.cc.get();
+        referredTimes[ptr].refsFromCycle++;
+        referredTimes[ptr].totalRefs = obj.cc.use_count();// - (&obj == this ? 1 : 0);
+        if (referredTimes[ptr].refsFromCycle >= 2) {
             return false;
         }
-        visited.insert(&obj);
-        size_t useCount = obj.cc.use_count();
-        if (obj.cc.get() == cc.get()) {
-            useCount--; // Because refs to this cell are about to be reduced by one (if we delete)
-        }
-        std::cout << obj.toString() << " ref count: " << useCount << std::endl;
-        maxUseCount = std::max(maxUseCount, useCount);
         return true;
     });
-    if (maxUseCount < 2) {
-        std::cout << "The cycle has become unreachable!\n";
-        for (auto p : visited) {
-            const_cast<ConsCellObject*>(p)->markedForCycleDeletion = true;
+    for (auto& p : referredTimes) {
+        if (Object::destructionDebug()) {
+            std::cout << p.first->car->toString() << ": totalRefs=" << p.second.totalRefs
+                      << ", refsFromCycle=" << p.second.refsFromCycle << std::endl;
         }
-        for (auto p : visited) {
-            const_cast<ConsCellObject*>(p)->cc.reset();
+        if (p.second.totalRefs > p.second.refsFromCycle) {
+            // Fair enough. Somebody is still referring to the cycle from outside it.
+            return;
         }
     }
+
+    if (Object::destructionDebug()) {
+        std::cout << "The whole cycle is unreachable!\n";
+    }
+    std::set<ConsCellObject*> clearList;
+    traverse([&](const ConsCellObject& obj) {
+        auto cc = const_cast<ConsCellObject*>(&obj);
+        if (clearList.count(cc)) {
+            return false;
+        }
+        clearList.insert(cc);
+        cc->markedForCycleDeletion = &clearList;
+        return true;
+    });
+    while (clearList.size()) {
+        std::cout << "Still " << clearList.size() << " objects left to destroy!\n";
+        for (auto p : clearList) {
+            std::cout << "   " << p << std::endl;
+        }
+        auto p = *clearList.begin();
+        clearList.erase(clearList.begin());
+        if (Object::destructionDebug()) {
+            std::cout << p << " about to be reseted\n";
+        }
+        p->cc.reset();
+        std::cout << p << " done...\n";
+    }
+    std::cout << "Done deleting circular list!\n";
+    assert(!cc);
 }
 
 }
