@@ -1011,11 +1011,13 @@ public:
         getSymbol(name)->function = std::move(func);
     }
 
-    Machine()
+    Machine(bool initStandardLibrary = true)
     {
+        if (!initStandardLibrary) {
+            return;
+        }
         setVariable("nil", makeNil(), true);
-        setVariable("t", std::make_unique<SymbolObject>(this, getSymbol("t"), ""), true);
-        
+        setVariable("t", std::make_unique<SymbolObject>(this, nullptr, "t"), true);
         defun("atom", [](std::any obj) {
             if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
             std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
