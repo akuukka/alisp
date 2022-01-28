@@ -570,9 +570,8 @@ void testMemoryLeaks()
     assert(Object::getDebugRefCount() == baseCount && "Macro call");
 
     // A quite simple circular test case:
-    if (false) {
+    if (true) {
         auto obj = m->evaluate("(let ((a (list 1)))(setcdr a a))");
-        // std::cout << "Final destruction!\n";
         assert(Object::getDebugRefCount() > baseCount && "Circular");
         obj = nullptr;
         assert(Object::getDebugRefCount() == baseCount && "Circular");
@@ -589,14 +588,10 @@ void testMemoryLeaks()
         assert(obj->equals(*m->evaluate("z")));
         assert(Object::getDebugRefCount() > baseCount && "Circular2");
         auto clone = obj->clone();
-        Object::destructionDebug() = true;
-        std::cout << "Clone destruction:\n";
         clone = nullptr;
         assert(Object::getDebugRefCount() > baseCount && "Circular2");
-        std::cout << "Obj destruction (even at this point variable z points to the list)!\n";
         obj = nullptr;
         assert(Object::getDebugRefCount() > baseCount && "Circular2");
-        std::cout << "Uninterning z...\n";
         m->evaluate("(unintern 'z)");
         assert(Object::getDebugRefCount() == baseCount && "Circular2");
     }
@@ -608,8 +603,8 @@ void testMemoryLeaks()
 
 void test()
 {
-    return testMemoryLeaks();
-    testCyclicals(); // Lot of work to do here still...
+    testMemoryLeaks();
+    // testCyclicals(); // Lot of work to do here still...
     testMacros();
     testListBasics();
     testLet();

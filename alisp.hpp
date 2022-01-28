@@ -1743,11 +1743,18 @@ bool ConsCell::isCyclical() const
     if (!*this) {
         return false;
     }
-    std::set<const ConsCell*> visited;
+    size_t selfTimes = 0;
     bool cycled = false;
+    std::set<const ConsCell*> visited;
     traverse([&](const ConsCell* cell) {
+        if (cell == this) {
+            selfTimes++;
+            if (selfTimes >= 2) {
+                cycled = true;
+                return false;
+            }
+        }
         if (visited.count(cell)) {
-            cycled = true;
             return false;
         }
         visited.insert(cell);
@@ -1816,9 +1823,11 @@ ConsCellObject::~ConsCellObject()
         return true;
     });
     while (clearList.size()) {
-        std::cout << "Still " << clearList.size() << " objects left to destroy!\n";
-        for (auto p : clearList) {
-            std::cout << "   " << p << std::endl;
+        if (Object::destructionDebug()) {
+            std::cout << "Still " << clearList.size() << " objects left to destroy!\n";
+            for (auto p : clearList) {
+                std::cout << "   " << p << std::endl;
+            }
         }
         auto p = *clearList.begin();
         clearList.erase(clearList.begin());
@@ -1826,9 +1835,11 @@ ConsCellObject::~ConsCellObject()
             std::cout << p << " about to be reseted\n";
         }
         p->cc.reset();
-        std::cout << p << " done...\n";
+        if (Object::destructionDebug())
+            std::cout << p << " done...\n";
     }
-    std::cout << "Done deleting circular list!\n";
+    if (Object::destructionDebug())
+        std::cout << "Done deleting circular list!\n";
     assert(!cc);
 }
 
