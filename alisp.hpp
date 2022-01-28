@@ -353,7 +353,7 @@ struct ConsCellObject : Object, Sequence
         return copy;
     }
 
-    void traverse(const std::function<bool(const ConsCellObject&)>& f) const;
+    void traverse(const std::function<bool(const Object&)>& f) const;
 
     const void* sharedDataPointer() const override { return cc.get(); }
     size_t sharedDataRefCount() const override { return cc.use_count(); }
@@ -1729,7 +1729,7 @@ void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
     }
 }
 
-void ConsCellObject::traverse(const std::function<bool(const ConsCellObject&)>& f) const
+void ConsCellObject::traverse(const std::function<bool(const Object&)>& f) const
 {
     if (!*this) {
         return;
@@ -1793,7 +1793,7 @@ ConsCellObject::~ConsCellObject()
     };
     std::map<const void*, RefData> referredTimes;
     size_t maxUseCount = 0;
-    traverse([&](const ConsCellObject& obj) {
+    traverse([&](const Object& obj) {
         auto ptr = obj.sharedDataPointer();
         referredTimes[ptr].refsFromCycle++;
         referredTimes[ptr].totalRefs = obj.sharedDataRefCount();// - (&obj == this ? 1 : 0);
@@ -1817,8 +1817,8 @@ ConsCellObject::~ConsCellObject()
         std::cout << "The whole cycle is unreachable!\n";
     }
     std::set<Object*> clearList;
-    traverse([&](const ConsCellObject& obj) {
-        auto cc = const_cast<ConsCellObject*>(&obj);
+    traverse([&](const Object& obj) {
+        auto cc = const_cast<Object*>(&obj);
         if (clearList.count(cc)) {
             return false;
         }
