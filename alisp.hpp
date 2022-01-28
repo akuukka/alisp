@@ -140,6 +140,10 @@ struct Object
 
     virtual const void* sharedDataPointer() const { return nullptr; }
     virtual size_t sharedDataRefCount() const { return 0; }
+    virtual void traverse(const std::function<bool(const Object&)>& f) const
+    {
+        f(*this);
+    }
 };
 
 struct Sequence
@@ -353,7 +357,7 @@ struct ConsCellObject : Object, Sequence
         return copy;
     }
 
-    void traverse(const std::function<bool(const Object&)>& f) const;
+    void traverse(const std::function<bool(const Object&)>& f) const override;
 
     const void* sharedDataPointer() const override { return cc.get(); }
     size_t sharedDataRefCount() const override { return cc.use_count(); }
@@ -1739,9 +1743,7 @@ void ConsCellObject::traverse(const std::function<bool(const Object&)>& f) const
         if (!f(*cell)) {
             return;
         }
-        if (cell->cc->car->isList()) {
-            cell->cc->car->asList()->traverse(f);
-        }
+        cell->cc->car->traverse(f);
         cell = cell->cc->cdr ? cell->cc->cdr->asList() : nullptr;
     }    
 }
@@ -1794,6 +1796,9 @@ ConsCellObject::~ConsCellObject()
     std::map<const void*, RefData> referredTimes;
     size_t maxUseCount = 0;
     traverse([&](const Object& obj) {
+        if (!obj.sharedDataPointer()) {
+            return false;
+        }
         auto ptr = obj.sharedDataPointer();
         referredTimes[ptr].refsFromCycle++;
         referredTimes[ptr].totalRefs = obj.sharedDataRefCount();// - (&obj == this ? 1 : 0);
@@ -1818,6 +1823,9 @@ ConsCellObject::~ConsCellObject()
     }
     std::set<Object*> clearList;
     traverse([&](const Object& obj) {
+        if (!obj.sharedDataPointer()) {
+            return false;
+        }
         auto cc = const_cast<Object*>(&obj);
         if (clearList.count(cc)) {
             return false;
