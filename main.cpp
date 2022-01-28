@@ -562,7 +562,13 @@ void testMemoryLeaks()
     using namespace alisp;
     std::unique_ptr<Machine> m = std::make_unique<Machine>();
     assert(Object::getDebugRefCount() > 0);
+    const int baseCount = Object::getDebugRefCount();
     ASSERT_EXCEPTION(*m, "(pop nil)", alisp::exceptions::Error);
+    assert(Object::getDebugRefCount() == baseCount && "Macro call");
+    auto obj = m->evaluate("(progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z)");
+    obj = nullptr;
+    assert(Object::getDebugRefCount() == baseCount && "Circular");
+    
     m = nullptr;
     assert(Object::getDebugRefCount() == 0);
 }
@@ -570,8 +576,8 @@ void testMemoryLeaks()
 void test()
 {
     testMemoryLeaks();
-    testMacros();
     testCyclicals(); // Lot of work to do here still...
+    testMacros();
     testListBasics();
     testLet();
     testQuote();
