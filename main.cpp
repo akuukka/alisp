@@ -628,6 +628,7 @@ void test()
     testSyntaxErrorDetection();
     testNullFunction();
     testPrognFunction();
+    assert(alisp::Object::getDebugRefCount() == 0);
     /*
 foo                 ; A symbol named ‘foo’.
 FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
