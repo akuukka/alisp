@@ -95,7 +95,7 @@ struct Object
 #else
     virtual ~Object() {}
 #endif
-
+    virtual void reset() {}
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
     virtual bool isNil() const { return false; }
@@ -245,7 +245,7 @@ struct FloatObject : ValueObject<double>
 struct ConsCellObject : Object, Sequence
 {
     std::shared_ptr<ConsCell> cc;
-    std::set<ConsCellObject*>* markedForCycleDeletion = nullptr;
+    std::set<Object*>* markedForCycleDeletion = nullptr;
 
     ConsCellObject() { cc = std::make_shared<ConsCell>(); }
 
@@ -262,6 +262,7 @@ struct ConsCellObject : Object, Sequence
     ConsCellObject(const ConsCellObject& o) : cc(o.cc) {}
     ~ConsCellObject() override;
 
+    void reset() override { cc.reset(); }
     std::string toString() const override;
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
@@ -1772,9 +1773,6 @@ ConsCellObject::~ConsCellObject()
         }
         return;
     }
-    if (!cc->isCyclical()) {
-        return;
-    }
     if (Object::destructionDebug()) {
         std::cout << "A reference to cyclical list " << toString()
                   << " is about to be reduced. this=" << this << std::endl;
@@ -1811,7 +1809,7 @@ ConsCellObject::~ConsCellObject()
     if (Object::destructionDebug()) {
         std::cout << "The whole cycle is unreachable!\n";
     }
-    std::set<ConsCellObject*> clearList;
+    std::set<Object*> clearList;
     traverse([&](const ConsCellObject& obj) {
         auto cc = const_cast<ConsCellObject*>(&obj);
         if (clearList.count(cc)) {
@@ -1833,13 +1831,12 @@ ConsCellObject::~ConsCellObject()
         if (Object::destructionDebug()) {
             std::cout << p << " about to be reseted\n";
         }
-        p->cc.reset();
+        p->reset();
         if (Object::destructionDebug())
             std::cout << p << " done...\n";
     }
     if (Object::destructionDebug())
         std::cout << "Done deleting circular list!\n";
-    assert(!cc);
 }
 
 }
