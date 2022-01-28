@@ -1,3 +1,5 @@
+#define ENABLE_DEBUG_REFCOUNTING
+
 #include "alisp.hpp"
 #include <cassert>
 #include <cstdint>
@@ -555,8 +557,18 @@ void testCyclicals()
     ASSERT_OUTPUT_EQ(m, "(setcar x x)", "(#0 2 3)");
 }
 
+void testMemoryLeaks()
+{
+    using namespace alisp;
+    std::unique_ptr<Machine> m = std::make_unique<Machine>();
+    assert(Object::getDebugRefCount() > 0);
+    m = nullptr;
+    assert(Object::getDebugRefCount() == 0);
+}
+
 void test()
 {
+    testMemoryLeaks();
     testCyclicals(); // Lot of work to do here still...
     testListBasics();
     testLet();

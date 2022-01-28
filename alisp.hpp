@@ -72,8 +72,26 @@ struct Converter<T, typename std::enable_if<IsInstantiationOf<std::variant, T>::
     }
 };
 
+#ifdef ENABLE_DEBUG_REFCOUNTING
+
+inline int changeRefCount(int i) {
+    static int refcnt = 0;
+    refcnt += i;
+    return refcnt;
+}
+
+#endif
+
 struct Object
 {
+#ifdef ENABLE_DEBUG_REFCOUNTING
+    Object() { changeRefCount(1); }
+    virtual ~Object() { changeRefCount(-1); }
+    static int getDebugRefCount() { return changeRefCount(0); }
+#else
+    virtual ~Object() {}
+#endif
+    
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
     virtual bool isNil() const { return false; }
@@ -81,7 +99,6 @@ struct Object
     virtual bool isFloat() const { return false; }
     virtual bool isString() const { return false; }
     virtual bool operator!() const { return false; }
-    virtual ~Object() {}
 
     virtual Function* resolveFunction() { return nullptr; }
     virtual std::unique_ptr<Object> clone() const = 0;
@@ -236,6 +253,8 @@ struct ConsCellObject : Object, Sequence
         }
         this->cc->cdr = std::move(cdr);
     }
+
+    ConsCellObject(const ConsCellObject& o) : cc(o.cc) {}
 
     std::string toString() const override;
     bool isList() const override { return true; }
@@ -1084,7 +1103,7 @@ public:
             args.skip();
             ConsCellObject code = dynamic_cast<ConsCellObject&>(*args.cc->car);
             makeFunc(macroName.c_str(), argc, argc,
-                     [this, macroName, argList, code](FArgs& a) mutable {
+                     [this, macroName, argList, code](FArgs& a) {
                          size_t i = 0;
                          std::map<std::string, std::unique_ptr<Object>> conv;
                          for (const auto& obj : argList) {
@@ -1097,8 +1116,7 @@ public:
                          renameSymbols(*copied, conv);
                          return copied->eval()->eval();
                      });
-            auto sym = getSymbol(macroName);
-            sym->function->isMacro = true;
+            getSymbol(macroName)->function->isMacro = true;
             return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
         });
         makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
