@@ -241,6 +241,7 @@ struct FloatObject : ValueObject<double>
 struct ConsCellObject : Object, Sequence
 {
     std::shared_ptr<ConsCell> cc;
+    bool markedForCycleDeletion = false;
 
     ConsCellObject() { cc = std::make_shared<ConsCell>(); }
 
@@ -255,6 +256,7 @@ struct ConsCellObject : Object, Sequence
     }
 
     ConsCellObject(const ConsCellObject& o) : cc(o.cc) {}
+    ~ConsCellObject() override;
 
     std::string toString() const override;
     bool isList() const override { return true; }
@@ -341,6 +343,8 @@ struct ConsCellObject : Object, Sequence
         }
         return copy;
     }
+
+    void traverse(const std::function<bool(const ConsCellObject&)>& f) const;
 };
 
 struct FArgs;
@@ -1698,6 +1702,9 @@ std::string ConsCellObject::toString() const
 
 void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
 {
+    if (!*this) {
+        return;
+    }
     const ConsCell* cell = this;
     while (cell) {
         if (!f(cell)) {
@@ -1708,6 +1715,23 @@ void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
         }
         cell = cell->next();
     }
+}
+
+void ConsCellObject::traverse(const std::function<bool(const ConsCellObject&)>& f) const
+{
+    if (!*this) {
+        return;
+    }
+    const ConsCellObject* cell = this;
+    while (cell) {
+        if (!f(*cell)) {
+            return;
+        }
+        if (cell->cc->car->isList()) {
+            cell->cc->car->asList()->traverse(f);
+        }
+        cell = cell->cc->cdr->asList();
+    }    
 }
 
 bool ConsCell::isCyclical() const
@@ -1726,6 +1750,43 @@ bool ConsCell::isCyclical() const
         return true;
     });
     return cycled;
+}
+
+ConsCellObject::~ConsCellObject()
+{
+    if (markedForCycleDeletion) {
+        std::cout << "Was marked for cycle deletion\n";
+        return;
+    }
+    if (!cc->isCyclical()) {
+        return;
+    }
+    std::cout << "omg, a shared ptr to cyclical list " << this->toString()
+              << " was destroyed! It's elements are:\n";
+    std::set<const ConsCellObject*> visited;
+    size_t maxUseCount = 0;
+    traverse([&](const ConsCellObject& obj) {
+        if (visited.count(&obj)) {
+            return false;
+        }
+        visited.insert(&obj);
+        size_t useCount = obj.cc.use_count();
+        if (obj.cc.get() == cc.get()) {
+            useCount--; // Because refs to this cell are about to be reduced by one (if we delete)
+        }
+        std::cout << obj.toString() << " ref count: " << useCount << std::endl;
+        maxUseCount = std::max(maxUseCount, useCount);
+        return true;
+    });
+    if (maxUseCount < 2) {
+        std::cout << "The cycle has become unreachable!\n";
+        for (auto p : visited) {
+            const_cast<ConsCellObject*>(p)->markedForCycleDeletion = true;
+        }
+        for (auto p : visited) {
+            const_cast<ConsCellObject*>(p)->cc.reset();
+        }
+    }
 }
 
 }

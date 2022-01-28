@@ -548,7 +548,10 @@ void testCyclicals()
     });
     assert(!list->asList()->cc->isCyclical());
     assert(ints.empty());
-
+    m.evaluate("nil")->asList()->cc->traverse([](const alisp::ConsCell* cell) {
+        assert(false && "Traversing empty list...");
+        return false;
+    });
     /*
       https://www.gnu.org/software/emacs/manual/html_node/elisp/Special-Read-Syntax.html
       
