@@ -91,7 +91,7 @@ struct Object
 #else
     virtual ~Object() {}
 #endif
-    
+
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
     virtual bool isNil() const { return false; }
