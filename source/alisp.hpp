@@ -1,5 +1,5 @@
 #pragma once
-#include "Converter.hpp"
+#include "Object.hpp"
 #include <cstdint>
 #include <string>
 #include <variant>
@@ -22,95 +22,12 @@
 #include "Template.hpp"
 #include "Exception.hpp"
 
-
 namespace alisp {
 
 class Machine;
 struct Object;
 struct ConsCellObject;
 struct Function;
-
-#ifdef ENABLE_DEBUG_REFCOUNTING
-
-inline int changeRefCount(int i) {
-    static int refcnt = 0;
-    refcnt += i;
-    return refcnt;
-}
-
-#endif
-
-struct Object
-{
-#ifdef ENABLE_DEBUG_REFCOUNTING
-    Object()
-    {
-        changeRefCount(1);
-        getAllObjects().insert(this);
-    }
-    virtual ~Object()
-    {
-        changeRefCount(-1);
-        getAllObjects().erase(this);
-    }
-    static int getDebugRefCount() { return changeRefCount(0); }
-    static bool& destructionDebug()
-    {
-        static bool dbg = false;
-        return dbg;
-    }
-    static std::set<Object*>& getAllObjects()
-    {
-        static std::set<Object*> l;
-        return l;
-    }
-    static void printAllObjects()
-    {
-        for (auto p: getAllObjects()) {
-            std::cout << p->toString() << std::endl;
-        }
-    }
-#else
-    virtual ~Object() {}
-#endif
-    virtual std::string toString() const = 0;
-    virtual bool isList() const { return false; }
-    virtual bool isNil() const { return false; }
-    virtual bool isInt() const { return false; }
-    virtual bool isFloat() const { return false; }
-    virtual bool isString() const { return false; }
-    virtual bool operator!() const { return false; }
-
-    virtual Function* resolveFunction() { return nullptr; }
-    virtual std::unique_ptr<Object> clone() const = 0;
-    virtual bool equals(const Object& o) const
-    {
-        return false;
-    }
-
-    virtual ConsCellObject* asList() { return nullptr; }
-    virtual const ConsCellObject* asList() const { return nullptr; }
-
-    friend std::ostream &operator<<(std::ostream &os, const Object &sym);
-
-    template <typename T> T value() const
-    {
-        const std::optional<T> opt = Converter<T>()(*this);
-        if (opt) {
-            return *opt;
-        }
-        return T();
-    }
-
-    template <typename T> std::optional<T> valueOrNull() const
-    {
-        Converter<T> conv;
-        return conv(*this);
-    }
-
-    virtual std::unique_ptr<Object> eval() { return clone(); }    
-    virtual void traverse(const std::function<bool(const Object&)>& f) const { f(*this); }
-};
 
 struct SharedDataObject : Object
 {
