@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.hpp"
+#include <cstdint>
 
 namespace alisp {
 
@@ -29,6 +30,15 @@ struct FloatObject : ValueObject<double>
     FloatObject(double value) : ValueObject<double>(value) {}
     bool isFloat() const override { return true; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
+};
+
+struct CharacterObject : ValueObject<std::int32_t>
+{
+    CharacterObject(char c) : ValueObject<std::int32_t>(c) {}
+    std::unique_ptr<Object> clone() const override
+    {
+        return std::make_unique<CharacterObject>(value);
+    }
 };
 
 inline std::unique_ptr<IntObject> makeInt(std::int64_t value)
