@@ -15,7 +15,7 @@
 #include <functional>
 #include <optional>
 #include <set>
-#include "AtScopeExit.h"
+#include "AtScopeExit.hpp"
 #include "Init.hpp"
 #include "Template.hpp"
 #include "Exception.hpp"
