@@ -87,12 +87,32 @@ struct Object
     std::set<Object*>* markedForCycleDeletion = nullptr;
 
 #ifdef ENABLE_DEBUG_REFCOUNTING
-    Object() { changeRefCount(1); }
-    virtual ~Object() { changeRefCount(-1); }
+    Object()
+    {
+        changeRefCount(1);
+        getAllObjects().insert(this);
+    }
+    virtual ~Object()
+    {
+        changeRefCount(-1);
+        getAllObjects().erase(this);
+    }
     static int getDebugRefCount() { return changeRefCount(0); }
-    static bool& destructionDebug() {
+    static bool& destructionDebug()
+    {
         static bool dbg = false;
         return dbg;
+    }
+    static std::set<Object*>& getAllObjects()
+    {
+        static std::set<Object*> l;
+        return l;
+    }
+    static void printAllObjects()
+    {
+        for (auto p: getAllObjects()) {
+            std::cout << p->toString() << std::endl;
+        }
     }
 #else
     virtual ~Object() {}
@@ -402,6 +422,13 @@ struct SymbolObject : Object
 
     }
 
+    ~SymbolObject()
+    {
+        if (sym) {
+            tryDestroySharedData();
+        }
+    }
+
     const std::string getSymbolName()
     {
         return sym ? sym->name : name;
@@ -411,6 +438,8 @@ struct SymbolObject : Object
     Symbol* getSymbolOrNull() const;
 
     Function* resolveFunction() override;
+
+    void reset() override { sym.reset(); }
 
     std::string toString() const override
     {
@@ -436,6 +465,15 @@ struct SymbolObject : Object
         const Symbol* lhs = getSymbolOrNull();
         const Symbol* rhs = op->getSymbolOrNull();
         return lhs == rhs;
+    }
+
+    const void* sharedDataPointer() const override { return sym.get(); }
+    size_t sharedDataRefCount() const override { return sym.use_count(); }
+    void traverse(const std::function<bool(const Object&)>& f) const override
+    {
+        if (f(*this) && sym && sym->variable) {
+            sym->variable->traverse(f);
+        }
     }
 };
 
@@ -1785,8 +1823,8 @@ void Object::tryDestroySharedData()
         return;
     }
     if (Object::destructionDebug()) {
-        std::cout << "A reference to cyclical list " << toString()
-                  << " is about to be reduced. this=" << this << std::endl;
+        std::cout << "A reference to shared data " << toString()
+                  << " is about to be reduced by one. this=" << this << std::endl;
     }
 
     // Traverse through the list. For every cons cell encountered, count how many times

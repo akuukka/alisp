@@ -595,6 +595,39 @@ void testMemoryLeaks()
         assert(Object::getDebugRefCount() == baseCount && "Circular2");
     }
 
+    // One involving symbols
+    if (true) {
+        std::set<Object*> baseObjs = Object::getAllObjects();
+        assert(Object::getDebugRefCount() == baseCount);
+        const char* code = R"code(
+(progn
+  (setq s1 (make-symbol "a"))
+  (setq s2 (make-symbol "b"))
+
+  (set s1 s2)
+  (set s2 s1)
+
+  (unintern 's1))
+)code";
+        m->evaluate(code);
+        assert(Object::getDebugRefCount() > baseCount && "Syms");
+        std::cout << "Before:\n";
+        for (auto o : Object::getAllObjects()) {
+            if (!baseObjs.count(o)) {
+                std::cout << o->toString() << std::endl;
+            }
+        }
+        Object::destructionDebug() = true;
+        m->evaluate("(unintern 's2)");
+        std::cout << "After:\n";
+        for (auto o : Object::getAllObjects()) {
+            if (!baseObjs.count(o)) {
+                std::cout << o->toString() << std::endl;
+            }
+        }
+        assert(Object::getDebugRefCount() == baseCount && "Syms");
+    }
+
     // Of course we should zero objects left after destroying the machine
     m = nullptr;
     assert(Object::getDebugRefCount() == 0);
