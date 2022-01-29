@@ -33,31 +33,6 @@ namespace alisp {
 
 class Machine;
 
-struct StringObject : Object, Sequence
-{
-    std::shared_ptr<std::string> value;
-
-    StringObject(std::string value) : value(std::make_shared<std::string>(value)) {}
-    StringObject(const StringObject& o) : value(o.value) {}
-
-    std::string toString() const override { return "\"" + *value + "\""; }
-
-    bool isString() const override { return true; }
-
-    std::unique_ptr<Object> clone() const override
-    {
-        return std::make_unique<StringObject>(*this);
-    }
-
-    bool equals(const Object& o) const override
-    {
-        const StringObject* str = dynamic_cast<const StringObject*>(&o);
-        return str && str->value == value;
-    }
-
-    size_t length() const override { return value->size(); }
-};
-
 template<typename T>
 struct ValueObject : Object
 {
@@ -290,15 +265,6 @@ inline std::optional<double> getValue(const Object &sym)
     return std::nullopt;
 }
 
-template <> inline std::optional<ConsCellObject> getValue(const Object& sym)
-{
-    auto s = dynamic_cast<const ConsCellObject*>(&sym);
-    if (s) {
-        return *s;
-    }
-    return std::nullopt;
-}
-
 template<>
 inline std::optional<bool> getValue(const Object &sym)
 {
@@ -322,16 +288,6 @@ inline std::optional<std::int64_t> getValue(const Object &sym)
     auto s = dynamic_cast<const IntObject*>(&sym);
     if (s) {
         return s->value;
-    }
-    return std::nullopt;
-}
-
-template<>
-inline std::optional<std::string> getValue(const Object& sym)
-{
-    auto s = dynamic_cast<const StringObject*>(&sym);
-    if (s) {
-        return *s->value;
     }
     return std::nullopt;
 }

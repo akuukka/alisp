@@ -3,6 +3,8 @@
 
 namespace alisp {
 
+struct StringObject;
+
 class Machine
 {
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
@@ -34,10 +36,6 @@ class Machine
     template<> std::unique_ptr<Object> makeObject(std::int64_t i) { return makeInt(i); }
     template<> std::unique_ptr<Object> makeObject(int i) { return makeInt(i); }
     template<> std::unique_ptr<Object> makeObject(size_t i) { return makeInt((std::int64_t)i); }
-    template<> std::unique_ptr<Object> makeObject(std::string str)
-    {
-        return std::make_unique<StringObject>(str);
-    }
     template<> std::unique_ptr<Object> makeObject(bool value)
     {
         return value ? makeTrue() : makeNil();
@@ -144,19 +142,7 @@ class Machine
         return std::make_unique<SymbolObject>(this, nullptr, next);
     }
     
-    std::unique_ptr<StringObject> parseString(const char *&str)
-    {
-        auto sym = std::make_unique<StringObject>("");
-        while (*str && *str != '"') {
-            *sym->value += *str;
-            str++;
-        }
-        if (!*str) {
-            throw std::runtime_error("unexpected end of file");
-        }
-        str++;
-        return sym;
-    }
+    std::unique_ptr<StringObject> parseString(const char *&str);
 
     std::unique_ptr<Object> quote(std::unique_ptr<Object> obj)
     {
@@ -167,76 +153,8 @@ class Machine
         list->cc->cdr = std::move(cdr);
         return list;
     }
-
-    std::unique_ptr<Object> parseNext(const char *&expr)
-    {
-        while (*expr) {
-            const char c = *expr;
-            const char n = *(expr+1);
-            if (isWhiteSpace(c)) {
-                expr++;
-                continue;
-            }
-            if (c == '\"') {
-                return parseString(++expr);
-            }
-            else if (isPartOfSymName(c))
-            {
-                return parseNamedObject(expr);
-            }
-            else if (c == '\'') {
-                expr++;
-                return quote(parseNext(expr));
-            }
-            else if (c == '(') {
-                auto l = makeList();
-                bool dot = false;
-                auto lastConsCell = l->cc.get();
-                assert(lastConsCell);
-                expr++;
-                skipWhitespace(expr);
-                while (*expr != ')' && *expr) {
-                    assert(!dot);
-                    if (*expr == '.') {
-                        auto old = expr;
-                        const std::string nextName = parseNextName(expr);
-                        if (nextName == ".") {
-                            dot = true;
-                        }
-                        else {
-                            expr = old;                            
-                        }
-                    }
-                    auto sym = parseNext(expr);
-                    skipWhitespace(expr);
-                    if (dot) {
-                        assert(lastConsCell->car);
-                        lastConsCell->cdr = std::move(sym);
-                    }
-                    else {
-                        if (lastConsCell->car) {
-                            assert(!lastConsCell->cdr);
-                            lastConsCell->cdr = std::make_unique<ConsCellObject>();
-                            assert(lastConsCell != lastConsCell->next());
-                            lastConsCell = lastConsCell->next();
-                        }
-                        lastConsCell->car = std::move(sym);
-                    }
-                }
-                if (!*expr) {
-                    throw exceptions::SyntaxError("End of file during parsing");
-                }
-                expr++;
-                return l;
-            }
-            else {
-                std::stringstream os;
-                os << "Unexpected character: " << c;
-                throw exceptions::SyntaxError(os.str());
-            }
-        }
-        return nullptr;
-    }
+    
+    std::unique_ptr<Object> parseNext(const char *&expr);
 
     void renameSymbols(ConsCellObject& obj, std::map<std::string, std::unique_ptr<Object>>& conv)
     {

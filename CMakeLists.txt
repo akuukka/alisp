@@ -14,6 +14,7 @@ if (NOT SINGLE_HEADER)
     ${CMAKE_SOURCE_DIR}/source/Machine.cpp
     ${CMAKE_SOURCE_DIR}/source/ConsCell.cpp
     ${CMAKE_SOURCE_DIR}/source/SymbolObject.cpp
+    ${CMAKE_SOURCE_DIR}/source/StringObject.cpp
     ${CMAKE_SOURCE_DIR}/source/ConsCellObject.cpp
     ${CMAKE_SOURCE_DIR}/source/SharedDataObject.cpp
     )

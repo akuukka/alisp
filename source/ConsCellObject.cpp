@@ -114,4 +114,14 @@ ALISP_INLINE std::string ConsCellObject::toString() const
     return s;
 }
 
+template <>
+ALISP_INLINE std::optional<ConsCellObject> getValue(const Object& sym)
+{
+    auto s = dynamic_cast<const ConsCellObject*>(&sym);
+    if (s) {
+        return *s;
+    }
+    return std::nullopt;
+}
+
 }

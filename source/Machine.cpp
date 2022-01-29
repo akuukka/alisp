@@ -1,7 +1,85 @@
 #include "alisp.hpp"
 #include "Machine.hpp"
+#include "StringObject.hpp"
 
 namespace alisp {
+
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::string str)
+{
+    return std::make_unique<StringObject>(str);
+}
+
+ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
+{
+    while (*expr) {
+        const char c = *expr;
+        const char n = *(expr+1);
+        if (isWhiteSpace(c)) {
+            expr++;
+            continue;
+        }
+        if (c == '\"') {
+            return parseString(++expr);
+        }
+        else if (isPartOfSymName(c))
+        {
+            return parseNamedObject(expr);
+        }
+        else if (c == '\'') {
+            expr++;
+            return quote(parseNext(expr));
+        }
+        else if (c == '(') {
+            auto l = makeList();
+            bool dot = false;
+            auto lastConsCell = l->cc.get();
+            assert(lastConsCell);
+            expr++;
+            skipWhitespace(expr);
+            while (*expr != ')' && *expr) {
+                assert(!dot);
+                if (*expr == '.') {
+                    auto old = expr;
+                    const std::string nextName = parseNextName(expr);
+                    if (nextName == ".") {
+                        dot = true;
+                    }
+                    else {
+                        expr = old;                            
+                    }
+                }
+                auto sym = parseNext(expr);
+                skipWhitespace(expr);
+                if (dot) {
+                    assert(lastConsCell->car);
+                    lastConsCell->cdr = std::move(sym);
+                }
+                else {
+                    if (lastConsCell->car) {
+                        assert(!lastConsCell->cdr);
+                        lastConsCell->cdr = std::make_unique<ConsCellObject>();
+                        assert(lastConsCell != lastConsCell->next());
+                        lastConsCell = lastConsCell->next();
+                    }
+                    lastConsCell->car = std::move(sym);
+                }
+            }
+            if (!*expr) {
+                throw exceptions::SyntaxError("End of file during parsing");
+            }
+            expr++;
+            return l;
+        }
+        else {
+            std::stringstream os;
+            os << "Unexpected character: " << c;
+            throw exceptions::SyntaxError(os.str());
+        }
+    }
+    return nullptr;
+}
+
 
 ALISP_INLINE Machine::Machine(bool initStandardLibrary)
 {
@@ -517,6 +595,20 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return ret;
     });
     evaluate(getInitCode());
+}
+
+ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char *&str)
+{
+    auto sym = std::make_unique<StringObject>("");
+    while (*str && *str != '"') {
+        *sym->value += *str;
+        str++;
+    }
+    if (!*str) {
+        throw std::runtime_error("unexpected end of file");
+    }
+    str++;
+    return sym;
 }
 
 }
