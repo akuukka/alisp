@@ -623,6 +623,75 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     evaluate(getInitCode());
 }
 
+ALISP_INLINE
+void Machine::renameSymbols(ConsCellObject& obj,
+                            std::map<std::string, std::unique_ptr<Object>>& conv)
+{
+    auto p = obj.cc.get();
+    while (p) {
+        auto& obj = *p->car.get();
+        SymbolObject* sym = dynamic_cast<SymbolObject*>(&obj);
+        if (sym && conv.count(sym->name)) {
+            p->car = quote(conv[sym->name]->clone());
+        }
+        ConsCellObject* cc = dynamic_cast<ConsCellObject*>(&obj);
+        if (cc) {
+            renameSymbols(*cc, conv);
+        }
+        p = p->next();
+    }
+}
+
+ALISP_INLINE std::unique_ptr<Object> Machine::parse(const char *expr)
+{
+    auto r = parseNext(expr);
+    if (onlyWhitespace(expr)) {
+        return r;
+    }
+
+    auto prog = makeList();
+    prog->cc->car = std::make_unique<SymbolObject>(this, nullptr, "progn");
+
+    auto consCell = makeList();
+    consCell->cc->car = std::move(r);
+    auto lastCell = consCell->cc.get();
+    
+    while (!onlyWhitespace(expr)) {
+        auto n = parseNext(expr);
+        lastCell->cdr = std::make_unique<ConsCellObject>(std::move(n), nullptr);
+        lastCell = lastCell->next();
+    }
+    prog->cc->cdr = std::move(consCell);
+    return prog;
+}
+
+ALISP_INLINE std::string Machine::parseNextName(const char*& str)
+{
+    std::string name;
+    while (*str && isPartOfSymName(*str)) {
+        name += *str;
+        str++;
+    }
+    return name;
+}
+
+ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
+{
+    const std::string next = parseNextName(str);
+    auto num = getNumericConstant(next);
+    if (num) {
+        return num;
+    }
+    if (next == "nil") {
+        // It's optimal to return nil already at this point.
+        // Note that even the GNU elisp manual says:
+        // 'After the Lisp reader has read either `()' or `nil', there is no way to determine
+        //  which representation was actually written by the programmer.'
+        return makeNil();
+    }
+    return std::make_unique<SymbolObject>(this, nullptr, next);
+}
+
 ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char *&str)
 {
     auto sym = std::make_unique<StringObject>("");

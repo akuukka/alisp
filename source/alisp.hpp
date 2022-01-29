@@ -199,34 +199,6 @@ inline bool onlyWhitespace(const char* expr)
     return true;
 }
 
-template<>
-inline std::optional<const Symbol*> getValue(const Object& sym)
-{
-    if (sym.isNil()) {
-        return nullptr;
-    }
-    auto s = dynamic_cast<const SymbolObject*>(&sym);
-    if (s) {
-        return s->getSymbol();
-    }
-    return std::nullopt;
-}
-
-template<>
-inline std::optional<const Sequence*> getValue(const Object& sym)
-{
-    if (sym.isString() || sym.isList()) {
-        return dynamic_cast<const Sequence*>(&sym);
-    }
-    return std::nullopt;
-}
-
-template <typename... Args>
-inline size_t getMinArgs()
-{
-    return countNonOpts<0, Args...>();
-}
-
 inline Object* FArgs::get()
 {
     if (!cc) {
