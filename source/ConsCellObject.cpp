@@ -124,4 +124,23 @@ ALISP_INLINE std::optional<ConsCellObject> getValue(const Object& sym)
     return std::nullopt;
 }
 
+ALISP_INLINE size_t ConsCellObject::length() const
+{
+    if (!*this) {
+        return 0;
+    }
+    std::set<const ConsCell*> visited;
+    size_t l = 1;
+    auto p = cc.get();
+    visited.insert(p);
+    while ((p = p->next())) {
+        if (visited.count(p)) {
+            throw exceptions::Error("Cyclical list length");
+        }
+        visited.insert(p);
+        l++;
+    }
+    return l;
+}
+
 }

@@ -55,25 +55,7 @@ struct ConsCellObject : SharedDataObject, Sequence
         return this->cc == op->cc;
     }
 
-    size_t length() const override
-    {
-        if (!*this) {
-            return 0;
-        }
-        std::set<const ConsCell*> visited;
-        size_t l = 1;
-        auto p = cc.get();
-        visited.insert(p);
-        while ((p = p->next())) {
-            if (visited.count(p)) {
-                throw exceptions::Error("Cyclical list length");
-            }
-            visited.insert(p);
-            l++;
-        }
-        return l;
-    }
-
+    size_t length() const override;
     std::unique_ptr<Object> eval() override;
 
     ConsCell::Iterator begin() const

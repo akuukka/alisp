@@ -5,6 +5,17 @@
 
 namespace alisp {
 
+ALISP_INLINE bool onlyWhitespace(const char* expr)
+{
+    while (*expr) {
+        if (!isWhiteSpace(*expr)) {
+            return false;
+        }
+        expr++;
+    }
+    return true;
+}
+
 ALISP_INLINE void skipWhitespace(const char*& expr)
 {
     while (*expr && isWhiteSpace(*expr)) {

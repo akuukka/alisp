@@ -64,10 +64,7 @@ struct Object
 
     virtual Function* resolveFunction() { return nullptr; }
     virtual std::unique_ptr<Object> clone() const = 0;
-    virtual bool equals(const Object& o) const
-    {
-        return false;
-    }
+    virtual bool equals(const Object& o) const { return false; }
 
     virtual ConsCellObject* asList() { return nullptr; }
     virtual const ConsCellObject* asList() const { return nullptr; }

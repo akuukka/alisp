@@ -188,17 +188,6 @@ inline bool isWhiteSpace(const char c)
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
-inline bool onlyWhitespace(const char* expr)
-{
-    while (*expr) {
-        if (!isWhiteSpace(*expr)) {
-            return false;
-        }
-        expr++;
-    }
-    return true;
-}
-
 inline Object* FArgs::get()
 {
     if (!cc) {
