@@ -84,8 +84,6 @@ inline int changeRefCount(int i) {
 
 struct Object
 {
-    std::set<Object*>* markedForCycleDeletion = nullptr;
-
 #ifdef ENABLE_DEBUG_REFCOUNTING
     Object()
     {
@@ -117,7 +115,6 @@ struct Object
 #else
     virtual ~Object() {}
 #endif
-    virtual void reset() {}
     virtual std::string toString() const = 0;
     virtual bool isList() const { return false; }
     virtual bool isNil() const { return false; }
@@ -153,19 +150,17 @@ struct Object
         return conv(*this);
     }
 
-    virtual std::unique_ptr<Object> eval()
-    {
-        return clone();
-    }
+    virtual std::unique_ptr<Object> eval() { return clone(); }    
+    virtual void traverse(const std::function<bool(const Object&)>& f) const { f(*this); }
+};
 
-    void tryDestroySharedData();
-    virtual const void* sharedDataPointer() const { return nullptr; }
-    virtual size_t sharedDataRefCount() const { return 0; }
-    virtual void traverse(const std::function<bool(const Object&)>& f) const
-    {
-        f(*this);
-    }
-
+struct SharedDataObject : Object
+{
+    std::set<SharedDataObject*>* markedForCycleDeletion = nullptr;
+    void tryDestroySharedData(); // Derived classes must call this from destructor.
+    virtual const void* sharedDataPointer() const = 0;
+    virtual size_t sharedDataRefCount() const = 0;
+    virtual void reset() = 0;
 };
 
 struct Sequence
@@ -179,8 +174,8 @@ inline std::ostream &operator<<(std::ostream &os, const Object &sym)
     return os;
 }
 
-inline std::ostream &operator<<(std::ostream &os,
-                                const std::unique_ptr<Object> &sym) {
+inline std::ostream &operator<<(std::ostream &os, const std::unique_ptr<Object> &sym)
+{
     if (sym) {
         os << sym->toString();
     }
@@ -273,7 +268,7 @@ struct FloatObject : ValueObject<double>
     std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
 };
 
-struct ConsCellObject : Object, Sequence
+struct ConsCellObject : SharedDataObject, Sequence
 {
     std::shared_ptr<ConsCell> cc;
 
@@ -290,7 +285,11 @@ struct ConsCellObject : Object, Sequence
     }
 
     ConsCellObject(const ConsCellObject& o) : cc(o.cc) {}
-    ~ConsCellObject() override;
+
+    ~ConsCellObject()
+    {
+        if (cc) tryDestroySharedData();
+    }        
 
     void reset() override { cc.reset(); }
     std::string toString() const override;
@@ -406,7 +405,7 @@ struct Symbol
     std::unique_ptr<Function> function;
 };
 
-struct SymbolObject : Object
+struct SymbolObject : SharedDataObject
 {
     std::shared_ptr<Symbol> sym;
     std::string name;
@@ -424,10 +423,8 @@ struct SymbolObject : Object
 
     ~SymbolObject()
     {
-        if (sym) {
-            tryDestroySharedData();
-        }
-    }
+        if (sym) tryDestroySharedData();
+    }        
 
     const std::string getSymbolName()
     {
@@ -1813,8 +1810,11 @@ bool ConsCell::isCyclical() const
     return cycled;
 }
 
-void Object::tryDestroySharedData()
+void SharedDataObject::tryDestroySharedData()
 {
+    if (!sharedDataPointer()) {
+        return;
+    }
     if (markedForCycleDeletion) {
         markedForCycleDeletion->erase(this);
         if (Object::destructionDebug()) {
@@ -1835,13 +1835,14 @@ void Object::tryDestroySharedData()
     };
     std::map<const void*, RefData> referredTimes;
     size_t maxUseCount = 0;
-    traverse([&](const Object& obj) {
-        if (!obj.sharedDataPointer()) {
+    traverse([&](const Object& baseObj) {
+        const SharedDataObject* obj = dynamic_cast<const SharedDataObject*>(&baseObj);
+        if (!obj || !obj->sharedDataPointer()) {
             return false;
         }
-        auto ptr = obj.sharedDataPointer();
+        auto ptr = obj->sharedDataPointer();
         referredTimes[ptr].refsFromCycle++;
-        referredTimes[ptr].totalRefs = obj.sharedDataRefCount();// - (&obj == this ? 1 : 0);
+        referredTimes[ptr].totalRefs = obj->sharedDataRefCount();// - (&obj == this ? 1 : 0);
         if (referredTimes[ptr].refsFromCycle >= 2) {
             return false;
         }
@@ -1861,12 +1862,13 @@ void Object::tryDestroySharedData()
     if (Object::destructionDebug()) {
         std::cout << "The whole cycle is unreachable!\n";
     }
-    std::set<Object*> clearList;
-    traverse([&](const Object& obj) {
-        if (!obj.sharedDataPointer()) {
+    std::set<SharedDataObject*> clearList;
+    traverse([&](const Object& baseObj) {
+        const SharedDataObject* obj = dynamic_cast<const SharedDataObject*>(&baseObj);
+        if (!obj || !obj->sharedDataPointer()) {
             return false;
         }
-        auto cc = const_cast<Object*>(&obj);
+        auto cc = const_cast<SharedDataObject*>(obj);
         if (clearList.count(cc)) {
             return false;
         }
@@ -1892,11 +1894,6 @@ void Object::tryDestroySharedData()
     }
     if (Object::destructionDebug())
         std::cout << "Done deleting circular list!\n";
-}
-
-ConsCellObject::~ConsCellObject()
-{
-    tryDestroySharedData();
 }
 
 }
