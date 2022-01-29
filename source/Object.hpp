@@ -71,8 +71,6 @@ struct Object
     virtual ConsCellObject* asList() { return nullptr; }
     virtual const ConsCellObject* asList() const { return nullptr; }
 
-    friend std::ostream &operator<<(std::ostream &os, const Object &sym);
-
     template <typename T> T value() const
     {
         const std::optional<T> opt = Converter<T>()(*this);
@@ -92,21 +90,7 @@ struct Object
     virtual void traverse(const std::function<bool(const Object&)>& f) const { f(*this); }
 };
 
-inline std::ostream &operator<<(std::ostream &os, const Object &sym)
-{
-    os << sym.toString();
-    return os;
-}
-
-inline std::ostream &operator<<(std::ostream &os, const std::unique_ptr<Object> &sym)
-{
-    if (sym) {
-        os << sym->toString();
-    }
-    else {
-        os << "nullptr";
-    }
-    return os;
-}
+std::ostream &operator<<(std::ostream &os, const Object &sym);
+std::ostream &operator<<(std::ostream &os, const std::unique_ptr<Object> &sym);
 
 }

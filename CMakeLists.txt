@@ -3,6 +3,11 @@ project(ALisp)
 
 set(SOURCE_FILES
   ${CMAKE_SOURCE_DIR}/source/main.cpp
+  ${CMAKE_SOURCE_DIR}/source/Object.cpp
+  ${CMAKE_SOURCE_DIR}/source/Machine.cpp
+  ${CMAKE_SOURCE_DIR}/source/ConsCell.cpp
+  ${CMAKE_SOURCE_DIR}/source/SymbolObject.cpp
+  ${CMAKE_SOURCE_DIR}/source/ConsCellObject.cpp
   ${CMAKE_SOURCE_DIR}/source/SharedDataObject.cpp
   )
 

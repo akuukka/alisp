@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <set>
 #include <string>
+#include "Machine.hpp"
 
 void ASSERT_EQ(std::string a, std::string b)
 {
