@@ -1,11 +1,19 @@
 #include "alisp.hpp"
 #include "ConsCellObject.hpp"
+#include "AtScopeExit.hpp"
 
 namespace alisp
 {
 
 ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
 {
+    thread_local int depth = 0;
+    depth++;
+    const AtScopeExit onExit([]{ depth--; });
+    if (depth >= 500) {
+        throw exceptions::Error("Max recursion depth limit exceeded.");
+    }
+    
     auto &c = *cc;
     if (!c) {
         return std::make_unique<ConsCellObject>();

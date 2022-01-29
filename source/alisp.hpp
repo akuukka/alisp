@@ -23,7 +23,6 @@
 #include "Object.hpp"
 #include "SharedDataObject.hpp"
 #include "AtScopeExit.hpp"
-#include "Init.hpp"
 #include "Template.hpp"
 #include "SymbolObject.hpp"
 #include "ConsCell.hpp"

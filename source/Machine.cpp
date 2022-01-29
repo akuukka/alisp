@@ -3,6 +3,7 @@
 #include "StringObject.hpp"
 #include "ValueObject.hpp"
 #include "ConsCellObject.hpp"
+#include "Init.hpp"
 
 namespace alisp {
 
