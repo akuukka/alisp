@@ -3,6 +3,7 @@ project(ALisp)
 
 set(SOURCE_FILES
   ${CMAKE_SOURCE_DIR}/source/main.cpp
+  ${CMAKE_SOURCE_DIR}/source/SharedDataObject.cpp
   )
 
 add_definitions(-std=c++17)
