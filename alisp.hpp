@@ -1558,8 +1558,8 @@ public:
             if (!sym || !sym->function) {
                 throw exceptions::VoidFunction(sym ? sym->name : "nil");
             }
+            auto list = makeList();
             for (const auto& p : m_syms) {
-                auto list = makeList();
                 list->cc->car = quote(std::make_unique<SymbolObject>(this, p.second, ""));
                 FArgs args(*list->cc, *this);
                 (sym->function->func)(args);
