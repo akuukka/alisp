@@ -12,3 +12,4 @@
 #include "SymbolObject.cpp"
 #include "StringObject.cpp"
 #include "ValueObject.cpp"
+#include "Converter.cpp"

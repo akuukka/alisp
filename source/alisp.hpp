@@ -200,29 +200,6 @@ inline bool onlyWhitespace(const char* expr)
 }
 
 template<>
-inline std::optional<std::shared_ptr<Object>> getValue(const Object& sym)
-{
-    return std::shared_ptr<Object>(sym.clone().release());
-}
-
-template<>
-inline std::optional<bool> getValue(const Object &sym)
-{
-    return !!sym;
-}
-
-template<>
-inline std::optional<std::any> getValue(const Object& sym)
-{
-    auto s = dynamic_cast<const ConsCellObject*>(&sym);
-    if (s) {
-        std::shared_ptr<ConsCell> cc = s->cc;
-        return cc;
-    }
-    return std::any();
-}
-
-template<>
 inline std::optional<const Symbol*> getValue(const Object& sym)
 {
     if (sym.isNil()) {
