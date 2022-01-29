@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <set>
 #include <string>
+#include "ValueObject.hpp"
 
 void ASSERT_EQ(std::string a, std::string b)
 {

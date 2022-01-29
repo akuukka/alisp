@@ -11,3 +11,4 @@
 #include "SharedDataObject.cpp"
 #include "SymbolObject.cpp"
 #include "StringObject.cpp"
+#include "ValueObject.cpp"

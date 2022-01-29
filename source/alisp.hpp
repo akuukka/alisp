@@ -25,40 +25,12 @@
 #include "AtScopeExit.hpp"
 #include "Init.hpp"
 #include "Template.hpp"
-#include "Exception.hpp"
 #include "SymbolObject.hpp"
 #include "ConsCellObject.hpp"
 
 namespace alisp {
 
 class Machine;
-
-template<typename T>
-struct ValueObject : Object
-{
-    T value;
-    ValueObject(T t) : value(t) {}
-    bool equals(const Object& o) const override
-    {
-        const ValueObject<T>* op = dynamic_cast<const ValueObject<T>*>(&o);
-        return op && op->value == value;
-    }
-    std::string toString() const override { return std::to_string(value); }
-};
-
-struct IntObject : ValueObject<std::int64_t>
-{
-    IntObject(std::int64_t value) : ValueObject<std::int64_t>(value) {}
-    bool isInt() const override { return true; }
-    std::unique_ptr<Object> clone() const override { return std::make_unique<IntObject>(value); }
-};
-
-struct FloatObject : ValueObject<double>
-{
-    FloatObject(double value) : ValueObject<double>(value) {}
-    bool isFloat() const override { return true; }
-    std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
-};
 
 struct FArgs;
 
@@ -77,14 +49,6 @@ inline std::unique_ptr<Object> makeNil() { return std::make_unique<ConsCellObjec
 
 inline std::unique_ptr<ConsCellObject> makeList() {
     return std::make_unique<ConsCellObject>();
-}
-
-inline std::unique_ptr<IntObject> makeInt(std::int64_t value) {
-    return std::make_unique<IntObject>(value);
-}
-
-inline std::unique_ptr<FloatObject> makeFloat(double value) {
-    return std::make_unique<FloatObject>(value);
 }
 
 inline int countArgs(const ConsCell* cc)
@@ -256,16 +220,6 @@ inline std::optional<std::shared_ptr<Object>> getValue(const Object& sym)
 }
 
 template<>
-inline std::optional<double> getValue(const Object &sym)
-{
-    auto s = dynamic_cast<const FloatObject*>(&sym);
-    if (s) {
-        return s->value;
-    }
-    return std::nullopt;
-}
-
-template<>
 inline std::optional<bool> getValue(const Object &sym)
 {
     return !!sym;
@@ -280,16 +234,6 @@ inline std::optional<std::any> getValue(const Object& sym)
         return cc;
     }
     return std::any();
-}
-
-template<>
-inline std::optional<std::int64_t> getValue(const Object &sym)
-{
-    auto s = dynamic_cast<const IntObject*>(&sym);
-    if (s) {
-        return s->value;
-    }
-    return std::nullopt;
 }
 
 template<>

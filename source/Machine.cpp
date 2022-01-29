@@ -1,6 +1,7 @@
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "StringObject.hpp"
+#include "ValueObject.hpp"
 
 namespace alisp {
 
@@ -8,6 +9,24 @@ template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::string str)
 {
     return std::make_unique<StringObject>(str);
+}
+
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::int64_t i)
+{
+    return makeInt(i);
+}
+
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(int i)
+{
+    return makeInt(i);
+}
+
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(size_t i)
+{
+    return makeInt((std::int64_t)i);
 }
 
 ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
@@ -610,5 +629,62 @@ ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char *&str
     str++;
     return sym;
 }
+
+ALISP_INLINE
+std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj)
+{
+    std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>();
+    list->cc->car = std::make_unique<SymbolObject>(this, nullptr, "quote");
+    std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>();
+    cdr->cc->car = std::move(obj);
+    list->cc->cdr = std::move(cdr);
+    return list;
+}
+
+ALISP_INLINE
+std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) const
+{
+    size_t dotCount = 0;
+    size_t digits = 0;
+    for (size_t i = 0;i < str.size(); i++) {
+        const char c = str[i];
+        if (c == '.') {
+            dotCount++;
+            if (dotCount == 2) {
+                return nullptr;
+            }
+        }
+        else if (c == '+') {
+            if (i > 0) {
+                return nullptr;
+            }
+        }
+        else if (c == '-') {
+            if (i > 0) {
+                return nullptr;
+            }
+        }
+        else if (c >= '0' && c <= '9') {
+            digits++;
+        }
+        else {
+            return nullptr;
+        }
+    }
+    if (!digits) {
+        return nullptr;
+    }
+    std::stringstream ss(str);
+    if (dotCount) {
+        double value;
+        ss >> value;
+        return makeFloat(value);
+    }
+    else {
+        std::int64_t value;
+        ss >> value;
+        return makeInt(value);
+    }
+    }
 
 }

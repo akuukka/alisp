@@ -2,6 +2,7 @@
 #include "ConsCell.hpp"
 #include "SharedDataObject.hpp"
 #include "Sequence.hpp"
+#include "Exception.hpp"
 
 namespace alisp {
 

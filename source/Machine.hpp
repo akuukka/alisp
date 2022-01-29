@@ -33,9 +33,6 @@ class Machine
     template <typename T>
     std::unique_ptr<Object> makeObject(T);
 
-    template<> std::unique_ptr<Object> makeObject(std::int64_t i) { return makeInt(i); }
-    template<> std::unique_ptr<Object> makeObject(int i) { return makeInt(i); }
-    template<> std::unique_ptr<Object> makeObject(size_t i) { return makeInt((std::int64_t)i); }
     template<> std::unique_ptr<Object> makeObject(bool value)
     {
         return value ? makeTrue() : makeNil();
@@ -80,50 +77,6 @@ class Machine
         return name;
     }
 
-    std::unique_ptr<Object> getNumericConstant(const std::string& str) const
-    {
-        size_t dotCount = 0;
-        size_t digits = 0;
-        for (size_t i = 0;i < str.size(); i++) {
-            const char c = str[i];
-            if (c == '.') {
-                dotCount++;
-                if (dotCount == 2) {
-                    return nullptr;
-                }
-            }
-            else if (c == '+') {
-                if (i > 0) {
-                    return nullptr;
-                }
-            }
-            else if (c == '-') {
-                if (i > 0) {
-                    return nullptr;
-                }
-            }
-            else if (c >= '0' && c <= '9') {
-                digits++;
-            }
-            else {
-                return nullptr;
-            }
-        }
-        if (!digits) {
-            return nullptr;
-        }
-        std::stringstream ss(str);
-        if (dotCount) {
-            double value;
-            ss >> value;
-            return makeFloat(value);
-        }
-        else {
-            std::int64_t value;
-            ss >> value;
-            return makeInt(value);
-        }
-    }
 
     std::unique_ptr<Object> parseNamedObject(const char*& str)
     {
@@ -143,18 +96,9 @@ class Machine
     }
     
     std::unique_ptr<StringObject> parseString(const char *&str);
-
-    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj)
-    {
-        std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>();
-        list->cc->car = std::make_unique<SymbolObject>(this, nullptr, "quote");
-        std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>();
-        cdr->cc->car = std::move(obj);
-        list->cc->cdr = std::move(cdr);
-        return list;
-    }
-    
+    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj);    
     std::unique_ptr<Object> parseNext(const char *&expr);
+    std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
 
     void renameSymbols(ConsCellObject& obj, std::map<std::string, std::unique_ptr<Object>>& conv)
     {
