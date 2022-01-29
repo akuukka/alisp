@@ -92,5 +92,21 @@ struct Object
     virtual void traverse(const std::function<bool(const Object&)>& f) const { f(*this); }
 };
 
+inline std::ostream &operator<<(std::ostream &os, const Object &sym)
+{
+    os << sym.toString();
+    return os;
+}
+
+inline std::ostream &operator<<(std::ostream &os, const std::unique_ptr<Object> &sym)
+{
+    if (sym) {
+        os << sym->toString();
+    }
+    else {
+        os << "nullptr";
+    }
+    return os;
+}
 
 }
