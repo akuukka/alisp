@@ -597,7 +597,6 @@ void testMemoryLeaks()
 
     // One involving symbols
     if (true) {
-        std::set<Object*> baseObjs = Object::getAllObjects();
         assert(Object::getDebugRefCount() == baseCount);
         const char* code = R"code(
 (progn
@@ -611,20 +610,7 @@ void testMemoryLeaks()
 )code";
         m->evaluate(code);
         assert(Object::getDebugRefCount() > baseCount && "Syms");
-        std::cout << "Before:\n";
-        for (auto o : Object::getAllObjects()) {
-            if (!baseObjs.count(o)) {
-                std::cout << o->toString() << std::endl;
-            }
-        }
-        Object::destructionDebug() = true;
         m->evaluate("(unintern 's2)");
-        std::cout << "After:\n";
-        for (auto o : Object::getAllObjects()) {
-            if (!baseObjs.count(o)) {
-                std::cout << o->toString() << std::endl;
-            }
-        }
         assert(Object::getDebugRefCount() == baseCount && "Syms");
     }
 
