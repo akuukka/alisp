@@ -26,13 +26,15 @@
 #include "Init.hpp"
 #include "Template.hpp"
 #include "SymbolObject.hpp"
-#include "ConsCellObject.hpp"
+#include "ConsCell.hpp"
+#include "Exception.hpp"
 
 namespace alisp {
 
 class Machine;
 
 struct FArgs;
+struct ConsCellObject;
 
 struct Function
 {
@@ -168,20 +170,6 @@ tupleOptCheck()
             writeToTuple<0>(tuple, args);
             return tuple;
         }
-
-inline bool isPartOfSymName(const char c)
-{
-    if (c=='.') return true;
-    if (c=='+') return true;
-    if (c=='%') return true;
-    if (c=='*') return true;
-    if (c=='/') return true;
-    if (c=='-') return true;
-    if (c>='a' && c<='z') return true;
-    if (c>='A' && c<='Z') return true;
-    if (c>='0' && c<='9') return true;
-    return false;
-}
 
 inline bool isWhiteSpace(const char c)
 {

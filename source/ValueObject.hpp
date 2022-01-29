@@ -39,6 +39,16 @@ struct CharacterObject : ValueObject<std::int32_t>
     {
         return std::make_unique<CharacterObject>(value);
     }
+    std::string toString() const override
+    {
+        std::string r = std::to_string(value);
+        if (value < 128) {
+            r += " (";
+            r += (char)value;
+            r += ")";
+        }
+        return r;
+    }
 };
 
 inline std::unique_ptr<IntObject> makeInt(std::int64_t value)

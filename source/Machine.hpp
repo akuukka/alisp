@@ -30,10 +30,7 @@ class Machine
     template <typename T>
     std::unique_ptr<Object> makeObject(T);
 
-    template<> std::unique_ptr<Object> makeObject(bool value)
-    {
-        return value ? makeTrue() : makeNil();
-    }
+    template<> std::unique_ptr<Object> makeObject(bool value);
     template<> std::unique_ptr<Object> makeObject(std::unique_ptr<Object> o)
     {
         return std::move(o);
@@ -101,15 +98,7 @@ public:
     }
 
     void makeFunc(const char *name, int minArgs, int maxArgs,
-                  const std::function<std::unique_ptr<Object>(FArgs &)>& f)
-    {
-        auto func = std::make_unique<Function>();
-        func->name = name;
-        func->minArgs = minArgs;
-        func->maxArgs = maxArgs;
-        func->func = std::move(f);
-        getSymbol(name)->function = std::move(func);
-    }
+                  const std::function<std::unique_ptr<Object>(FArgs &)>& f);
 
     Machine(bool initStandardLibrary = true);
 
@@ -140,15 +129,7 @@ public:
         return m_syms[name];
     }
 
-    std::shared_ptr<Symbol> getSymbol(std::string name)
-    {
-        if (!m_syms.count(name)) {
-            m_syms[name] = std::make_shared<Symbol>();
-            m_syms[name]->name = name;
-            m_syms[name]->parent = this;
-        }
-        return m_syms[name];
-    }
+    std::shared_ptr<Symbol> getSymbol(std::string name);
 };
 
 }

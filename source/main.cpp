@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include "ValueObject.hpp"
+#include "ConsCellObject.hpp"
 
 void ASSERT_EQ(std::string a, std::string b)
 {

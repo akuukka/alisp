@@ -2,8 +2,30 @@
 #include "Machine.hpp"
 #include "StringObject.hpp"
 #include "ValueObject.hpp"
+#include "ConsCellObject.hpp"
 
 namespace alisp {
+
+ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
+                                    const std::function<std::unique_ptr<Object>(FArgs &)>& f)
+{
+    auto func = std::make_unique<Function>();
+    func->name = name;
+    func->minArgs = minArgs;
+    func->maxArgs = maxArgs;
+    func->func = std::move(f);
+    getSymbol(name)->function = std::move(func);
+}
+
+ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
+{
+    if (!m_syms.count(name)) {
+        m_syms[name] = std::make_shared<Symbol>();
+        m_syms[name]->name = name;
+        m_syms[name]->parent = this;
+    }
+    return m_syms[name];
+}
 
 ALISP_INLINE bool onlyWhitespace(const char* expr)
 {
@@ -45,6 +67,21 @@ template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(size_t i)
 {
     return makeInt((std::int64_t)i);
+}
+
+inline bool isPartOfSymName(const char c)
+{
+    if (c=='.') return true;
+    if (c=='?') return true;
+    if (c=='+') return true;
+    if (c=='%') return true;
+    if (c=='*') return true;
+    if (c=='/') return true;
+    if (c=='-') return true;
+    if (c>='a' && c<='z') return true;
+    if (c>='A' && c<='Z') return true;
+    if (c>='0' && c<='9') return true;
+    return false;
 }
 
 ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
@@ -686,9 +723,26 @@ ALISP_INLINE std::string Machine::parseNextName(const char*& str)
     return name;
 }
 
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(bool value)
+{
+    return value ? makeTrue() : makeNil();
+}
+
 ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
 {
     const std::string next = parseNextName(str);
+    if (next.size() && next[0] == '?') {
+        if (next.length() == 2) {
+            return std::make_unique<CharacterObject>(next[1]);
+        }
+        else if (next.size() == 1) {
+            throw exceptions::SyntaxError("EOF while parsing");
+        }
+        else  {
+            throw exceptions::Error("Invalid read syntax");
+        }
+    }
     auto num = getNumericConstant(next);
     if (num) {
         return num;

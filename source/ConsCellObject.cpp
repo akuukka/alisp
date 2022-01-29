@@ -1,4 +1,5 @@
 #include "alisp.hpp"
+#include "ConsCellObject.hpp"
 
 namespace alisp
 {

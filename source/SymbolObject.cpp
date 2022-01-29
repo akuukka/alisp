@@ -1,3 +1,4 @@
+#include "SymbolObject.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
 

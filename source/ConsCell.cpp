@@ -1,11 +1,12 @@
 #include "alisp.hpp"
+#include "ConsCellObject.hpp"
 
 namespace alisp
 {
 
 ALISP_INLINE const ConsCell* ConsCell::next() const
 {
-    auto cc = dynamic_cast<ConsCellObject *>(this->cdr.get());
+    auto cc = dynamic_cast<ConsCellObject*>(this->cdr.get());
     if (cc) {
         return cc->cc.get();
     }
