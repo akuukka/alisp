@@ -754,9 +754,12 @@ inline std::optional<std::string> getValue(const Object& sym)
 template<>
 inline std::optional<const Symbol*> getValue(const Object& sym)
 {
+    if (sym.isNil()) {
+        return nullptr;
+    }
     auto s = dynamic_cast<const SymbolObject*>(&sym);
     if (s) {
-        return s->sym.get();
+        return s->getSymbol();
     }
     return std::nullopt;
 }
@@ -1322,6 +1325,17 @@ public:
                     if (str[i+1] == '%') {
                         str.erase(i, 1);
                     }
+                    else if (str[i+1] == 's') {
+                        const auto nextSym = args.get();
+                        std::string stringVal;
+                        if (nextSym->isString()) {
+                            stringVal = nextSym->value<std::string>();
+                        }
+                        else {
+                            throw exceptions::Error("Format specifier doesn’t match argument type");
+                        }
+                        str = str.substr(0, i) + stringVal + str.substr(i+2);
+                    }
                     else if (str[i+1] == 'd') {
                         const auto nextSym = args.get();
                         std::int64_t intVal;
@@ -1539,6 +1553,18 @@ public:
                 obj = p->car.get();
             }
             return obj->clone();
+        });
+        defun("mapatoms", [this](const Symbol* sym) {
+            if (!sym || !sym->function) {
+                throw exceptions::VoidFunction(sym ? sym->name : "nil");
+            }
+            for (const auto& p : m_syms) {
+                auto list = makeList();
+                list->cc->car = quote(std::make_unique<SymbolObject>(this, p.second, ""));
+                FArgs args(*list->cc, *this);
+                (sym->function->func)(args);
+            }
+            return makeNil();
         });
         makeFunc("cons", 2, 2, [](FArgs &args) {
             return std::make_unique<ConsCellObject>(args.get()->clone(), args.get()->clone());
