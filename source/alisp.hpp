@@ -624,7 +624,7 @@ tupleOptCheck()
         }
         writeToTuple<I + 1>(t, args);
     }
-
+        
         template<typename ...Args>
         std::tuple<Args...> toTuple(FArgs& args)
         {
@@ -632,25 +632,6 @@ tupleOptCheck()
             writeToTuple<0>(tuple, args);
             return tuple;
         }
-
-void cons(std::unique_ptr<Object> sym, ConsCell& list)
-{
-    if (!list) {
-        list.car = std::move(sym);
-        return;
-    }
-    ConsCell cdr = std::move(list);
-    list.car = std::move(sym);
-    list.cdr = std::make_unique<ConsCellObject>();
-    auto &lo = dynamic_cast<ConsCellObject &>(*list.cdr.get());
-    lo.cc->car = std::move(cdr.car);
-    lo.cc->cdr = std::move(cdr.cdr);
-}
-
-void cons(std::unique_ptr<Object> sym,
-          const std::unique_ptr<ConsCellObject> &list) {
-    cons(std::move(sym), *list->cc);
-}
 
 bool isPartOfSymName(const char c)
 {
