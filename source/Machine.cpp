@@ -5,6 +5,13 @@
 
 namespace alisp {
 
+ALISP_INLINE void skipWhitespace(const char*& expr)
+{
+    while (*expr && isWhiteSpace(*expr)) {
+        expr++;
+    }
+}
+
 template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::string str)
 {

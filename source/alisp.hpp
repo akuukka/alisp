@@ -44,13 +44,6 @@ struct Function
     std::function<std::unique_ptr<Object>(FArgs&)> func;
 };
 
-// Remember nil = ()
-inline std::unique_ptr<Object> makeNil() { return std::make_unique<ConsCellObject>(); }
-
-inline std::unique_ptr<ConsCellObject> makeList() {
-    return std::make_unique<ConsCellObject>();
-}
-
 inline int countArgs(const ConsCell* cc)
 {
     if (!cc || !(*cc)) {
@@ -204,13 +197,6 @@ inline bool onlyWhitespace(const char* expr)
         expr++;
     }
     return true;
-}
-
-inline void skipWhitespace(const char*& expr)
-{
-    while (*expr && isWhiteSpace(*expr)) {
-        expr++;
-    }
 }
 
 template<>

@@ -122,4 +122,14 @@ struct ConsCellObject : SharedDataObject, Sequence
     size_t sharedDataRefCount() const override { return cc.use_count(); }
 };
 
+inline std::unique_ptr<Object> makeNil()
+{
+    return std::make_unique<ConsCellObject>();
+}
+
+inline std::unique_ptr<ConsCellObject> makeList()
+{
+    return std::make_unique<ConsCellObject>();
+}
+
 }
