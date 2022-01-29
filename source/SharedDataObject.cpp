@@ -1,10 +1,10 @@
 #define ENABLE_DEBUG_REFCOUNTING
-
+#include "alisp.hpp"
 #include "SharedDataObject.hpp"
 
 namespace alisp {
 
-void SharedDataObject::tryDestroySharedData()
+ALISP_INLINE void SharedDataObject::tryDestroySharedData()
 {
     if (!sharedDataPointer()) {
         return;

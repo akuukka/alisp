@@ -3,7 +3,7 @@
 namespace alisp
 {
 
-const ConsCell* ConsCell::next() const
+ALISP_INLINE const ConsCell* ConsCell::next() const
 {
     auto cc = dynamic_cast<ConsCellObject *>(this->cdr.get());
     if (cc) {
@@ -12,7 +12,7 @@ const ConsCell* ConsCell::next() const
     return nullptr;
 }
 
-ConsCell* ConsCell::next()
+ALISP_INLINE ConsCell* ConsCell::next()
 {
     auto cc = dynamic_cast<ConsCellObject *>(this->cdr.get());
     if (cc) {
@@ -21,7 +21,7 @@ ConsCell* ConsCell::next()
     return nullptr;
 }
 
-void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
+ALISP_INLINE void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
 {
     if (!*this) {
         return;
@@ -38,7 +38,7 @@ void ConsCell::traverse(const std::function<bool(const ConsCell*)>& f) const
     }
 }
 
-bool ConsCell::isCyclical() const
+ALISP_INLINE bool ConsCell::isCyclical() const
 {
     if (!*this) {
         return false;

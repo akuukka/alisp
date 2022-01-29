@@ -1,11 +1,13 @@
 #define ENABLE_DEBUG_REFCOUNTING
-
-#include "alisp.hpp"
+#ifdef ALISP_SINGLE_HEADER
+#include "ALisp_SingleHeader.hpp"
+#else
+#include "Machine.hpp"
+#endif
 #include <cassert>
 #include <cstdint>
 #include <set>
 #include <string>
-#include "Machine.hpp"
 
 void ASSERT_EQ(std::string a, std::string b)
 {

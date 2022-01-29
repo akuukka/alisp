@@ -3,7 +3,7 @@
 namespace alisp
 {
 
-std::unique_ptr<Object> ConsCellObject::eval()
+ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
 {
     auto &c = *cc;
     if (!c) {
@@ -22,7 +22,7 @@ std::unique_ptr<Object> ConsCellObject::eval()
     throw exceptions::VoidFunction(c.car->toString());
 }
 
-void ConsCellObject::traverse(const std::function<bool(const Object&)>& f) const
+ALISP_INLINE void ConsCellObject::traverse(const std::function<bool(const Object&)>& f) const
 {
     if (!*this) {
         return;
@@ -37,7 +37,7 @@ void ConsCellObject::traverse(const std::function<bool(const Object&)>& f) const
     }    
 }
 
-std::string ConsCellObject::toString() const
+ALISP_INLINE std::string ConsCellObject::toString() const
 {
     if (!cc->car && !cc->cdr) {
         return "nil";

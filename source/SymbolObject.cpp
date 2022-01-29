@@ -3,7 +3,7 @@
 
 namespace alisp {
 
-std::unique_ptr<Object> SymbolObject::eval() 
+ALISP_INLINE std::unique_ptr<Object> SymbolObject::eval() 
 {
     const auto var = sym ? sym->variable.get() : parent->resolveVariable(name);
     if (!var) {
@@ -12,7 +12,7 @@ std::unique_ptr<Object> SymbolObject::eval()
     return var->clone();
 }
 
-Function* SymbolObject::resolveFunction()
+ALISP_INLINE Function* SymbolObject::resolveFunction()
 {
     if (sym) {
         return sym->function.get();
@@ -21,12 +21,12 @@ Function* SymbolObject::resolveFunction()
     return parent->resolveFunction(name);
 }
 
-Symbol* SymbolObject::getSymbolOrNull() const
+ALISP_INLINE Symbol* SymbolObject::getSymbolOrNull() const
 {
     return sym ? sym.get() : parent->getSymbolOrNull(name).get();
 }
 
-Symbol* SymbolObject::getSymbol() const
+ALISP_INLINE Symbol* SymbolObject::getSymbol() const
 {
     return sym ? sym.get() : parent->getSymbol(name).get();
 }
