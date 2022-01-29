@@ -121,14 +121,7 @@ public:
         m_msgHandler = handler;
     }
     
-    std::shared_ptr<Symbol> getSymbolOrNull(std::string name)
-    {
-        if (!m_syms.count(name)) {
-            return nullptr;
-        }
-        return m_syms[name];
-    }
-
+    std::shared_ptr<Symbol> getSymbolOrNull(std::string name);
     std::shared_ptr<Symbol> getSymbol(std::string name);
 };
 

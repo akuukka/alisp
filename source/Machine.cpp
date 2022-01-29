@@ -17,6 +17,14 @@ ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
     getSymbol(name)->function = std::move(func);
 }
 
+ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)
+{
+    if (!m_syms.count(name)) {
+        return nullptr;
+    }
+    return m_syms[name];
+}
+
 ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
 {
     if (!m_syms.count(name)) {
