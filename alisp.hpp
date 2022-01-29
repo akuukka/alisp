@@ -1842,7 +1842,7 @@ void SharedDataObject::tryDestroySharedData()
         }
         auto ptr = obj->sharedDataPointer();
         referredTimes[ptr].refsFromCycle++;
-        referredTimes[ptr].totalRefs = obj->sharedDataRefCount();// - (&obj == this ? 1 : 0);
+        referredTimes[ptr].totalRefs = obj->sharedDataRefCount();
         if (referredTimes[ptr].refsFromCycle >= 2) {
             return false;
         }
