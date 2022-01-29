@@ -60,6 +60,7 @@ struct Object
     virtual bool isFloat() const { return false; }
     virtual bool isString() const { return false; }
     virtual bool operator!() const { return false; }
+    virtual Object* trySelfEvaluate() { return nullptr; }
 
     virtual Function* resolveFunction() { return nullptr; }
     virtual std::unique_ptr<Object> clone() const = 0;

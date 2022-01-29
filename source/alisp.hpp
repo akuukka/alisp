@@ -204,6 +204,11 @@ inline Object* FArgs::get()
     if (!cc) {
         return nullptr;
     }
+    auto self = cc->car->trySelfEvaluate();
+    if (self && false) {
+        cc = cc->next();
+        return self;
+    }
     argStorage.push_back(cc->car->eval());
     cc = cc->next();
     return argStorage.back().get();

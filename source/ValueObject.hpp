@@ -14,6 +14,7 @@ struct ValueObject : Object
         return op && op->value == value;
     }
     std::string toString() const override { return std::to_string(value); }
+    Object* trySelfEvaluate() override { return this; }
 };
 
 struct IntObject : ValueObject<std::int64_t>
