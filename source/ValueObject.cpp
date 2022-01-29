@@ -24,4 +24,14 @@ ALISP_INLINE std::optional<std::int64_t> getValue(const Object &sym)
     return std::nullopt;
 }
 
+template<>
+ALISP_INLINE std::optional<std::uint32_t> getValue(const Object &sym)
+{
+    auto s = dynamic_cast<const CharacterObject*>(&sym);
+    if (s) {
+        return s->value;
+    }
+    return std::nullopt;
+}
+
 }
