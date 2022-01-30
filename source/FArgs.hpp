@@ -1,6 +1,7 @@
 #pragma once
 #include "Object.hpp"
 #include "ConsCell.hpp"
+#include <type_traits>
 #include <vector>
 
 namespace alisp {
@@ -82,7 +83,20 @@ struct FArgs
 };
 
 template<typename T>
-inline typename std::enable_if<!OptCheck<T>::value, T>::type getFuncParam(FArgs& args)
+inline typename std::enable_if<std::is_reference_v<T> , T>::type getFuncParam(FArgs& args)
+{
+    Object* arg = args.get();
+    try {
+        return arg->value<T>();
+    }
+    catch (std::runtime_error& ex) {
+        std::cout << "err: " << ex.what() << std::endl;
+        throw exceptions::WrongTypeArgument(arg->toString());
+    }
+}
+
+template<typename T>
+inline typename std::enable_if<!OptCheck<T>::value && !std::is_reference_v<T> , T>::type getFuncParam(FArgs& args)
 {
     Object* arg = args.get();
     std::optional<typename OptCheck<T>::BaseType> opt = arg->valueOrNull<T>();

@@ -1,4 +1,5 @@
 #include <any>
+#include "StringObject.hpp"
 #include "alisp.hpp"
 #include "Converter.hpp"
 #include "ConsCellObject.hpp"
@@ -64,6 +65,15 @@ ALISP_INLINE std::optional<std::any> getValue(const Object& sym)
         return cc;
     }
     return std::any();
+}
+
+template<>
+ALISP_INLINE const std::string& getValueReference(const Object &sym)
+{
+    if (sym.isString()) {
+        return *dynamic_cast<const StringObject*>(&sym)->value;
+    }
+    throw std::runtime_error("Failed to get string arg");
 }
 
 }

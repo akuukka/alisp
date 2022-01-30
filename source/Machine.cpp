@@ -635,7 +635,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return newList;
     });
-    defun("substring", [](std::string str,
+    defun("substring", [](const std::string& str,
                           std::optional<std::int64_t> start,
                           std::optional<std::int64_t> end) {
         if (start && *start < 0) {

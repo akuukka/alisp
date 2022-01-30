@@ -2,6 +2,7 @@
 #include <set>
 #include <string>
 #include <iostream>
+#include <type_traits>
 #include "Converter.hpp"
 
 namespace alisp
@@ -69,13 +70,20 @@ struct Object
     virtual ConsCellObject* asList() { return nullptr; }
     virtual const ConsCellObject* asList() const { return nullptr; }
 
-    template <typename T> T value() const
+    template <typename T>
+    typename std::enable_if<!std::is_reference<T>::value, T>::type value() const
     {
         const std::optional<T> opt = Converter<T>()(*this);
         if (opt) {
             return *opt;
         }
-        return T();
+        throw std::runtime_error("Unable to convert object to desired type.");
+    }
+
+    template <typename T>
+    typename std::enable_if<std::is_reference<T>::value, T>::type value() const
+    {
+        return Converter<T>()(*this);
     }
 
     template <typename T> std::optional<T> valueOrNull() const

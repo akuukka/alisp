@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <type_traits>
 #include <variant>
 #include "Template.hpp"
 
@@ -11,12 +12,24 @@ struct Object;
 template <typename T>
 std::optional<T> getValue(const Object &sym);
 
+template <typename T>
+T getValueReference(const Object &sym);
+
 template <typename T, typename T2 = void>
 struct Converter
 {
     std::optional<T> operator()(const Object& obj)
     {
         return getValue<T>(obj);
+    }
+};
+
+template <typename T>
+struct Converter<T, typename std::enable_if<std::is_reference<T>::value>::type>
+{
+    T operator()(const Object& obj)
+    {
+        return getValueReference<T>(obj);
     }
 };
 
