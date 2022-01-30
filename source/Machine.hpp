@@ -56,26 +56,27 @@ class Machine
         };
         makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
     }
+
+    template<typename R, typename... Args, typename T>
+    std::function<std::unique_ptr<Object>(FArgs&)> genCaller(T f)
+    {
+        return [=](FArgs& args) {
+            std::tuple<Args...> t = toTuple<Args...>(args);
+            return makeObject<R>(std::apply(f, std::move(t)));
+        };
+    }
     
     template<typename R, typename ...Args>
     typename std::enable_if<sizeof...(Args) != 1, void>::type
     defunInternal(const char* name, std::function<R(Args...)> f)
     {
-        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
-            std::tuple<Args...> t = toTuple<Args...>(args);
-            return makeObject<R>(std::apply(f, std::move(t)));
-        };
-        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
+        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), genCaller<R, Args...>(f));
     }
 
     template<typename R, typename ...Args>
     void defunInternal(const char* name, R(*f)(Args...))
     {
-        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
-            std::tuple<Args...> t = toTuple<Args...>(args);
-            return makeObject<R>(std::apply(f, std::move(t)));
-        };
-        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
+        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), genCaller<R, Args...>(f));
     }
 
     std::string parseNextName(const char*& str);
