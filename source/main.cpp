@@ -371,6 +371,12 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_CONTAINS(m, "(1+ 0.0)", "1.0");
     ASSERT_EXCEPTION(m, "(1+ \"a\")", alisp::exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_CONTAINS(m, "(+ +.1 -0.1)", "0.0");
+    ASSERT_OUTPUT_EQ(m, "(= 1 1)", "t");
+    ASSERT_OUTPUT_EQ(m, "(= 1.0 1)", "t");
+    ASSERT_OUTPUT_EQ(m, "(= 1 1.0)", "t");
+    ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0)", "t");
+    ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0 1.0)", "t");
+    ASSERT_OUTPUT_EQ(m, "(= 1 2)", "nil");
 }
 
 void testNthFunction()

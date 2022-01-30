@@ -87,6 +87,7 @@ inline bool isPartOfSymName(const char c)
     if (c=='+') return true;
     if (c=='%') return true;
     if (c=='*') return true;
+    if (c=='=') return true;
     if (c=='/') return true;
     if (c=='-') return true;
     if (c>='a' && c<='z') return true;
@@ -742,6 +743,11 @@ std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) cons
         ss >> value;
         return makeInt(value);
     }
-    }
+}
+
+ALISP_INLINE std::unique_ptr<Object> Machine::makeTrue() 
+{
+    return std::make_unique<SymbolObject>(this, nullptr, "t");
+}
 
 }

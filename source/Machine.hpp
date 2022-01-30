@@ -62,11 +62,6 @@ class Machine
         getSymbol(name)->function = std::move(func);
     }
 
-    std::unique_ptr<Object> makeTrue()
-    {
-        return std::make_unique<SymbolObject>(this, nullptr, "t");
-    }
-
     std::string parseNextName(const char*& str);
     std::unique_ptr<Object> parseNamedObject(const char*& str);    
     std::unique_ptr<StringObject> parseString(const char *&str);
@@ -123,6 +118,7 @@ public:
     
     std::shared_ptr<Symbol> getSymbolOrNull(std::string name);
     std::shared_ptr<Symbol> getSymbol(std::string name);
+    std::unique_ptr<Object> makeTrue();
 };
 
 }
