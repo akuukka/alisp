@@ -1,7 +1,9 @@
 #include "ConsCellObject.hpp"
+#include "Exception.hpp"
 #include "Machine.hpp"
 #include "ValueObject.hpp"
 #include "alisp.hpp"
+#include <cmath>
 
 namespace alisp
 {
@@ -17,26 +19,41 @@ ALISP_INLINE double toDouble(std::variant<double, std::int64_t> var)
 }
 
 ALISP_INLINE
-std::unique_ptr<Object> truncate(std::variant<double, std::int64_t> obj,
-                                 std::optional<std::variant<double, std::int64_t>> divisor)
+std::int64_t truncate(std::variant<double, std::int64_t> obj,
+                      std::optional<std::variant<double, std::int64_t>> divisor)
 {
     std::optional<double> div;
     if (divisor) {
         div = toDouble(*divisor);
+        if (*div == 0) {
+            throw alisp::exceptions::ArithError("Division by zero");
+        }
     }
     try {
         const std::int64_t i = std::get<std::int64_t>(obj);
-        return div ? makeInt(static_cast<std::int64_t>(i / *div)) : makeInt(i);
+        return div ? static_cast<std::int64_t>(i / *div) : i;
     }
     catch (std::bad_variant_access&) {
         if (!div) { div = 1; }
-        return makeInt(static_cast<std::int64_t>(std::get<double>(obj)/ *div));
+        return static_cast<std::int64_t>(std::get<double>(obj)/ *div);
     }
+}
+
+ALISP_INLINE std::int64_t floor(std::variant<double, std::int64_t> obj)
+{
+    return static_cast<std::int64_t>(std::floor(toDouble(obj)));
+}
+
+ALISP_INLINE std::int64_t ceiling(std::variant<double, std::int64_t> obj)
+{
+    return static_cast<std::int64_t>(std::ceil(toDouble(obj)));
 }
 
 void initMathFunctions(Machine& m)
 {
     m.defun("truncate", truncate);
+    m.defun("floor", floor);
+    m.defun("ceiling", ceiling);
     m.defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
     m.makeFunc("=", 1, 0xffff, [&m](FArgs& args) {
         std::int64_t i = 0;

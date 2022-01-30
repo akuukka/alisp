@@ -1,3 +1,4 @@
+#include "Exception.hpp"
 #define ENABLE_DEBUG_REFCOUNTING
 #ifdef ALISP_SINGLE_HEADER
 #include "ALisp_SingleHeader.hpp"
@@ -377,11 +378,16 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0 1.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(= 1 2)", "nil");
+    ASSERT_EXCEPTION(m, "(truncate 1 0)", alisp::exceptions::ArithError);
     ASSERT_OUTPUT_EQ(m, "(truncate 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate 1.1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate -1.2)", "-1");
     ASSERT_OUTPUT_EQ(m, "(truncate 19.5 3.2)", "6");
     ASSERT_OUTPUT_EQ(m, "(truncate 5.999 nil)", "5");
+    ASSERT_OUTPUT_EQ(m, "(ceiling -1.5)", "-1");
+    ASSERT_OUTPUT_EQ(m, "(floor -1.5)", "-2");
+    ASSERT_OUTPUT_EQ(m, "(floor 1.5)", "1");
+    ASSERT_OUTPUT_EQ(m, "(ceiling 2)", "2");
 }
 
 void testNthFunction()
