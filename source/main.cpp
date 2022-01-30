@@ -265,6 +265,7 @@ void testPrognFunction()
 void testVariables()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "nil");
     ASSERT_OUTPUT_EQ(m, "(set 'y 15)", "15");
     ASSERT_OUTPUT_EQ(m, "(progn (setq x 1) (let (x z) (setq x 2) "
                      "(setq z 3) (setq y x)) (list x y))", "(1 2)");

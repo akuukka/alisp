@@ -27,6 +27,9 @@ ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
 
 ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)
 {
+    if (m_locals.count(name)) {
+        return m_locals[name].back();
+    }
     if (!m_syms.count(name)) {
         return nullptr;
     }
@@ -35,6 +38,9 @@ ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)
 
 ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
 {
+    if (m_locals.count(name)) {
+        return m_locals[name].back();
+    }
     if (!m_syms.count(name)) {
         m_syms[name] = std::make_shared<Symbol>();
         m_syms[name]->name = name;
@@ -70,6 +76,12 @@ template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::string str)
 {
     return std::make_unique<StringObject>(str);
+}
+
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(const char* value)
+{
+    return std::make_unique<StringObject>(std::string(value));
 }
 
 template<>
@@ -603,6 +615,12 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
     });
+    defun("boundp", [this](const Symbol* sym) -> ObjectPtr {
+        if (!sym->variable) {
+            return makeNil();
+        }
+        return makeTrue();
+    });
     evaluate(getInitCode());
 }
 
@@ -789,8 +807,10 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeTrue()
 
 ALISP_INLINE void Machine::pushLocalVariable(std::string name, ObjectPtr obj)
 {
-    m_locals[name].push_back(std::make_shared<Symbol>());
-    m_locals[name].back()->variable = std::move(obj);
+    auto sym = std::make_shared<Symbol>();
+    m_locals[name].push_back(sym);
+    sym->variable = std::move(obj);
+    sym->local = true;
 }
 
 ALISP_INLINE bool Machine::popLocalVariable(std::string name)

@@ -13,6 +13,7 @@ struct Symbol
 {
     Machine* parent = nullptr;
     bool constant = false;
+    bool local = false;
     std::string name;
     std::unique_ptr<Object> variable;
     std::unique_ptr<Function> function;

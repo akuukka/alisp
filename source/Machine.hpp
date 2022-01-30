@@ -22,6 +22,7 @@ class Machine
     template <typename T>
     std::unique_ptr<Object> makeObject(T);
 
+    template<> std::unique_ptr<Object> makeObject(const char* value);
     template<> std::unique_ptr<Object> makeObject(bool value);
     template<> std::unique_ptr<Object> makeObject(std::unique_ptr<Object> o)
     {
