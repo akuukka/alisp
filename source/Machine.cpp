@@ -615,12 +615,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
     });
-    defun("boundp", [this](const Symbol* sym) -> ObjectPtr {
-        if (!sym->variable) {
-            return makeNil();
-        }
-        return makeTrue();
-    });
+    defun("boundp", [this](const Symbol* sym) { return !sym || sym->variable ? true : false; });
     evaluate(getInitCode());
 }
 
