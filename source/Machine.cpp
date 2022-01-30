@@ -1,8 +1,12 @@
+#include <sstream>
+#include <any>
 #include "alisp.hpp"
+#include "AtScopeExit.hpp"
 #include "Machine.hpp"
 #include "StringObject.hpp"
 #include "ValueObject.hpp"
 #include "ConsCellObject.hpp"
+#include "SymbolObject.hpp"
 #include "Init.hpp"
 
 namespace alisp {

@@ -1,5 +1,9 @@
 #pragma once
+#include <map>
 #include "alisp.hpp"
+#include "Symbol.hpp"
+#include "ConsCellObject.hpp"
+#include "FArgs.hpp"
 
 namespace alisp {
 

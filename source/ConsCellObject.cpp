@@ -1,6 +1,8 @@
 #include "alisp.hpp"
+#include "SymbolObject.hpp"
 #include "ConsCellObject.hpp"
 #include "AtScopeExit.hpp"
+#include "FArgs.hpp"
 
 namespace alisp
 {
