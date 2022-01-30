@@ -237,11 +237,11 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return std::string(num, c);
     });
     defun("null", [](bool isNil) { return !isNil; });
-    defun("setcar", [](ConsCellObject obj, std::shared_ptr<Object> newcar) {
-        return obj.cc->car = newcar->clone(), newcar;
+    defun("setcar", [](ConsCellObject obj, std::unique_ptr<Object> newcar) {
+        return obj.cc->car = newcar->clone(), std::move(newcar);
     });
-    defun("setcdr", [](ConsCellObject obj, std::shared_ptr<Object> newcdr) {
-        return obj.cc->cdr = newcdr->clone(), newcdr;
+    defun("setcdr", [](ConsCellObject obj, std::unique_ptr<Object> newcdr) {
+        return obj.cc->cdr = newcdr->clone(), std::move(newcdr);
     });
     defun("car", [](ConsCellObject obj) { 
         return obj.cc->car ? obj.cc->car->clone() : makeNil();
@@ -366,7 +366,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
              std::bind(let, std::placeholders::_1, false));
     makeFunc("let*", 2, std::numeric_limits<int>::max(),
              std::bind(let, std::placeholders::_1, true));
-    defun("make-list", [this](std::int64_t n, std::shared_ptr<Object> ptr) {
+    defun("make-list", [this](std::int64_t n, ObjectPtr ptr) {
         std::unique_ptr<Object> r = makeNil();
         for (std::int64_t i=0; i < n; i++) {
             r = std::make_unique<ConsCellObject>(ptr->clone(), r->clone());

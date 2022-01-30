@@ -45,9 +45,9 @@ ALISP_INLINE std::optional<const Sequence*> getValue(const Object& sym)
 }
 
 template<>
-ALISP_INLINE std::optional<std::shared_ptr<Object>> getValue(const Object& sym)
+ALISP_INLINE std::optional<std::unique_ptr<Object>> getValue(const Object& sym)
 {
-    return std::shared_ptr<Object>(sym.clone().release());
+    return sym.clone();
 }
 
 template<>
