@@ -593,7 +593,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return std::make_unique<StringObject>(descr);
     });
-    defun("concat", [](std::string str1, std::string str2) { return str1 + str2; });
+    defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });
     defun("nth", [](std::int64_t index, ConsCellObject list) {
         auto p = list.cc.get();
         auto obj = list.cc->car.get();
