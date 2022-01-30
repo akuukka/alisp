@@ -120,54 +120,67 @@ tupleOptCheck()
 }
 
 template <size_t I, typename... Args>
-inline constexpr typename std::enable_if<I < std::tuple_size_v<std::tuple<Args...>>,
-                                             bool>::type
-tupleOptCheck()
+inline constexpr typename
+std::enable_if<I < std::tuple_size_v<std::tuple<Args...>>, bool>::type tupleOptCheck()
 {
     using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
     constexpr bool isOptionalParam = OptCheck<T>::value;
     return isOptionalParam;
 }
-    
-    template<size_t I, typename ...Args>
-    inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
-                                                                                 FArgs& args)
-    {
-        using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-        constexpr bool isOptionalParam = OptCheck<T>::value;
-        static_assert(!isOptionalParam || tupleOptCheck<I+1, Args...>(),
-                      "Non-optional function param given after optional one. ");
-        std::optional<typename OptCheck<T>::BaseType> opt;
-        Object* arg;
-        bool conversionFailed = false;
-        if (args.hasNext()) {
-            arg = args.get();
-            opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
-            if (!opt) {
-                if (isOptionalParam && arg->isNil()) {
-                    // nil => std::nullopt makes sense
-                }
-                else {
-                    conversionFailed = true;
-                }
+
+template<typename T>
+inline typename std::enable_if<!OptCheck<T>::value, T>::type getFuncParam(FArgs& args)
+{
+    Object* arg = args.get();
+    std::optional<typename OptCheck<T>::BaseType> opt = arg->valueOrNull<T>();
+    if (!opt) {
+        throw exceptions::WrongTypeArgument(arg->toString());
+    }
+    return std::move(*opt);
+}
+
+template<typename T>
+inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& args)
+{
+    std::optional<typename OptCheck<T>::BaseType> opt;
+    Object* arg;
+    bool conversionFailed = false;
+    if (args.hasNext()) {
+        arg = args.get();
+        opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
+        if (!opt) {
+            if (arg->isNil()) {
+                // nil => std::nullopt makes sense
+            }
+            else {
+                conversionFailed = true;
             }
         }
-        if (!opt && (!isOptionalParam || conversionFailed)) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
-        if (opt) {
-            std::get<I>(t) = std::move(*opt);
-        }
-        writeToTuple<I + 1>(t, args);
     }
+    if (conversionFailed) {
+        throw exceptions::WrongTypeArgument(arg->toString());
+    }
+    return opt;
+}
+    
+template<size_t I, typename ...Args>
+inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
+                                                                             FArgs& args)
+{
+    using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
+    static_assert(!OptCheck<T>::value || tupleOptCheck<I+1, Args...>(),
+                  "Non-optional function param given after optional one.");
+    std::get<I>(t) = getFuncParam<T>(args);
+    writeToTuple<I + 1>(t, args);
+}
         
-        template<typename ...Args>
-        std::tuple<Args...> toTuple(FArgs& args)
-        {
-            std::tuple<Args...> tuple;
-            writeToTuple<0>(tuple, args);
-            return tuple;
-        }
+template<typename ...Args>
+std::tuple<Args...> toTuple(FArgs& args)
+{
+    std::tuple<Args...> tuple;
+    writeToTuple<0>(tuple, args);
+    return tuple;
+}
 
 inline bool isWhiteSpace(const char c)
 {

@@ -51,7 +51,7 @@ class Machine
     {
         std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
             std::tuple<Args...> t = toTuple<Args...>(args);
-            return makeObject<R>(std::apply(f, t));
+            return makeObject<R>(std::apply(f, std::move(t)));
         };
         makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
     }
@@ -61,7 +61,7 @@ class Machine
     {
         std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
             std::tuple<Args...> t = toTuple<Args...>(args);
-            return makeObject<R>(std::apply(f, t));
+            return makeObject<R>(std::apply(f, std::move(t)));
         };
         makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
     }
