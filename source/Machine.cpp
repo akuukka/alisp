@@ -56,9 +56,16 @@ ALISP_INLINE bool isWhiteSpace(const char c)
 
 ALISP_INLINE bool onlyWhitespace(const char* expr)
 {
+    bool inComment = true;
     while (*expr) {
-        if (!isWhiteSpace(*expr)) {
+        if (*expr == ';') {
+            inComment = true;
+        }
+        if (!inComment && !isWhiteSpace(*expr)) {
             return false;
+        }
+        if (inComment && *expr == '\n') {
+            inComment = false;
         }
         expr++;
     }
@@ -82,6 +89,11 @@ template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(const char* value)
 {
     return std::make_unique<StringObject>(std::string(value));
+}
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::shared_ptr<Symbol> sym)
+{
+    return std::make_unique<SymbolObject>(this, sym, "");
 }
 
 template<>
@@ -125,6 +137,16 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
         const char n = *(expr+1);
         if (isWhiteSpace(c)) {
             expr++;
+            continue;
+        }
+        if (c == ';') {
+            expr++;
+            while (*expr && *expr != '\n') {
+                expr++;
+            }
+            if (*expr && *expr == '\n') {
+                expr++;
+            }
             continue;
         }
         if (c == '\"') {
@@ -615,7 +637,14 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
     });
-    defun("boundp", [this](const Symbol* sym) { return !sym || sym->variable ? true : false; });
+    defun("boundp", [](const Symbol* sym) { return !sym || sym->variable ? true : false; });
+    defun("makunbound", [](std::shared_ptr<Symbol> sym) {
+        if (!sym || sym->constant) {
+            throw exceptions::Error("setting-constant" + (sym ? sym->name : std::string("nil")));
+        }
+        sym->variable = nullptr;
+        return sym;
+    });
     evaluate(getInitCode());
 }
 

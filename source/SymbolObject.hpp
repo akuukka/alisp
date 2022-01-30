@@ -32,7 +32,7 @@ struct SymbolObject : SharedDataObject
         return sym ? sym->name : name;
     };
 
-    Symbol* getSymbol() const;
+    std::shared_ptr<Symbol> getSymbol() const;
     Symbol* getSymbolOrNull() const;
 
     Function* resolveFunction() override;

@@ -265,6 +265,7 @@ void testPrognFunction()
 void testVariables()
 {
     alisp::Machine m;
+    ASSERT_OUTPUT_EQ(m, "'(;comment\n1)", "(1)");
     ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "nil");
     ASSERT_OUTPUT_EQ(m, "(let ((abracadabra 5))(boundp 'abracadabra))", "t");
     ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "nil");
@@ -274,6 +275,23 @@ void testVariables()
     ASSERT_OUTPUT_EQ(m, "(set 'y 15)", "15");
     ASSERT_OUTPUT_EQ(m, "(progn (setq x 1) (let (x z) (setq x 2) "
                      "(setq z 3) (setq y x)) (list x y))", "(1 2)");
+    ASSERT_OUTPUT_EQ(m, "(setq x 1) ; Put a value in the global binding.", "1");
+    ASSERT_EXCEPTION(m, "(let ((x 2)) (makunbound 'x) x)", alisp::exceptions::VoidVariable);
+    ASSERT_OUTPUT_EQ(m, "x ; The global binding is unchanged.", "1");
+    
+    ASSERT_EXCEPTION(m, R"code(
+(let ((x 2))             ; Locally bind it.
+  (let ((x 3))           ; And again.
+    (makunbound 'x)      ; Void the innermost-local binding.
+    x))                  ; And refer: it’s void.
+)code", alisp::exceptions::VoidVariable);
+
+    ASSERT_OUTPUT_EQ(m, R"code(
+(let ((x 2))
+  (let ((x 3))
+    (makunbound 'x))     ; Void inner binding, then remove it.
+  x)                     ; Now outer let binding is visible.
+)code", "2");
 }
 
 void testSymbols()

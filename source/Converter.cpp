@@ -16,6 +16,19 @@ ALISP_INLINE std::optional<const Symbol*> getValue(const Object& sym)
     }
     auto s = dynamic_cast<const SymbolObject*>(&sym);
     if (s) {
+        return s->getSymbol().get();
+    }
+    return std::nullopt;
+}
+
+template<>
+ALISP_INLINE std::optional<std::shared_ptr<Symbol>> getValue(const Object& sym)
+{
+    if (sym.isNil()) {
+        return nullptr;
+    }
+    auto s = dynamic_cast<const SymbolObject*>(&sym);
+    if (s) {
         return s->getSymbol();
     }
     return std::nullopt;

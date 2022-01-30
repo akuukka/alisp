@@ -27,9 +27,9 @@ ALISP_INLINE Symbol* SymbolObject::getSymbolOrNull() const
     return sym ? sym.get() : parent->getSymbolOrNull(name).get();
 }
 
-ALISP_INLINE Symbol* SymbolObject::getSymbol() const
+ALISP_INLINE std::shared_ptr<Symbol> SymbolObject::getSymbol() const
 {
-    return sym ? sym.get() : parent->getSymbol(name).get();
+    return sym ? sym : parent->getSymbol(name);
 }
 
 }

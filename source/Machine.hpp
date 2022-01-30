@@ -24,14 +24,9 @@ class Machine
 
     template<> std::unique_ptr<Object> makeObject(const char* value);
     template<> std::unique_ptr<Object> makeObject(bool value);
-    template<> std::unique_ptr<Object> makeObject(std::unique_ptr<Object> o)
-    {
-        return std::move(o);
-    }
-    template<> std::unique_ptr<Object> makeObject(std::shared_ptr<Object> o)
-    {
-        return o->clone();
-    }
+    template<> std::unique_ptr<Object> makeObject(std::unique_ptr<Object> o) { return o; }
+    template<> std::unique_ptr<Object> makeObject(std::shared_ptr<Object> o) { return o->clone(); }
+    template<> std::unique_ptr<Object> makeObject(std::shared_ptr<Symbol> sym);
 
     template <typename... Args>
     inline size_t getMinArgs()
