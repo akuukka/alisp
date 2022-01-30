@@ -1,21 +1,25 @@
 #include "ConsCellObject.hpp"
 #include "Machine.hpp"
 #include "ValueObject.hpp"
+#include "alisp.hpp"
 
 namespace alisp
 {
 
+ALISP_INLINE std::unique_ptr<Object> truncate(std::variant<double, std::int64_t> obj)
+{
+    try {
+        const std::int64_t i = std::get<std::int64_t>(obj);
+        return makeInt(i);
+    }
+    catch (std::bad_variant_access&) {
+        return makeInt(static_cast<std::int64_t>(std::get<double>(obj)));
+    }
+}
+
 void initMathFunctions(Machine& m)
 {
-    m.defun("truncate", [](std::variant<double, std::int64_t> obj) -> std::unique_ptr<Object> {
-        try {
-            const std::int64_t i = std::get<std::int64_t>(obj);
-            return makeInt(i);
-        }
-        catch (std::bad_variant_access&) {
-            return makeInt(static_cast<std::int64_t>(std::get<double>(obj)));
-        }
-    });
+    m.defun("truncate", truncate);
     m.defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
     m.makeFunc("=", 1, 0xffff, [&m](FArgs& args) {
         std::int64_t i = 0;

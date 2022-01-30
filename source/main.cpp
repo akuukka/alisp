@@ -377,6 +377,7 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0 1.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(= 1 2)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(truncate 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate 1.1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate -1.2)", "-1");
 }

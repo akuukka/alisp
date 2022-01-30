@@ -47,19 +47,23 @@ class Machine
     }
     
     template<typename R, typename ...Args>
-    void makeFuncInternal(const char* name, std::function<R(Args...)> f)
+    void defunInternal(const char* name, std::function<R(Args...)> f)
     {
         std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
             std::tuple<Args...> t = toTuple<Args...>(args);
             return makeObject<R>(std::apply(f, t));
         };
+        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
+    }
 
-        auto func = std::make_unique<Function>();
-        func->name = name;
-        func->minArgs = getMinArgs<Args...>();
-        func->maxArgs = sizeof...(Args);
-        func->func = w;
-        getSymbol(name)->function = std::move(func);
+    template<typename R, typename ...Args>
+    void defunInternal(const char* name, R(*f)(Args...))
+    {
+        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
+            std::tuple<Args...> t = toTuple<Args...>(args);
+            return makeObject<R>(std::apply(f, t));
+        };
+        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
     }
 
     std::string parseNextName(const char*& str);
@@ -98,9 +102,17 @@ public:
     Machine(bool initStandardLibrary = true);
 
     template<typename F>
-    void defun(const char* name, F&& f)
+    typename std::enable_if<std::is_object<F>::value, void>::type
+    defun(const char* name, F&& f)
     {
-        makeFuncInternal(name, lambda_to_func(f));
+        defunInternal(name, lambda_to_func(f));
+    }
+
+    template<typename F>
+    typename std::enable_if<!std::is_object<F>::value, void>::type
+    defun(const char* name, F&& f)
+    {
+        defunInternal(name, f);
     }
 
     void setVariable(std::string name, std::unique_ptr<Object> obj, bool constant = false)
