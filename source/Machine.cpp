@@ -575,15 +575,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
     });
-    makeFunc("pop", 1, 1, [this](FArgs& args) {
-        auto arg = args.get();
-        ConsCellObject *list = dynamic_cast<ConsCellObject *>(arg);
-        if (!list) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
-        auto ret = list->cc->car->clone();
-        return ret;
-    });
     evaluate(getInitCode());
 }
 

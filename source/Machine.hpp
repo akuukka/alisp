@@ -47,7 +47,19 @@ class Machine
     }
     
     template<typename R, typename ...Args>
-    void defunInternal(const char* name, std::function<R(Args...)> f)
+    typename std::enable_if<sizeof...(Args) == 1, void>::type
+    defunInternal(const char* name, std::function<R(Args...)> f)
+    {
+        using T = typename std::tuple_element<0, std::tuple<Args...>>::type;
+        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
+            return makeObject<R>(f(getFuncParam<T>(args)));
+        };
+        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
+    }
+    
+    template<typename R, typename ...Args>
+    typename std::enable_if<sizeof...(Args) != 1, void>::type
+    defunInternal(const char* name, std::function<R(Args...)> f)
     {
         std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
             std::tuple<Args...> t = toTuple<Args...>(args);
