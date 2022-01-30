@@ -300,6 +300,16 @@ void testVariables()
 (let ((x 1))    ; x is dynamically bound.
   (getx))
 )code", "1");
+    
+    ASSERT_OUTPUT_EQ(m, R"code(
+(setq x -99)      ; x receives an initial value of -99.
+(defun addx ()
+  (setq x (1+ x)))  ; Add 1 to x and return its new value.
+(let ((x 1))
+  (addx)
+  (addx))
+)code", "3");
+    ASSERT_OUTPUT_EQ(m, "(addx)", "-98");
 }
 
 void testSymbols()
