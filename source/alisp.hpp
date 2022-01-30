@@ -106,28 +106,6 @@ struct FArgs
     }
 };
 
-template<size_t I, typename ...Args>
-inline typename std::enable_if<I == sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>&,
-                                                                              FArgs&)
-{}
-
-template <size_t I, typename... Args>
-inline constexpr typename std::enable_if<I == std::tuple_size_v<std::tuple<Args...>>,
-                                         bool>::type
-tupleOptCheck()
-{
-    return true;
-}
-
-template <size_t I, typename... Args>
-inline constexpr typename
-std::enable_if<I < std::tuple_size_v<std::tuple<Args...>>, bool>::type tupleOptCheck()
-{
-    using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-    constexpr bool isOptionalParam = OptCheck<T>::value;
-    return isOptionalParam;
-}
-
 template<typename T>
 inline typename std::enable_if<!OptCheck<T>::value, T>::type getFuncParam(FArgs& args)
 {
