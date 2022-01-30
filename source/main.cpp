@@ -541,13 +541,18 @@ void testLet()
     ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (message \"%d\" x) (+ x y))", "4");
     ASSERT_OUTPUT_EQ(m, "(let* ((x 1) (y x)) y)", "1");
     ASSERT_EXCEPTION(m, "(let ((x 1) (y x)) y)", alisp::exceptions::VoidVariable);
-
     ASSERT_OUTPUT_EQ(m, R"code(
 (setq y 2)
 (let ((y 1)
       (z y))
   (list y z))
 )code", "(1 2)");
+    ASSERT_OUTPUT_EQ(m, R"code(
+(setq y 2)
+(let* ((y 1)
+       (z y))    ; Use the just-established value of y.
+  (list y z))
+)code", "(1 1)");
 }
 
 void testIf()
