@@ -41,7 +41,6 @@ struct Function
     int minArgs = 0;
     int maxArgs = 0xffff;
     bool isMacro = false;
-    std::unique_ptr<ConsCellObject> macroCode;
     std::function<std::unique_ptr<Object>(FArgs&)> func;
 };
 

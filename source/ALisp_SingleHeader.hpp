@@ -13,3 +13,4 @@
 #include "StringObject.cpp"
 #include "ValueObject.cpp"
 #include "Converter.cpp"
+#include "MathFunctions.cpp"

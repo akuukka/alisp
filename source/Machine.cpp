@@ -7,6 +7,8 @@
 
 namespace alisp {
 
+void initMathFunctions(Machine& m);
+
 ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
                                     const std::function<std::unique_ptr<Object>(FArgs &)>& f)
 {
@@ -171,6 +173,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     }
     setVariable("nil", makeNil(), true);
     setVariable("t", std::make_unique<SymbolObject>(this, nullptr, "t"), true);
+    initMathFunctions(*this);
     defun("atom", [](std::any obj) {
         if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
@@ -192,16 +195,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("cdr", [](ConsCellObject obj) {
         return obj.cc->cdr ? obj.cc->cdr->clone() : makeNil();
     });
-    defun("1+", [](std::variant<double, std::int64_t> obj) -> std::unique_ptr<Object> {
-            try {
-                const std::int64_t i = std::get<std::int64_t>(obj);
-                return makeInt(i+1);
-            }
-            catch (std::bad_variant_access&) {
-                const double f = std::get<double>(obj);
-                return makeFloat(f+1.0);
-            }
-        });
     defun("consp", [](std::any obj) {
         if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return false;
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
@@ -439,95 +432,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             std::cout << str << std::endl;
         }
         return std::make_unique<StringObject>(str);
-    });
-    makeFunc("/", 1, 0xffff, [](FArgs& args) {
-        std::int64_t i = 0;
-        double f = 0;
-        bool first = true;
-        bool fp = false;
-        for (auto sym : args) {
-            if (sym->isFloat()) {
-                const double v = sym->value<double>();
-                if (v == 0) {
-                    throw exceptions::ArithError("Division by zero");
-                }
-                fp = true;
-                if (first) {
-                    i = v;
-                    f = v;
-                }
-                else {
-                    i /= v;
-                    f /= v;
-                }
-            }
-            else if (sym->isInt()) {
-                const std::int64_t v = sym->value<std::int64_t>();
-                if (v == 0) {
-                    throw exceptions::ArithError("Division by zero");
-                }
-                if (first) {
-                    i = v;
-                    f = v;
-                }
-                else {
-                    i /= v;
-                    f /= v;
-                }
-            }
-            else {
-                throw exceptions::WrongTypeArgument(sym->toString());
-            }
-            first = false;
-        }
-        return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
-            : static_cast<std::unique_ptr<Object>>(makeInt(i));
-    });
-    makeFunc("+", 0, 0xffff, [](FArgs& args) {
-        std::int64_t i = 0;
-        double f = 0;
-        bool fp = false;
-        for (auto sym : args) {
-            if (sym->isFloat()) {
-                const double v = sym->value<double>();
-                fp = true;
-                i += v;
-                f += v;
-            }
-            else if (sym->isInt()) {
-                const std::int64_t v = sym->value<std::int64_t>();
-                i += v;
-                f += v;
-            }
-            else {
-                throw exceptions::WrongTypeArgument(sym->toString());
-            }
-        }
-        return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
-            : static_cast<std::unique_ptr<Object>>(makeInt(i));
-    });
-    makeFunc("*", 0, 0xffff, [](FArgs& args) {
-        std::int64_t i = 1;
-        double f = 1;
-        bool fp = false;
-        for (auto sym : args) {
-            if (sym->isFloat()) {
-                const double v = sym->value<double>();
-                fp = true;
-                i *= v;
-                f *= v;
-            }
-            else if (sym->isInt()) {
-                const std::int64_t v = sym->value<std::int64_t>();
-                i *= v;
-                f *= v;
-            }
-            else {
-                throw exceptions::WrongTypeArgument(sym->toString());
-            }
-        }
-        return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
-            : static_cast<std::unique_ptr<Object>>(makeInt(i));
     });
     makeFunc("progn", 0, 0xfffff, [](FArgs& args) {
         std::unique_ptr<Object> ret = makeNil();

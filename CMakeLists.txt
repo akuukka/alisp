@@ -12,6 +12,7 @@ if (NOT SINGLE_HEADER)
     ${SOURCE_FILES}
     ${CMAKE_SOURCE_DIR}/source/Object.cpp
     ${CMAKE_SOURCE_DIR}/source/Machine.cpp
+    ${CMAKE_SOURCE_DIR}/source/MathFunctions.cpp
     ${CMAKE_SOURCE_DIR}/source/ConsCell.cpp
     ${CMAKE_SOURCE_DIR}/source/Converter.cpp
     ${CMAKE_SOURCE_DIR}/source/SymbolObject.cpp
