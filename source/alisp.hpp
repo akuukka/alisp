@@ -163,11 +163,6 @@ inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& 
     return opt;
 }
     
-inline bool isWhiteSpace(const char c)
-{
-    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-}
-
 inline Object* FArgs::get()
 {
     if (!cc) {

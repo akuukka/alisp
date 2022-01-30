@@ -38,6 +38,11 @@ ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
     return m_syms[name];
 }
 
+ALISP_INLINE bool isWhiteSpace(const char c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
 ALISP_INLINE bool onlyWhitespace(const char* expr)
 {
     while (*expr) {
