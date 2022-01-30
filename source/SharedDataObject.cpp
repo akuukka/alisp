@@ -16,6 +16,14 @@ ALISP_INLINE void SharedDataObject::tryDestroySharedData()
         }
         return;
     }
+
+    // Of course if our shared pointer is the last remaining pointer to the shared data,
+    // then there is no need for complex cycle checks.
+    if (sharedDataRefCount() == 1) {
+        reset();
+        return;
+    }
+    
     if (Object::destructionDebug()) {
         std::cout << "A reference to shared data " << toString()
                   << " is about to be reduced by one. this=" << this << std::endl;
