@@ -75,7 +75,7 @@ struct Object
     {
         const std::optional<T> opt = Converter<T>()(*this);
         if (opt) {
-            return *opt;
+            return std::move(*opt);
         }
         throw std::runtime_error("Unable to convert object to desired type.");
     }
