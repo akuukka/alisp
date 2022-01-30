@@ -37,7 +37,7 @@ class Machine
     }
     template<> std::unique_ptr<Object> makeObject(std::shared_ptr<Object> o)
     {
-        return std::unique_ptr<Object>(o->clone());
+        return o->clone();
     }
 
     template <typename... Args>
