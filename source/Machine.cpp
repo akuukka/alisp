@@ -1,5 +1,6 @@
 #include <sstream>
 #include <any>
+#include "Exception.hpp"
 #include "alisp.hpp"
 #include "AtScopeExit.hpp"
 #include "Machine.hpp"
@@ -291,7 +292,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                 value = makeNil();
             }
             else {
-                assert(false && "OMG");
+                throw exceptions::WrongTypeArgument(arg.toString());
             }
             if (star) {
                 pushLocalVariable(name, std::move(value));

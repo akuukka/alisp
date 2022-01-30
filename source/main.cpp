@@ -513,6 +513,7 @@ void testLet()
 {
     alisp::Machine m;
     m.setMessageHandler([&](std::string msg) {});
+    ASSERT_EXCEPTION(m, "(let (1) nil)", alisp::exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (message \"%d\" x) (+ x y))", "4");
     ASSERT_OUTPUT_EQ(m, "(let* ((x 1) (y x)) y)", "1");
     ASSERT_EXCEPTION(m, "(let ((x 1) (y x)) y)", alisp::exceptions::VoidVariable);
