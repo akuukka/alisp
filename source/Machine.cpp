@@ -2,6 +2,7 @@
 #include <any>
 #include "Exception.hpp"
 #include "Object.hpp"
+#include "Sequence.hpp"
 #include "alisp.hpp"
 #include "AtScopeExit.hpp"
 #include "Machine.hpp"
@@ -362,6 +363,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return res;
     };
     defun("length", [](const Sequence* ptr) { return ptr->length(); });
+    defun("sequencep", [](ObjectPtr obj) { return dynamic_cast<Sequence*>(obj.get()) != nullptr; });
     makeFunc("let", 2, std::numeric_limits<int>::max(),
              std::bind(let, std::placeholders::_1, false));
     makeFunc("let*", 2, std::numeric_limits<int>::max(),
