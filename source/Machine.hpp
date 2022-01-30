@@ -57,26 +57,14 @@ class Machine
         makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
     }
 
-    template<typename R, typename... Args, typename T>
-    std::function<std::unique_ptr<Object>(FArgs&)> genCaller(T f)
-    {
-        return [=](FArgs& args) {
-            std::tuple<Args...> t = toTuple<Args...>(args);
-            return makeObject<R>(std::apply(f, std::move(t)));
-        };
-    }
-    
     template<typename R, typename ...Args>
     typename std::enable_if<sizeof...(Args) != 1, void>::type
     defunInternal(const char* name, std::function<R(Args...)> f)
     {
-        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), genCaller<R, Args...>(f));
-    }
-
-    template<typename R, typename ...Args>
-    void defunInternal(const char* name, R(*f)(Args...))
-    {
-        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), genCaller<R, Args...>(f));
+        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), [=](FArgs& args) {
+            std::tuple<Args...> t = toTuple<Args...>(args);
+            return makeObject<R>(std::apply(f, std::move(t)));
+        });
     }
 
     std::string parseNextName(const char*& str);
@@ -98,17 +86,9 @@ public:
     Machine(bool initStandardLibrary = true);
 
     template<typename F>
-    typename std::enable_if<std::is_object<F>::value, void>::type
-    defun(const char* name, F&& f)
+    void defun(const char* name, F&& f)
     {
         defunInternal(name, lambda_to_func(f));
-    }
-
-    template<typename F>
-    typename std::enable_if<!std::is_object<F>::value, void>::type
-    defun(const char* name, F&& f)
-    {
-        defunInternal(name, f);
     }
 
     void setVariable(std::string name, std::unique_ptr<Object> obj, bool constant = false)

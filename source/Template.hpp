@@ -39,6 +39,14 @@ struct function_traits<ReturnType(ClassType::*)(Args...) const>
     static constexpr auto arity = sizeof...(Args);
 };
 
+template <typename Ret, typename... Args>
+struct function_traits<Ret(*)(Args...)>
+{
+    using result_type = Ret;
+    using arg_tuple = std::tuple<Args...>;
+    static constexpr auto arity = sizeof...(Args);
+};
+
 template <class F, std::size_t ... Is, class T>
 auto lambda_to_func_impl(F f, std::index_sequence<Is...>, T) {
     return std::function<typename T::result_type(std::tuple_element_t<Is, typename T::arg_tuple>...)>(f);

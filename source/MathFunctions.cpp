@@ -4,6 +4,7 @@
 #include "ValueObject.hpp"
 #include "alisp.hpp"
 #include <cmath>
+#include <functional>
 
 namespace alisp
 {
