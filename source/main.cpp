@@ -380,6 +380,8 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(truncate 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate 1.1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate -1.2)", "-1");
+    ASSERT_OUTPUT_EQ(m, "(truncate 19.5 3.2)", "6");
+    ASSERT_OUTPUT_EQ(m, "(truncate 5.999 nil)", "5");
 }
 
 void testNthFunction()

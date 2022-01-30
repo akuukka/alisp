@@ -6,14 +6,31 @@
 namespace alisp
 {
 
-ALISP_INLINE std::unique_ptr<Object> truncate(std::variant<double, std::int64_t> obj)
+ALISP_INLINE double toDouble(std::variant<double, std::int64_t> var)
 {
     try {
-        const std::int64_t i = std::get<std::int64_t>(obj);
-        return makeInt(i);
+        return std::get<std::int64_t>(var);
     }
     catch (std::bad_variant_access&) {
-        return makeInt(static_cast<std::int64_t>(std::get<double>(obj)));
+        return std::get<double>(var);
+    }
+}
+
+ALISP_INLINE
+std::unique_ptr<Object> truncate(std::variant<double, std::int64_t> obj,
+                                 std::optional<std::variant<double, std::int64_t>> divisor)
+{
+    std::optional<double> div;
+    if (divisor) {
+        div = toDouble(*divisor);
+    }
+    try {
+        const std::int64_t i = std::get<std::int64_t>(obj);
+        return div ? makeInt(static_cast<std::int64_t>(i / *div)) : makeInt(i);
+    }
+    catch (std::bad_variant_access&) {
+        if (!div) { div = 1; }
+        return makeInt(static_cast<std::int64_t>(std::get<double>(obj)/ *div));
     }
 }
 
