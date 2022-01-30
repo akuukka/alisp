@@ -74,7 +74,15 @@ ALISP_INLINE bool onlyWhitespace(const char* expr)
 
 ALISP_INLINE void skipWhitespace(const char*& expr)
 {
-    while (*expr && isWhiteSpace(*expr)) {
+    while (*expr && (isWhiteSpace(*expr) || *expr == ';')) {
+        if (*expr == ';') {
+            while (*expr && *expr != '\n') {
+                expr++;
+            }
+            if (!*expr) {
+                return;
+            }
+        }
         expr++;
     }
 }

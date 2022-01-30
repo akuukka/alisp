@@ -12,7 +12,7 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 (defun car-safe (object)
   (let ((x object))
     (if (consp x)
-        (car x)
+        (car x)  
       nil)))
 
 (defun cddr (cons-cell)
