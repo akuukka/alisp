@@ -14,7 +14,7 @@ class Machine
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
     std::function<void(std::string)> m_msgHandler;
 
-    std::map<std::string, std::vector<std::unique_ptr<Object>>> m_locals;
+    std::map<std::string, std::vector<std::shared_ptr<Symbol>>> m_locals;
 
     void pushLocalVariable(std::string name, std::unique_ptr<Object> obj);
     bool popLocalVariable(std::string name);

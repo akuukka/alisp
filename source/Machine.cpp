@@ -509,7 +509,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             throw exceptions::WrongTypeArgument(p1->toString());
         }
         if (!name->sym && m_locals.count(name->name) && m_locals[name->name].size()) {
-            auto& loc = m_locals[name->name].back();
+            auto& loc = m_locals[name->name].back()->variable;
             loc = args.get()->clone();
             return loc->clone();
         }
@@ -609,7 +609,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
 ALISP_INLINE Object* Machine::resolveVariable(const std::string& name)
 {
     if (m_locals.count(name)) {
-        return m_locals[name].back().get();
+        return m_locals[name].back()->variable.get();
     }
     if (m_syms.count(name)) {
         return m_syms[name]->variable.get();
@@ -787,9 +787,10 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeTrue()
     return std::make_unique<SymbolObject>(this, nullptr, "t");
 }
 
-ALISP_INLINE void Machine::pushLocalVariable(std::string name, std::unique_ptr<Object> obj)
+ALISP_INLINE void Machine::pushLocalVariable(std::string name, ObjectPtr obj)
 {
-    m_locals[name].push_back(std::move(obj));
+    m_locals[name].push_back(std::make_shared<Symbol>());
+    m_locals[name].back()->variable = std::move(obj);
 }
 
 ALISP_INLINE bool Machine::popLocalVariable(std::string name)
