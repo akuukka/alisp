@@ -14,3 +14,4 @@
 #include "ValueObject.cpp"
 #include "Converter.cpp"
 #include "MathFunctions.cpp"
+#include "SequenceFunctions.cpp"

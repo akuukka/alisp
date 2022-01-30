@@ -15,6 +15,7 @@
 namespace alisp {
 
 void initMathFunctions(Machine& m);
+void initSequenceFunctions(Machine& m);
 
 ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
                                     const std::function<std::unique_ptr<Object>(FArgs &)>& f)
@@ -229,6 +230,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     setVariable("nil", makeNil(), true);
     setVariable("t", std::make_unique<SymbolObject>(this, nullptr, "t"), true);
     initMathFunctions(*this);
+    initSequenceFunctions(*this);
     defun("atom", [](std::any obj) {
         if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
@@ -362,8 +364,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return res;
     };
-    defun("length", [](const Sequence* ptr) { return ptr->length(); });
-    defun("sequencep", [](ObjectPtr obj) { return dynamic_cast<Sequence*>(obj.get()) != nullptr; });
     makeFunc("let", 2, std::numeric_limits<int>::max(),
              std::bind(let, std::placeholders::_1, false));
     makeFunc("let*", 2, std::numeric_limits<int>::max(),
