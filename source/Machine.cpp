@@ -522,7 +522,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return std::make_unique<StringObject>(descr);
     });
-    defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
     defun("concat", [](std::string str1, std::string str2) { return str1 + str2; });
     defun("nth", [](std::int64_t index, ConsCellObject list) {
         auto p = list.cc.get();
