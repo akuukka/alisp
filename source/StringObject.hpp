@@ -28,6 +28,8 @@ struct StringObject : Object, Sequence
     }
 
     size_t length() const override { return value->size(); }
+
+    std::unique_ptr<Object> elt(std::int64_t index) const override;
 };
 
 }

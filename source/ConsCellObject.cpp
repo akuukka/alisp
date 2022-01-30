@@ -154,4 +154,16 @@ ALISP_INLINE size_t ConsCellObject::length() const
     return l;
 }
 
+std::unique_ptr<Object> ConsCellObject::elt(std::int64_t index) const
+{
+    auto p = cc.get();
+    for (std::int64_t i=0;i<index;i++) {
+        p = p->next();
+        if (!p) {
+            break;
+        }
+    }
+    return p && p->car ? p->car->clone() : makeNil();
+}
+
 }
