@@ -244,7 +244,7 @@ void testCdrFunction()
     ASSERT_OUTPUT_EQ(m, "(cdr '())", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr (cdr '(a b c)))", "(c)");
     ASSERT_EXCEPTION(m, "(cdr 1)", alisp::exceptions::WrongTypeArgument);
-    // ASSERT_OUTPUT_EQ(m, "(cdr-safe '(a b c))", "(b c)");
+    ASSERT_OUTPUT_EQ(m, "(cdr-safe '(a b c))", "(b c)");
 }
 
 void testPrognFunction()
@@ -265,10 +265,9 @@ void testPrognFunction()
 void testVariables()
 {
     alisp::Machine m;
-    m.evaluate("(setq x 2)");
-    assert(m.evaluate("(/ 1.0 x)")->value<double>() == 0.5);
-    assert(m.evaluate("(+ 1 x)")->value<std::int64_t>() == 3);
     ASSERT_OUTPUT_EQ(m, "(set 'y 15)", "15");
+    ASSERT_OUTPUT_EQ(m, "(progn (setq x 1) (let (x z) (setq x 2) "
+                     "(setq z 3) (setq y x)) (list x y))", "(1 2)");
 }
 
 void testSymbols()
@@ -643,6 +642,7 @@ void testMemoryLeaks()
 
 void test()
 {
+    testVariables();
     testMemoryLeaks();
     testCyclicals(); // Lot of work to do here still...
     testMacros();
@@ -664,7 +664,6 @@ void test()
     testDescribeVariableFunction();
     testInternFunction();
     testEqFunction();
-    testVariables();
     testDivision();
     testSyntaxErrorDetection();
     testNullFunction();

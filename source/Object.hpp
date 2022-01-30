@@ -88,6 +88,8 @@ struct Object
     virtual void traverse(const std::function<bool(const Object&)>& f) const { f(*this); }
 };
 
+using ObjectPtr = std::unique_ptr<Object>;
+
 std::ostream &operator<<(std::ostream &os, const Object &sym);
 std::ostream &operator<<(std::ostream &os, const std::unique_ptr<Object> &sym);
 

@@ -12,20 +12,8 @@ class Machine
 
     std::map<std::string, std::vector<std::unique_ptr<Object>>> m_locals;
 
-    void pushLocalVariable(std::string name, std::unique_ptr<Object> obj)
-    {
-        m_locals[name].push_back(std::move(obj));
-    }
-
-    bool popLocalVariable(std::string name)
-    {
-        assert(m_locals[name].size());
-        m_locals[name].pop_back();
-        if (m_locals[name].empty()) {
-            m_locals.erase(name);
-        }
-        return true;
-    }
+    void pushLocalVariable(std::string name, std::unique_ptr<Object> obj);
+    bool popLocalVariable(std::string name);
 
     template <typename T>
     std::unique_ptr<Object> makeObject(T);

@@ -271,17 +271,30 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         std::vector<std::string> varList;
         std::vector<std::pair<std::string, std::unique_ptr<Object>>> pushList;
         for (auto& arg : *args.cc->car->asList()) {
-            assert(arg.isList());
-            auto list = arg.asList();
-            auto cc = list->cc.get();
-            const auto sym = dynamic_cast<const SymbolObject*>(cc->car.get());
-            assert(sym && sym->name.size());
-            if (star) {
-                pushLocalVariable(sym->name, cc->cdr->asList()->cc->car->eval());
-                varList.push_back(sym->name);
+            std::string name;
+            ObjectPtr value;
+            if (arg.isList()) {
+                auto list = arg.asList();
+                auto cc = list->cc.get();
+                const auto sym = dynamic_cast<const SymbolObject*>(cc->car.get());
+                assert(sym && sym->name.size());
+                name = sym->name;
+                value = cc->cdr->asList()->cc->car->eval();
+            }
+            else if (auto sym = dynamic_cast<const SymbolObject*>(&arg)) {
+                assert(sym->name.size());
+                name = sym->name;
+                value = makeNil();
             }
             else {
-                pushList.emplace_back(sym->name, cc->cdr->asList()->cc->car->eval());
+                assert(false && "OMG");
+            }
+            if (star) {
+                pushLocalVariable(name, std::move(value));
+                varList.push_back(name);
+            }
+            else {
+                pushList.emplace_back(name, std::move(value));
             }
         }
         for (auto& push : pushList) {
@@ -489,6 +502,11 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
         if (!name) {
             throw exceptions::WrongTypeArgument(p1->toString());
+        }
+        if (!name->sym && m_locals.count(name->name) && m_locals[name->name].size()) {
+            auto& loc = m_locals[name->name].back();
+            loc = args.get()->clone();
+            return loc->clone();
         }
         auto sym = name->getSymbol();
         assert(sym);
@@ -762,6 +780,21 @@ std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) cons
 ALISP_INLINE std::unique_ptr<Object> Machine::makeTrue() 
 {
     return std::make_unique<SymbolObject>(this, nullptr, "t");
+}
+
+ALISP_INLINE void Machine::pushLocalVariable(std::string name, std::unique_ptr<Object> obj)
+{
+    m_locals[name].push_back(std::move(obj));
+}
+
+ALISP_INLINE bool Machine::popLocalVariable(std::string name)
+{
+    assert(m_locals[name].size());
+    m_locals[name].pop_back();
+    if (m_locals[name].empty()) {
+        m_locals.erase(name);
+    }
+    return true;
 }
 
 }
