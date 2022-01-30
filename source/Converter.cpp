@@ -1,4 +1,5 @@
 #include <any>
+#include "ValueObject.hpp"
 #include "StringObject.hpp"
 #include "alisp.hpp"
 #include "Converter.hpp"
@@ -59,12 +60,22 @@ ALISP_INLINE std::optional<bool> getValue(const Object &sym)
 template<>
 ALISP_INLINE std::optional<std::any> getValue(const Object& sym)
 {
-    auto s = dynamic_cast<const ConsCellObject*>(&sym);
-    if (s) {
-        std::shared_ptr<ConsCell> cc = s->cc;
-        return cc;
+    if (auto s = dynamic_cast<const ConsCellObject*>(&sym)) {
+        return s->cc;
     }
-    return std::any();
+    else if (auto s = dynamic_cast<const IntObject*>(&sym)) {
+        return s->value;
+    }
+    else if (auto s = dynamic_cast<const FloatObject*>(&sym)) {
+        return s->value;
+    }
+    else if (auto s = dynamic_cast<const StringObject*>(&sym)) {
+        return s->value;
+    }
+    else if (auto s = dynamic_cast<const SymbolObject*>(&sym)) {
+        return s->getSymbol();
+    }
+    return std::nullopt;
 }
 
 template<>
