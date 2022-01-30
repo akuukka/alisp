@@ -578,6 +578,25 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     evaluate(getInitCode());
 }
 
+ALISP_INLINE Object* Machine::resolveVariable(const std::string& name)
+{
+    if (m_locals.count(name)) {
+        return m_locals[name].back().get();
+    }
+    if (m_syms.count(name)) {
+        return m_syms[name]->variable.get();
+    }
+    return nullptr;
+}
+
+ALISP_INLINE Function* Machine::resolveFunction(const std::string& name)
+{
+    if (m_syms.count(name)) {
+        return m_syms[name]->function.get();
+    }
+    return nullptr;
+}
+
 ALISP_INLINE
 void Machine::renameSymbols(ConsCellObject& obj,
                             std::map<std::string, std::unique_ptr<Object>>& conv)

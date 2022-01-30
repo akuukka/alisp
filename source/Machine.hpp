@@ -88,25 +88,8 @@ class Machine
 public:
     std::unique_ptr<Object> parse(const char *expr);
     std::unique_ptr<Object> evaluate(const char *expr) { return parse(expr)->eval();  }
-
-    Object* resolveVariable(const std::string& name)
-    {
-        if (m_locals.count(name)) {
-            return m_locals[name].back().get();
-        }
-        if (m_syms.count(name)) {
-            return m_syms[name]->variable.get();
-        }
-        return nullptr;
-    }
-
-    Function* resolveFunction(const std::string& name)
-    {
-        if (m_syms.count(name)) {
-            return m_syms[name]->function.get();
-        }
-        return nullptr;
-    }
+    Object* resolveVariable(const std::string& name);
+    Function* resolveFunction(const std::string& name);
 
     void makeFunc(const char *name, int minArgs, int maxArgs,
                   const std::function<std::unique_ptr<Object>(FArgs &)>& f);
