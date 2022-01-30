@@ -292,6 +292,14 @@ void testVariables()
     (makunbound 'x))     ; Void inner binding, then remove it.
   x)                     ; Now outer let binding is visible.
 )code", "2");
+    
+    ASSERT_OUTPUT_EQ(m, R"code(
+(setq x -99)  ; x receives an initial value of -99.
+(defun getx ()
+  x)            ; x is used free in this function.
+(let ((x 1))    ; x is dynamically bound.
+  (getx))
+)code", "1");
 }
 
 void testSymbols()
@@ -553,6 +561,23 @@ void testLet()
        (z y))    ; Use the just-established value of y.
   (list y z))
 )code", "(1 1)");
+    ASSERT_OUTPUT_EQ(m, R"code(
+(setq abracadabra 5)
+(setq foo 9)
+;; Here the symbol abracadabra
+;;   is the symbol whose value is examined.
+(let ((abracadabra 'foo))
+  (symbol-value 'abracadabra))
+)code", "foo");
+    ASSERT_OUTPUT_EQ(m, R"code(
+;; Here, the value of abracadabra,
+;;   which is foo,
+;;   is the symbol whose value is examined.
+(let ((abracadabra 'foo))
+  (symbol-value abracadabra))
+)code", "9");
+    ASSERT_OUTPUT_EQ(m, "(symbol-value 'abracadabra)", "5");
+   
 }
 
 void testIf()

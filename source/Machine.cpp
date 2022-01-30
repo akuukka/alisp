@@ -1,6 +1,7 @@
 #include <sstream>
 #include <any>
 #include "Exception.hpp"
+#include "Object.hpp"
 #include "alisp.hpp"
 #include "AtScopeExit.hpp"
 #include "Machine.hpp"
@@ -653,6 +654,16 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         sym->variable = nullptr;
         return sym;
     });
+    defun("symbol-value", [this](std::shared_ptr<Symbol> sym) -> ObjectPtr {
+        if (!sym) {
+            return makeNil();
+        }
+        if (!sym->variable) {
+            throw exceptions::VoidVariable(sym->name);
+        }
+        return sym->variable->clone();
+    });
+
     evaluate(getInitCode());
 }
 
