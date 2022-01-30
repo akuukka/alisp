@@ -163,25 +163,6 @@ inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& 
     return opt;
 }
     
-template<size_t I, typename ...Args>
-inline typename std::enable_if<I < sizeof...(Args), void>::type writeToTuple(std::tuple<Args...>& t,
-                                                                             FArgs& args)
-{
-    using T = typename std::tuple_element<I, std::tuple<Args...>>::type;
-    static_assert(!OptCheck<T>::value || tupleOptCheck<I+1, Args...>(),
-                  "Non-optional function param given after optional one.");
-    std::get<I>(t) = getFuncParam<T>(args);
-    writeToTuple<I + 1>(t, args);
-}
-        
-template<typename ...Args>
-std::tuple<Args...> toTuple(FArgs& args)
-{
-    std::tuple<Args...> tuple;
-    writeToTuple<0>(tuple, args);
-    return tuple;
-}
-
 inline bool isWhiteSpace(const char c)
 {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r';
@@ -193,7 +174,7 @@ inline Object* FArgs::get()
         return nullptr;
     }
     auto self = cc->car->trySelfEvaluate();
-    if (self && false) {
+    if (self) {
         cc = cc->next();
         return self;
     }

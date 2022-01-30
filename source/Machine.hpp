@@ -45,26 +45,21 @@ class Machine
     {
         return countNonOpts<0, Args...>();
     }
+
+    template<typename R, typename... Args, std::size_t... Is>
+    auto genCaller(std::function<R(Args...)> f,
+                   std::index_sequence<Is...>)
+    {
+        return [=](FArgs& args) {
+            return makeObject<R>(f((getFuncParam<typename std::tuple_element<Is, std::tuple<Args...>>::type>(args))...));
+        };
+    }
     
     template<typename R, typename ...Args>
-    typename std::enable_if<sizeof...(Args) == 1, void>::type
-    defunInternal(const char* name, std::function<R(Args...)> f)
+    void defunInternal(const char* name, std::function<R(Args...)> f)
     {
-        using T = typename std::tuple_element<0, std::tuple<Args...>>::type;
-        std::function<std::unique_ptr<Object>(FArgs&)> w = [=](FArgs& args) {
-            return makeObject<R>(f(getFuncParam<T>(args)));
-        };
-        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), w);
-    }
-
-    template<typename R, typename ...Args>
-    typename std::enable_if<sizeof...(Args) != 1, void>::type
-    defunInternal(const char* name, std::function<R(Args...)> f)
-    {
-        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args), [=](FArgs& args) {
-            std::tuple<Args...> t = toTuple<Args...>(args);
-            return makeObject<R>(std::apply(f, std::move(t)));
-        });
+        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args),
+                 genCaller(f, std::index_sequence_for<Args...>{}));
     }
 
     std::string parseNextName(const char*& str);
