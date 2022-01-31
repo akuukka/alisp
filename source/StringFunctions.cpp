@@ -1,6 +1,9 @@
+#include "ConsCellObject.hpp"
 #include "Machine.hpp"
+#include "StringObject.hpp"
 #include <algorithm>
 #include <cstdint>
+#include <regex>
 
 namespace alisp
 {
@@ -33,6 +36,34 @@ void initStringFunctions(Machine& m)
             return static_cast<char>(c);
         });
         return ret;
+    });
+    m.defun("split-string", [](std::string s,
+                               std::optional<std::string> sep,
+                               std::optional<bool> omitNulls) -> ObjectPtr {
+        std::smatch m;
+        std::regex e (sep ? *sep : "[ \n\t]+");
+        size_t prev = std::string::npos;
+
+        ListBuilder builder;
+
+        auto addMatch = [&](std::string m, bool sep) {
+            if (!omitNulls || *omitNulls) {
+                if (sep) return;
+            }
+            builder.add(std::make_unique<StringObject>(m));
+        };
+        
+        while (std::regex_search (s,m,e)) {
+            for (auto x:m) {
+                addMatch(x.str(), true);
+                if (prev != std::string::npos) {
+                    addMatch(s.substr(prev, m.position()), false);
+                }
+                prev = 0;
+            }
+            s = m.suffix().str();
+        }
+        return builder.get();
     });
 }
 
