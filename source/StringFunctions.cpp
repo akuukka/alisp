@@ -1,5 +1,6 @@
 #include "ConsCellObject.hpp"
 #include "Machine.hpp"
+#include "Object.hpp"
 #include "StringObject.hpp"
 #include <algorithm>
 #include <cstdint>
@@ -36,6 +37,12 @@ void initStringFunctions(Machine& m)
             return static_cast<char>(c);
         });
         return ret;
+    });
+    m.defun("clear-string", [](std::string& str) {
+        for (auto& c : str) {
+            c = 0;
+        }
+        return false;
     });
     m.defun("split-string", [](std::string s,
                                std::optional<std::string> sep,

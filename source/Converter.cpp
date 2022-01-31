@@ -87,4 +87,14 @@ ALISP_INLINE const std::string& getValueReference(const Object &sym)
     throw std::runtime_error("Failed to get string arg");
 }
 
+
+template<>
+ALISP_INLINE std::string& getValueReference(const Object &sym)
+{
+    if (sym.isString()) {
+        return *dynamic_cast<const StringObject*>(&sym)->value;
+    }
+    throw std::runtime_error("Failed to get string arg");
+}
+
 }
