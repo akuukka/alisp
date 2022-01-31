@@ -28,6 +28,12 @@ class Machine
         return countNonOpts<0, Args...>();
     }
 
+    template <typename... Args>
+    inline size_t getMaxArgs()
+    {
+        return countMaxArgs<0, Args...>();
+    }
+
     template<typename R, typename... Args, std::size_t... Is>
     auto genCaller(std::function<R(Args...)> f,
                    std::index_sequence<Is...>)
@@ -40,7 +46,7 @@ class Machine
     template<typename R, typename ...Args>
     void defunInternal(const char* name, std::function<R(Args...)> f)
     {
-        makeFunc(name, getMinArgs<Args...>(), sizeof...(Args),
+        makeFunc(name, getMinArgs<Args...>(), getMaxArgs<Args...>(),
                  genCaller(f, std::index_sequence_for<Args...>{}));
     }
 

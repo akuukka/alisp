@@ -206,6 +206,8 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, "(char-or-string-p (elt \"abc\" 0))", "t");
     ASSERT_OUTPUT_EQ(m, "(char-or-string-p \"abc\")", "t");
     ASSERT_OUTPUT_EQ(m, "(char-or-string-p 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(string ?a ?b ?c)", "\"abc\"");
+    ASSERT_OUTPUT_EQ(m, "(string)", "\"\"");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
     assert(m.evaluate("(stringp \"abc\")")->toString() == "t");
     assert(m.evaluate("(stringp 1)")->toString() == "nil");

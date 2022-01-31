@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+#include <limits>
 #include <type_traits>
 #include <optional>
 
@@ -75,7 +77,27 @@ inline typename std::enable_if<I < sizeof...(Args), size_t>::type countNonOpts()
     if (OptCheck<ThisType>::value) {
         return 0;
     }
+    if constexpr (IsInstantiationOf<std::vector, ThisType>::value) {
+        static_assert(I + 1 == sizeof...(Args), "std::vector function params must be last");
+        return 0;
+    }
     return 1 + countNonOpts<I+1, Args...>();
+}
+
+template <size_t I, typename... Args>
+inline typename std::enable_if<I == sizeof...(Args), size_t>::type countMaxArgs()
+{
+    return sizeof...(Args);
+}
+
+template <size_t I, typename... Args>
+inline typename std::enable_if<I < sizeof...(Args), size_t>::type countMaxArgs()
+{
+    using ThisType = NthTypeOf<I, Args...>;
+    if (IsInstantiationOf<std::vector, ThisType>::value) {
+        return static_cast<size_t>(std::numeric_limits<std::int32_t>::max());
+    }
+    return countMaxArgs<I+1, Args...>();
 }
 
 }

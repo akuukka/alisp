@@ -1,6 +1,8 @@
 #pragma once
+#include "Exception.hpp"
 #include "Object.hpp"
 #include "ConsCell.hpp"
+#include "Template.hpp"
 #include <type_traits>
 #include <vector>
 
@@ -83,6 +85,14 @@ struct FArgs
 };
 
 template<typename T>
+constexpr bool specialParamType()
+{
+    return std::is_reference_v<T> ||
+        OptCheck<T>::value ||
+        IsInstantiationOf<std::vector, T>::value;
+}
+
+template<typename T>
 inline typename std::enable_if<std::is_reference_v<T> , T>::type getFuncParam(FArgs& args)
 {
     Object* arg = args.get();
@@ -96,14 +106,14 @@ inline typename std::enable_if<std::is_reference_v<T> , T>::type getFuncParam(FA
 }
 
 template<typename T>
-inline typename std::enable_if<!OptCheck<T>::value && !std::is_reference_v<T> , T>::type getFuncParam(FArgs& args)
+inline typename std::enable_if<IsInstantiationOf<std::vector, T>::value, T>::type getFuncParam(FArgs& args)
 {
-    Object* arg = args.get();
-    std::optional<typename OptCheck<T>::BaseType> opt = arg->valueOrNull<T>();
-    if (!opt) {
-        throw exceptions::WrongTypeArgument(arg->toString());
+    T v;
+    using ValueType = typename T::value_type;
+    while (args.hasNext()) {
+        v.push_back(getFuncParam<ValueType>(args));
     }
-    return std::move(*opt);
+    return v;
 }
 
 template<typename T>
@@ -128,6 +138,17 @@ inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& 
         throw exceptions::WrongTypeArgument(arg->toString());
     }
     return opt;
+}
+
+template<typename T>
+inline typename std::enable_if<!specialParamType<T>(), T>::type getFuncParam(FArgs& args)
+{
+    Object* arg = args.get();
+    std::optional<typename OptCheck<T>::BaseType> opt = arg->valueOrNull<T>();
+    if (!opt) {
+        throw exceptions::WrongTypeArgument(arg->toString());
+    }
+    return std::move(*opt);
 }
     
 inline Object* FArgs::get()

@@ -1,4 +1,5 @@
 #include "Machine.hpp"
+#include <algorithm>
 #include <cstdint>
 
 namespace alisp
@@ -25,6 +26,13 @@ void initStringFunctions(Machine& m)
             *end = static_cast<std::int64_t>(str.size()) + *end;
         }
         return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
+    });
+    m.defun("string", [](std::vector<std::uint32_t> chars) {
+        std::string ret;
+        std::transform(chars.begin(), chars.end(), std::back_inserter(ret), [](std::uint32_t c) {
+            return static_cast<char>(c);
+        });
+        return ret;
     });
 }
 
