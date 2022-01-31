@@ -41,42 +41,35 @@ void initStringFunctions(Machine& m)
                                std::optional<std::string> sep,
                                std::optional<bool> omitNulls) -> ObjectPtr {
         std::smatch m;
-        std::regex e (sep ? *sep : "[ \\n\\t]+");
+        std::regex e(sep ? *sep : "[ \\n\\t\\r\\v]+");
 
         if (sep && !omitNulls) {
             omitNulls = false;
         }
 
         ListBuilder builder;
-        //std::cout << "s: '" << s << "'" << std::endl;
         auto addMatch = [&](std::string m) {
-            //std::cout << "add match: '" << m << "'" << std::endl;
             if (!omitNulls || *omitNulls) {
                 if (m.empty()) {
-                    //std::cout << " SKIP!\n";
                     return;
                 }
             }
             builder.append(std::make_unique<StringObject>(std::move(m)));
         };
-
-        auto begin = s.cbegin();
-        auto end = s.cend();
-        
-        while (std::regex_search(begin, end, m, e)) {
-            //std::cout << "left: '" << s << "'" << std::endl;
-            for (auto x : m) {
-                auto p = std::distance(s.cbegin(), begin);
-                auto mp = p + m.position();
-                //std::cout << "match pos:" << mp << " size: " << x.length() << std::endl;
-                //std::cout << " => substr from " << p << " to " << mp <<  std::endl;
-                addMatch(s.substr(p, mp - p));
-                begin = m.suffix().first;
-                break;
-            }
-            //std::cout << "left suffix: '" << s << "'" << std::endl;
+        std::regex_iterator<std::string::iterator> rit(s.begin(), s.end(), e);
+        std::regex_iterator<std::string::iterator> rend;
+        size_t from = 0;
+        bool lastWasEmpty = false;
+        while (rit != rend) {
+            auto m = s.substr(from, rit->position() - from);
+            addMatch(m);
+            from = rit->position() + rit->length();
+            lastWasEmpty = rit->position() == s.length() && m.empty();
+            ++rit;
         }
-        addMatch(s.substr(std::distance(s.cbegin(), begin)));
+        if (!lastWasEmpty) {
+            addMatch(s.substr(from));
+        }
         return builder.get();
     });
 }

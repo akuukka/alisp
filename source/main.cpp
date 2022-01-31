@@ -217,6 +217,27 @@ void testStrings()
                      R"code(("S" "up is g" "d f" "d"))code");
     ASSERT_OUTPUT_EQ(m, "(split-string \"Soup is good food\" \"o+\")",
                      R"code(("S" "up is g" "d f" "d"))code");
+    ASSERT_OUTPUT_EQ(m,
+                     R"code((split-string "aooob" "o*"))code",
+                     R"code(("" "a" "" "b" ""))code");
+    ASSERT_OUTPUT_EQ(m,
+                     R"code((split-string "ooaboo" "o*"))code",
+                     R"code(("" "" "a" "b" ""))code");
+    ASSERT_OUTPUT_EQ(m,
+                     R"code((split-string "" ""))code",
+                     R"code((""))code");
+    ASSERT_OUTPUT_EQ(m,
+                     R"code((split-string "Soup is good food" "o*" t))code",
+                     R"code(("S" "u" "p" " " "i" "s" " " "g" "d" " " "f" "d"))code");
+    ASSERT_OUTPUT_EQ(m,
+                     R"code((split-string "Nice doggy!" "" t))code",
+                     R"code(("N" "i" "c" "e" " " "d" "o" "g" "g" "y" "!"))code");
+    ASSERT_OUTPUT_EQ(m,
+                     R"code((split-string "" "" t))code",
+                     R"code(nil)code");
+    ASSERT_OUTPUT_EQ(m,
+                     R"code((split-string "ooo" "o*" t))code",
+                     R"code(nil)code");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
     assert(m.evaluate("(stringp \"abc\")")->toString() == "t");
     assert(m.evaluate("(stringp 1)")->toString() == "nil");
