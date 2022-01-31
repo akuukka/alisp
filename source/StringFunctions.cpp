@@ -38,12 +38,7 @@ void initStringFunctions(Machine& m)
         });
         return ret;
     });
-    m.defun("clear-string", [](std::string& str) {
-        for (auto& c : str) {
-            c = 0;
-        }
-        return false;
-    });
+    m.defun("clear-string", [](std::string& str) { for (auto& c : str) { c = 0; } });
     m.defun("split-string", [](std::string s,
                                std::optional<std::string> sep,
                                std::optional<bool> omitNulls) -> ObjectPtr {

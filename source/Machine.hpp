@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <type_traits>
 #include "alisp.hpp"
 #include "Symbol.hpp"
 #include "ConsCellObject.hpp"
@@ -35,11 +36,23 @@ class Machine
     }
 
     template<typename R, typename... Args, std::size_t... Is>
-    auto genCaller(std::function<R(Args...)> f,
+    typename std::enable_if<!std::is_same_v<R, void>, std::function<ObjectPtr(FArgs&)> >::type
+    genCaller(std::function<R(Args...)> f,
                    std::index_sequence<Is...>)
     {
         return [=](FArgs& args) {
             return makeObject<R>(f((getFuncParam<typename std::tuple_element<Is, std::tuple<Args...>>::type>(args))...));
+        };
+    }
+
+    template<typename R, typename... Args, std::size_t... Is>
+    typename std::enable_if<std::is_same_v<R, void>, std::function<ObjectPtr(FArgs&)> >::type
+    genCaller(std::function<R(Args...)> f,
+              std::index_sequence<Is...>)
+    {
+        return [=](FArgs& args) {
+            f((getFuncParam<typename std::tuple_element<Is, std::tuple<Args...>>::type>(args))...);
+            return makeNil();
         };
     }
     
