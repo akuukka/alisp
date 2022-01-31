@@ -746,6 +746,12 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(bool value)
     return value ? makeTrue() : makeNil();
 }
 
+template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::unique_ptr<Object> o)
+{
+    return o;
+}
+
 ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
 {
     const std::string next = parseNextName(str);
