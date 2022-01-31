@@ -424,13 +424,9 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("quote", 1, 1, [](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
-    makeFunc("stringp", 1, 1, [this](FArgs& args) {
-        return (args.get()->isString()) ? makeTrue() : makeNil();
-    });
-    makeFunc("numberp", 1, 1, [this](FArgs& args) {
-        auto arg = args.get();
-        return arg->isInt() || arg->isFloat() ? makeTrue() : makeNil();
-    });
+    defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
+    defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
+    defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
     makeFunc("make-symbol", 1, 1, [this](FArgs& args) {
         const auto arg = args.get();
         if (!arg->isString()) {

@@ -272,6 +272,10 @@ void testVariables()
     ASSERT_OUTPUT_EQ(m, "(setq abracadabra 5)", "5");
     ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "t");
     ASSERT_OUTPUT_EQ(m, "(boundp nil)", "t");
+    ASSERT_OUTPUT_EQ(m, "(numberp 1)", "t");
+    ASSERT_OUTPUT_EQ(m, "(numberp 1.0)", "t");
+    ASSERT_OUTPUT_EQ(m, "(numberp nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(numberp \"A\")", "nil");
     ASSERT_OUTPUT_EQ(m, "(set 'y 15)", "15");
     ASSERT_OUTPUT_EQ(m, "(progn (setq x 1) (let (x z) (setq x 2) "
                      "(setq z 3) (setq y x)) (list x y))", "(1 2)");
