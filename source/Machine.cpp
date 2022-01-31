@@ -26,7 +26,8 @@ ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
     func->minArgs = minArgs;
     func->maxArgs = maxArgs;
     func->func = std::move(f);
-    getSymbol(name)->function = std::move(func);
+    auto sym = getSymbol(name);
+    sym->function = std::move(func);
 }
 
 ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)

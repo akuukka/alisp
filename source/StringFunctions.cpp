@@ -104,6 +104,21 @@ void initStringFunctions(Machine& m)
     m.defun("string<", [](const std::string& a, const std::string& b) { return a < b; });
     m.defun("string-lessp", [](const std::string& a, const std::string& b) { return a < b; });
     m.defun("string-greaterp", [](const std::string& a, const std::string& b) { return a > b; });
+    m.defun("number-to-string", [](std::variant<std::int64_t, std::uint32_t, double> num)
+    {
+        try {
+            const std::uint32_t val = std::get<std::uint32_t>(num);
+            return std::to_string(val);
+        }
+        catch (std::bad_variant_access&) {}
+        try {
+            const std::int64_t val = std::get<std::int64_t>(num);
+            return std::to_string(val);
+        }
+        catch (std::bad_variant_access&) {}
+        const double val = std::get<double>(num);
+        return std::to_string(val);
+    });
 }
 
 }

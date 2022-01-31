@@ -33,7 +33,7 @@ ALISP_INLINE std::optional<std::uint32_t> getValue(const Object &sym)
         return s->value;
     }
     auto i = dynamic_cast<const IntObject*>(&sym);
-    if (i->value >=0 && i->value <= std::numeric_limits<std::uint32_t>::max()) {
+    if (i && i->value >=0 && i->value <= std::numeric_limits<std::uint32_t>::max()) {
         return i->value;
     }
     return std::nullopt;
