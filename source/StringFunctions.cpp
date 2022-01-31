@@ -22,6 +22,9 @@ void initStringFunctions(Machine& m)
     });
     m.defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
     m.defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
+    m.defun("string-bytes", [](const std::string& s) {
+        return static_cast<std::int64_t>(s.size());
+    });
     m.defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });
     m.defun("substring", [](const std::string& str,
                             std::optional<std::int64_t> start,
