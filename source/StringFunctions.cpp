@@ -98,6 +98,7 @@ void initStringFunctions(Machine& m)
         }
         return builder.get();
     });
+    m.defun("char-equal", [](std::uint32_t c1, std::uint32_t c2) { return c1 == c2; });
 }
 
 }

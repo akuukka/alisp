@@ -267,6 +267,8 @@ void testStrings()
     ASSERT_EXCEPTION(m, R"code((store-substring str 4 ?d))code", alisp::exceptions::Error);
     ASSERT_EXCEPTION(m, R"code((store-substring str -1 ?d))code", alisp::exceptions::Error);
     ASSERT_EXCEPTION(m, R"code((store-substring str -1 "abc"))code", alisp::exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, R"code((char-equal 65 ?A))code", R"code(t)code");
+    ASSERT_OUTPUT_EQ(m, R"code((char-equal ?x ?b))code", R"code(nil)code");
 }
 
 void testDivision()
