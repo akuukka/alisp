@@ -43,6 +43,10 @@ void initStringFunctions(Machine& m)
         std::smatch m;
         std::regex e (sep ? *sep : "[ \\n\\t]+");
 
+        if (sep && !omitNulls) {
+            omitNulls = false;
+        }
+
         ListBuilder builder;
         //std::cout << "s: " << s << std::endl;
         auto addMatch = [&](std::string m) {
