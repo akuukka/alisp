@@ -52,22 +52,31 @@ void initStringFunctions(Machine& m)
         auto addMatch = [&](std::string m) {
             //std::cout << "add match: '" << m << "'" << std::endl;
             if (!omitNulls || *omitNulls) {
-                if (m.empty()) return;
+                if (m.empty()) {
+                    // std::cout << " SKIP!\n";
+                    return;
+                }
             }
-            builder.add(std::make_unique<StringObject>(m));
+            builder.add(std::make_unique<StringObject>(std::move(m)));
         };
+
+        auto begin = s.cbegin();
+        auto end = s.cend();
         
-        while (std::regex_search (s,m,e)) {
+        while (std::regex_search(begin, end, m, e)) {
             //std::cout << "left: '" << s << "'" << std::endl;
-            //std::cout << "match pos:" << m.position() << std::endl;
             for (auto x : m) {
-                addMatch(s.substr(0, m.position()));
-                if (m.position() + x.str().length() == s.size()) {
+                auto p = std::distance(s.cbegin(), begin);
+                auto mp = p + m.position();
+                //std::cout << "match pos:" << mp << " size: " << x.length() << std::endl;
+                //std::cout << " => substr from " << p << " to " << (mp - p) <<  std::endl;
+                addMatch(s.substr(p, mp - p));
+                if (mp + x.str().length() == s.size()) {
                     addMatch("");
                 }
+                begin = m.suffix().first;
                 break;
             }
-            s = m.suffix().str();
             //std::cout << "left suffix: '" << s << "'" << std::endl;
         }
         return builder.get();
