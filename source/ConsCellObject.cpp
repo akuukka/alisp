@@ -3,6 +3,7 @@
 #include "ConsCellObject.hpp"
 #include "AtScopeExit.hpp"
 #include "FArgs.hpp"
+#include <cstring>
 
 namespace alisp
 {
@@ -164,6 +165,38 @@ std::unique_ptr<Object> ConsCellObject::elt(std::int64_t index) const
         }
     }
     return p && p->car ? p->car->clone() : makeNil();
+}
+
+ALISP_INLINE void ListBuilder::add(std::unique_ptr<Object> obj)
+{
+    if (!m_list) {
+        m_list = std::make_unique<ConsCellObject>();
+    }
+    if (!m_last) {
+        m_list->cc = std::make_shared<ConsCell>();
+        m_last = m_list->cc.get();
+    }
+    if (!m_last->car) {
+        m_last->car = std::move(obj);
+    }
+    else {
+        auto newCc = std::make_unique<ConsCellObject>();
+        auto nextLast = newCc->cc.get();
+        m_last->cdr = std::move(newCc);
+        m_last = nextLast;
+        m_last->car = std::move(obj);
+    }
+}
+
+ALISP_INLINE std::unique_ptr<ConsCellObject> ListBuilder::get()
+{
+    if (!m_list) {
+        return std::make_unique<ConsCellObject>();
+    }
+    auto r = std::move(m_list);
+    m_list = nullptr;
+    m_last = nullptr;
+    return std::move(r);
 }
 
 }

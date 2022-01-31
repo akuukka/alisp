@@ -115,4 +115,13 @@ inline std::unique_ptr<ConsCellObject> makeList()
     return std::make_unique<ConsCellObject>();
 }
 
+class ListBuilder
+{
+    std::unique_ptr<ConsCellObject> m_list;
+    ConsCell* m_last = nullptr;
+public:
+    void add(std::unique_ptr<Object> obj);
+    std::unique_ptr<ConsCellObject> get();
+};
+
 }
