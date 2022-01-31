@@ -3,9 +3,11 @@
 #include "Machine.hpp"
 #include "Object.hpp"
 #include "StringObject.hpp"
+#include "alisp.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <regex>
+#include "UTF8.hpp"
 
 namespace alisp
 {
@@ -119,6 +121,7 @@ void initStringFunctions(Machine& m)
         const double val = std::get<double>(num);
         return std::to_string(val);
     });
+    m.defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
 }
 
 }
