@@ -213,6 +213,8 @@ void testStrings()
                      "(\"\" \"two\" \"words\" \"\")");
     ASSERT_OUTPUT_EQ(m, "(split-string \"Soup is good food\" \"o\")",
                      R"code(("S" "up is g" "" "d f" "" "d"))code");
+    ASSERT_OUTPUT_EQ(m, "(split-string \"Soup is good food\" \"o\" t)",
+                     R"code(("S" "up is g" "d f" "d"))code");
     assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
     assert(m.evaluate("(stringp \"abc\")")->toString() == "t");
     assert(m.evaluate("(stringp 1)")->toString() == "nil");
