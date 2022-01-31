@@ -9,6 +9,9 @@ void initStringFunctions(Machine& m)
     m.defun("char-or-string-p", [](ObjectPtr obj) {
         return obj->isString() || obj->isCharacter();
     });
+    m.defun("make-string", [](std::int64_t num, std::uint32_t c) {
+        return std::string(num, c);
+    });
     m.defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
     m.defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
     m.defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });

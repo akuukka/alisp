@@ -238,9 +238,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
         return !(cc && !!(*cc));
     });
-    defun("make-string", [](std::int64_t num, std::uint32_t c) {
-        return std::string(num, c);
-    });
     defun("null", [](bool isNil) { return !isNil; });
     defun("setcar", [](ConsCellObject obj, std::unique_ptr<Object> newcar) {
         return obj.cc->car = newcar->clone(), std::move(newcar);
