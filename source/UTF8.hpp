@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <iostream>
 #include <string>
 
 namespace alisp
@@ -31,6 +32,16 @@ constexpr int u8length(std::uint32_t codepoint)
         return 4;
     }
     return 0;
+}
+
+inline size_t strlen(const char *s)
+{
+    int len=0;
+    while (*s) {
+        if ((*s & 0xC0) != 0x80) len++;
+        s++;
+    }
+    return len;
 }
 
 inline std::string encode(std::uint32_t codepoint)

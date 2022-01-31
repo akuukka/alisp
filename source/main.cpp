@@ -270,6 +270,7 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((char-equal 65 ?A))code", R"code(t)code");
     ASSERT_OUTPUT_EQ(m, R"code((char-equal ?x ?b))code", R"code(nil)code");
     ASSERT_OUTPUT_EQ(m, R"code((char-to-string 12472))code", R"code("ジ")code");
+    ASSERT_OUTPUT_EQ(m, R"code((length "aジb"))code", R"code(1)code");
 }
 
 void testDivision()

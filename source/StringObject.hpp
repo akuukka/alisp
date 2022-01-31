@@ -27,7 +27,7 @@ struct StringObject : Object, Sequence
         return str && str->value == value;
     }
 
-    size_t length() const override { return value->size(); }
+    size_t length() const override;
 
     std::unique_ptr<Object> elt(std::int64_t index) const override;
 };

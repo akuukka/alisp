@@ -3,8 +3,15 @@
 #include "ValueObject.hpp"
 #include <stdexcept>
 #include "Exception.hpp"
+#include "UTF8.hpp"
 
 namespace alisp {
+
+ALISP_INLINE
+size_t StringObject::length() const
+{
+    return value ? utf8::strlen(value->c_str()) : 0;
+}
 
 template<>
 ALISP_INLINE std::optional<std::string> getValue(const Object& sym)
