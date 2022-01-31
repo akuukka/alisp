@@ -41,27 +41,30 @@ void initStringFunctions(Machine& m)
                                std::optional<std::string> sep,
                                std::optional<bool> omitNulls) -> ObjectPtr {
         std::smatch m;
-        std::regex e (sep ? *sep : "[ \n\t]+");
-        size_t prev = std::string::npos;
+        std::regex e (sep ? *sep : "[ \\n\\t]+");
 
         ListBuilder builder;
-
-        auto addMatch = [&](std::string m, bool sep) {
+        //std::cout << "s: " << s << std::endl;
+        auto addMatch = [&](std::string m) {
+            //std::cout << "add match: '" << m << "'" << std::endl;
             if (!omitNulls || *omitNulls) {
-                if (sep) return;
+                if (m.empty()) return;
             }
             builder.add(std::make_unique<StringObject>(m));
         };
         
         while (std::regex_search (s,m,e)) {
-            for (auto x:m) {
-                addMatch(x.str(), true);
-                if (prev != std::string::npos) {
-                    addMatch(s.substr(prev, m.position()), false);
+            //std::cout << "left: '" << s << "'" << std::endl;
+            //std::cout << "match pos:" << m.position() << std::endl;
+            for (auto x : m) {
+                addMatch(s.substr(0, m.position()));
+                if (m.position() + x.str().length() == s.size()) {
+                    addMatch("");
                 }
-                prev = 0;
+                break;
             }
             s = m.suffix().str();
+            //std::cout << "left suffix: '" << s << "'" << std::endl;
         }
         return builder.get();
     });
