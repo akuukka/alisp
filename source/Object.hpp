@@ -60,6 +60,9 @@ struct Object
     virtual bool isInt() const { return false; }
     virtual bool isFloat() const { return false; }
     virtual bool isString() const { return false; }
+    virtual bool isCharacter() const { return false; }
+    virtual bool isSymbol() const { return false; }
+
     virtual bool operator!() const { return false; }
     virtual Object* trySelfEvaluate() { return nullptr; }
 

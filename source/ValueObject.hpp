@@ -49,6 +49,7 @@ struct CharacterObject : ValueObject<std::int32_t>
         }
         return r;
     }
+    bool isCharacter() const override { return true; }
 };
 
 inline std::unique_ptr<IntObject> makeInt(std::int64_t value)

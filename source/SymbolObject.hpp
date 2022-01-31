@@ -34,10 +34,11 @@ struct SymbolObject : SharedDataObject
 
     std::shared_ptr<Symbol> getSymbol() const;
     Symbol* getSymbolOrNull() const;
-
+    
     Function* resolveFunction() override;
 
     void reset() override { sym.reset(); }
+    bool isSymbol() const override { return true; }
 
     std::string toString() const override
     {

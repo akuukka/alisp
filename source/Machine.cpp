@@ -424,6 +424,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("quote", 1, 1, [](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
+    defun("char-or-string-p", [](ObjectPtr obj) { return obj->isString() || obj->isCharacter(); });
     defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
     defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
