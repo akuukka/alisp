@@ -1,4 +1,5 @@
 #include <any>
+#include <optional>
 #include "ValueObject.hpp"
 #include "StringObject.hpp"
 #include "alisp.hpp"
@@ -55,6 +56,15 @@ template<>
 ALISP_INLINE std::optional<bool> getValue(const Object &sym)
 {
     return !!sym;
+}
+
+template<>
+ALISP_INLINE std::optional<StringObject> getValue(const Object& sym)
+{
+    if (sym.isString()) {
+        return dynamic_cast<const StringObject&>(sym);
+    }
+    return std::nullopt;
 }
 
 template<>

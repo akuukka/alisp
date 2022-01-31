@@ -1,4 +1,5 @@
 #include "ConsCellObject.hpp"
+#include "Exception.hpp"
 #include "Machine.hpp"
 #include "Object.hpp"
 #include "StringObject.hpp"
@@ -37,6 +38,29 @@ void initStringFunctions(Machine& m)
             return static_cast<char>(c);
         });
         return ret;
+    });
+    m.defun("store-substring", [](StringObject sobj,
+                                  std::int64_t idx,
+                                  std::variant<std::string, std::uint32_t> obj)
+    {
+        auto& str = *sobj.value;
+        try {
+            const std::uint32_t c = std::get<std::uint32_t>(obj);
+            if (idx < 0 || idx >= str.size()) {
+                throw exceptions::Error("Index out bounds");
+            }
+            str[idx] = c;
+        }
+        catch (std::bad_variant_access&) {
+            const std::string s = std::get<std::string>(obj);
+            if (idx < 0 || idx + s.size() > str.size()) {
+                throw exceptions::Error("Index out bounds. Can't grow string");
+            }
+            for (size_t i = 0; i < s.length(); i++) {
+                str[idx+i] = s[i];
+            }
+        }
+        return sobj;
     });
     m.defun("clear-string", [](std::string& str) { for (auto& c : str) { c = 0; } });
     m.defun("split-string", [](std::string s,

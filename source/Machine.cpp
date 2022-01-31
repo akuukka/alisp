@@ -728,6 +728,12 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(bool value)
 }
 
 template<>
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(StringObject obj)
+{
+    return obj.clone();
+}
+
+template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::unique_ptr<Object> o)
 {
     return o;

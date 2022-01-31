@@ -253,6 +253,20 @@ void testStrings()
     m.evaluate("(message \"%d\" 15)");
     m.evaluate("(message \"num: %d.%%\" 50)");
     assert(expectedMsgs.empty());
+    ASSERT_OUTPUT_EQ(m,
+                     R"code(
+(progn
+ (setq str "abc")
+ (store-substring str 0 "A"))
+)code",
+                     R"code("Abc")code");
+    ASSERT_OUTPUT_EQ(m, R"code((store-substring str 1 "B"))code", R"code("ABc")code");
+    ASSERT_OUTPUT_EQ(m, R"code((store-substring str 2 "C"))code", R"code("ABC")code");
+    ASSERT_EXCEPTION(m, R"code((store-substring str 3 "D"))code", alisp::exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, R"code((store-substring str 2 ?c))code", R"code("ABc")code");
+    ASSERT_EXCEPTION(m, R"code((store-substring str 4 ?d))code", alisp::exceptions::Error);
+    ASSERT_EXCEPTION(m, R"code((store-substring str -1 ?d))code", alisp::exceptions::Error);
+    ASSERT_EXCEPTION(m, R"code((store-substring str -1 "abc"))code", alisp::exceptions::Error);
 }
 
 void testDivision()
