@@ -16,6 +16,7 @@ namespace alisp {
 
 void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
+void initStringFunctions(Machine& m);
 
 ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
                                     const std::function<std::unique_ptr<Object>(FArgs &)>& f)
@@ -231,6 +232,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     setVariable("t", std::make_unique<SymbolObject>(this, nullptr, "t"), true);
     initMathFunctions(*this);
     initSequenceFunctions(*this);
+    initStringFunctions(*this);
     defun("atom", [](std::any obj) {
         if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
@@ -424,9 +426,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("quote", 1, 1, [](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
-    defun("char-or-string-p", [](ObjectPtr obj) { return obj->isString() || obj->isCharacter(); });
-    defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
-    defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
     makeFunc("make-symbol", 1, 1, [this](FArgs& args) {
         const auto arg = args.get();
@@ -592,7 +591,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return std::make_unique<StringObject>(descr);
     });
-    defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });
     defun("nth", [](std::int64_t index, ConsCellObject list) {
         auto p = list.cc.get();
         auto obj = list.cc->car.get();
@@ -633,17 +631,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             first = false;
         }
         return newList;
-    });
-    defun("substring", [](const std::string& str,
-                          std::optional<std::int64_t> start,
-                          std::optional<std::int64_t> end) {
-        if (start && *start < 0) {
-            *start = static_cast<std::int64_t>(str.size()) + *start;
-        }
-        if (end && *end < 0) {
-            *end = static_cast<std::int64_t>(str.size()) + *end;
-        }
-        return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
     });
     defun("boundp", [](const Symbol* sym) { return !sym || sym->variable ? true : false; });
     defun("makunbound", [](std::shared_ptr<Symbol> sym) {
