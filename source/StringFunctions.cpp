@@ -48,16 +48,16 @@ void initStringFunctions(Machine& m)
         }
 
         ListBuilder builder;
-        //std::cout << "s: " << s << std::endl;
+        //std::cout << "s: '" << s << "'" << std::endl;
         auto addMatch = [&](std::string m) {
             //std::cout << "add match: '" << m << "'" << std::endl;
             if (!omitNulls || *omitNulls) {
                 if (m.empty()) {
-                    // std::cout << " SKIP!\n";
+                    //std::cout << " SKIP!\n";
                     return;
                 }
             }
-            builder.add(std::make_unique<StringObject>(std::move(m)));
+            builder.append(std::make_unique<StringObject>(std::move(m)));
         };
 
         auto begin = s.cbegin();
@@ -69,16 +69,14 @@ void initStringFunctions(Machine& m)
                 auto p = std::distance(s.cbegin(), begin);
                 auto mp = p + m.position();
                 //std::cout << "match pos:" << mp << " size: " << x.length() << std::endl;
-                //std::cout << " => substr from " << p << " to " << (mp - p) <<  std::endl;
+                //std::cout << " => substr from " << p << " to " << mp <<  std::endl;
                 addMatch(s.substr(p, mp - p));
-                if (mp + x.str().length() == s.size()) {
-                    addMatch("");
-                }
                 begin = m.suffix().first;
                 break;
             }
             //std::cout << "left suffix: '" << s << "'" << std::endl;
         }
+        addMatch(s.substr(std::distance(s.cbegin(), begin)));
         return builder.get();
     });
 }

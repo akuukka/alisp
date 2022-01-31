@@ -167,7 +167,7 @@ std::unique_ptr<Object> ConsCellObject::elt(std::int64_t index) const
     return p && p->car ? p->car->clone() : makeNil();
 }
 
-ALISP_INLINE void ListBuilder::add(std::unique_ptr<Object> obj)
+ALISP_INLINE void ListBuilder::append(std::unique_ptr<Object> obj)
 {
     if (!m_list) {
         m_list = std::make_unique<ConsCellObject>();
