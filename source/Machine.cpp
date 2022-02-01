@@ -741,18 +741,32 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::unique_ptr<Object>
     return o;
 }
 
+inline std::pair<std::uint32_t, size_t> parseNextChar(const char* str)
+{
+    std::pair<std::uint32_t, size_t> p;
+    if (str[0] == '\\') {
+        if (!str[1]) {
+            throw exceptions::SyntaxError("EOF while parsing");
+        }
+        const char c = str[1];
+        if (c == 'n') return std::make_pair(static_cast<std::uint32_t>('\n'), 2);
+        str++;
+    }
+    p.second = utf8::next(str, &p.first);
+    return p;
+}
+
 ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
 {
     if (str[0] == '?') {
-        std::uint32_t encoded;
-        const int nlen = utf8::next(str + 1, &encoded);
-        if (nlen) {
-            const std::uint32_t codepoint = utf8::decode(encoded);
-            str += 1 + nlen;
-            return std::make_unique<CharacterObject>(codepoint);
-        }
         if (!str[1]) {
             throw exceptions::SyntaxError("EOF while parsing");
+        }
+        const std::pair<std::uint32_t, size_t> nchar = parseNextChar(str+1);
+        if (nchar.second) {
+            const std::uint32_t codepoint = utf8::decode(nchar.first);
+            str += 1 + nchar.second;
+            return std::make_unique<CharacterObject>(codepoint);
         }
         throw exceptions::Error("Invalid read syntax");
     }

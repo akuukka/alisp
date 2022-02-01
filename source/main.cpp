@@ -280,6 +280,7 @@ void testStrings()
     ASSERT_EXCEPTION(m, R"code((elt "aジb" 3))code", alisp::exceptions::Error);
     ASSERT_EXCEPTION(m, R"code((elt "" 0))code", alisp::exceptions::Error);
     ASSERT_OUTPUT_EQ(m, R"code((make-string 5 (elt "aジb" 1)))code", R"code("ジジジジジ")code");
+    ASSERT_OUTPUT_EQ(m, R"code((make-string 2 ?\n))code", "\"\n\n\"");
 }
 
 void testDivision()
