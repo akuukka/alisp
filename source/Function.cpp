@@ -62,14 +62,14 @@ void initFunctionFunctions(Machine& m)
         });
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(funcName));
     });
-    m.defun("functionp", [](const Symbol* sym) {
-        return sym->function && !sym->function->isMacro;
+    m.defun("functionp", [](const Symbol& sym) {
+        return sym.function && !sym.function->isMacro;
     });
-    m.defun("func-arity", [&m](const Symbol* sym) {
-        if (!sym->function) {
-            throw exceptions::VoidFunction("void-function " + sym->name);
+    m.defun("func-arity", [&m](const Symbol& sym) {
+        if (!sym.function) {
+            throw exceptions::VoidFunction("void-function " + sym.name);
         }
-        return m.makeConsCell(makeInt(sym->function->minArgs), makeInt(sym->function->maxArgs));
+        return m.makeConsCell(makeInt(sym.function->minArgs), makeInt(sym.function->maxArgs));
     });
 }
 

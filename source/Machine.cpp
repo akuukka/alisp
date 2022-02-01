@@ -553,15 +553,15 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return obj->clone();
     });
-    defun("mapatoms", [this](const Symbol* sym) {
-        if (!sym || !sym->function) {
-            throw exceptions::VoidFunction(sym ? sym->name : "nil");
+    defun("mapatoms", [this](const Symbol& sym) {
+        if (!sym.function) {
+            throw exceptions::VoidFunction(sym.name);
         }
         auto list = makeList(this);
         for (const auto& p : m_syms) {
             list->cc->car = quote(std::make_unique<SymbolObject>(this, p.second, ""));
             FArgs args(*list->cc, *this);
-            (sym->function->func)(args);
+            (sym.function->func)(args);
         }
         return makeNil();
     });
@@ -582,7 +582,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return newList;
     });
-    defun("boundp", [](const Symbol* sym) { return !sym || sym->variable ? true : false; });
+    defun("boundp", [](const Symbol& sym) { return sym.variable ? true : false; });
     defun("makunbound", [](std::shared_ptr<Symbol> sym) {
         if (!sym || sym->constant) {
             throw exceptions::Error("setting-constant" + (sym ? sym->name : std::string("nil")));

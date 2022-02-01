@@ -13,19 +13,6 @@ namespace alisp
 {
 
 template<>
-ALISP_INLINE std::optional<const Symbol*> getValue(const Object& sym)
-{
-    if (sym.isNil()) {
-        return sym.asList()->parent->getSymbol("nil").get();
-    }
-    auto s = dynamic_cast<const SymbolObject*>(&sym);
-    if (s) {
-        return s->getSymbol().get();
-    }
-    return std::nullopt;
-}
-
-template<>
 ALISP_INLINE std::optional<std::shared_ptr<Symbol>> getValue(const Object& sym)
 {
     if (sym.isNil()) {
@@ -112,12 +99,23 @@ ALISP_INLINE const std::string& getValueReference(const Object &sym)
     throw std::runtime_error("Failed to get string arg");
 }
 
-
 template<>
 ALISP_INLINE std::string& getValueReference(const Object &sym)
 {
     if (sym.isString()) {
         return *dynamic_cast<const StringObject*>(&sym)->value;
+    }
+    throw std::runtime_error("Failed to get string arg");
+}
+
+template<>
+ALISP_INLINE const Symbol& getValueReference(const Object &sym)
+{
+    if (sym.isNil()) {
+        return *sym.asList()->parent->getSymbol("nil");
+    }
+    if (sym.isSymbol()) {
+        return *dynamic_cast<const SymbolObject*>(&sym)->getSymbol();
     }
     throw std::runtime_error("Failed to get string arg");
 }
