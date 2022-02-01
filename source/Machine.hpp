@@ -22,6 +22,8 @@ class Machine
     void pushLocalVariable(std::string name, std::unique_ptr<Object> obj);
     bool popLocalVariable(std::string name);
 
+    std::unique_ptr<Object> makeNil();
+
     template <typename T>
     std::unique_ptr<Object> makeObject(T);
 

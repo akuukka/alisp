@@ -6,14 +6,17 @@
 
 namespace alisp {
 
+class Machine;
+
 struct ConsCellObject : SharedDataObject, Sequence
 {
     std::shared_ptr<ConsCell> cc;
+    Machine* parent = nullptr;
 
-    ConsCellObject() { cc = std::make_shared<ConsCell>(); }
+    ConsCellObject(Machine* parent) : parent(parent) { cc = std::make_shared<ConsCell>(); }
 
-    ConsCellObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr) :
-        ConsCellObject()
+    ConsCellObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr, Machine* p) :
+        ConsCellObject(p)
     {
         this->cc->car = std::move(car);
         if (!cdr || !(*cdr)) {
@@ -22,7 +25,7 @@ struct ConsCellObject : SharedDataObject, Sequence
         this->cc->cdr = std::move(cdr);
     }
 
-    ConsCellObject(const ConsCellObject& o) : cc(o.cc) {}
+    ConsCellObject(const ConsCellObject& o) : cc(o.cc), parent(o.parent) {}
 
     ~ConsCellObject()
     {
@@ -41,9 +44,7 @@ struct ConsCellObject : SharedDataObject, Sequence
 
     std::unique_ptr<Object> clone() const override
     {
-        auto copy = std::make_unique<ConsCellObject>();
-        copy->cc = cc;
-        return copy;
+        return std::make_unique<ConsCellObject>(*this);
     }
 
     bool equals(const Object &o) const override
@@ -71,7 +72,7 @@ struct ConsCellObject : SharedDataObject, Sequence
 
     std::unique_ptr<ConsCellObject> deepCopy() const
     {
-        std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>();
+        std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>(parent);
         ConsCell *origPtr = cc.get();
         ConsCell *copyPtr = copy->cc.get();
         assert(origPtr && copyPtr);
@@ -88,7 +89,7 @@ struct ConsCellObject : SharedDataObject, Sequence
             auto cdr = origPtr->cdr.get();
             origPtr = origPtr->next();
             if (origPtr) {
-                copyPtr->cdr = std::make_unique<ConsCellObject>();
+                copyPtr->cdr = std::make_unique<ConsCellObject>(parent);
                 copyPtr = copyPtr->next();
             }
             else if (cdr) {
@@ -105,21 +106,23 @@ struct ConsCellObject : SharedDataObject, Sequence
     size_t sharedDataRefCount() const override { return cc.use_count(); }
 };
 
-inline std::unique_ptr<Object> makeNil()
+inline std::unique_ptr<Object> makeNil(Machine* parent)
 {
-    return std::make_unique<ConsCellObject>();
+    return std::make_unique<ConsCellObject>(parent);
 }
 
-inline std::unique_ptr<ConsCellObject> makeList()
+inline std::unique_ptr<ConsCellObject> makeList(Machine* parent)
 {
-    return std::make_unique<ConsCellObject>();
+    return std::make_unique<ConsCellObject>(parent);
 }
 
 class ListBuilder
 {
     std::unique_ptr<ConsCellObject> m_list;
     ConsCell* m_last = nullptr;
+    Machine& m_parent;
 public:
+    ListBuilder(Machine& parent) : m_parent(parent) {}
     void append(std::unique_ptr<Object> obj);
     std::unique_ptr<ConsCellObject> get();
 };

@@ -66,7 +66,7 @@ void initMathFunctions(Machine& m)
                 const double v = sym->value<double>();
                 if (!first) {
                     if (v != f) {
-                        return makeNil();
+                        return makeNil(&m);
                     }
                 }
                 f = v;
@@ -76,7 +76,7 @@ void initMathFunctions(Machine& m)
                 const std::int64_t v = sym->value<std::int64_t>();
                 if (!first) {
                     if ((!fp && v != i) || (fp && v != f)) {
-                        return makeNil();
+                        return makeNil(&m);
                     }
                 }
                 i = v;

@@ -19,7 +19,7 @@ ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
     
     auto &c = *cc;
     if (!c) {
-        return std::make_unique<ConsCellObject>();
+        return std::make_unique<ConsCellObject>(parent);
     }
     const Function* f = c.car->resolveFunction();
     if (f) {
@@ -164,13 +164,13 @@ std::unique_ptr<Object> ConsCellObject::elt(std::int64_t index) const
             break;
         }
     }
-    return p && p->car ? p->car->clone() : makeNil();
+    return p && p->car ? p->car->clone() : makeNil(parent);
 }
 
 ALISP_INLINE void ListBuilder::append(std::unique_ptr<Object> obj)
 {
     if (!m_list) {
-        m_list = std::make_unique<ConsCellObject>();
+        m_list = std::make_unique<ConsCellObject>(&m_parent);
     }
     if (!m_last) {
         m_list->cc = std::make_shared<ConsCell>();
@@ -180,7 +180,7 @@ ALISP_INLINE void ListBuilder::append(std::unique_ptr<Object> obj)
         m_last->car = std::move(obj);
     }
     else {
-        auto newCc = std::make_unique<ConsCellObject>();
+        auto newCc = std::make_unique<ConsCellObject>(&m_parent);
         auto nextLast = newCc->cc.get();
         m_last->cdr = std::move(newCc);
         m_last = nextLast;
@@ -191,7 +191,7 @@ ALISP_INLINE void ListBuilder::append(std::unique_ptr<Object> obj)
 ALISP_INLINE std::unique_ptr<ConsCellObject> ListBuilder::get()
 {
     if (!m_list) {
-        return std::make_unique<ConsCellObject>();
+        return std::make_unique<ConsCellObject>(&m_parent);
     }
     auto r = std::move(m_list);
     m_list = nullptr;

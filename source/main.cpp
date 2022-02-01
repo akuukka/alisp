@@ -613,6 +613,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(progn (defun xx () t) (functionp 'xx))", "t");
     ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
     ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
+    // ASSERT_OUTPUT_EQ(m, "(functionp nil)", "nil");
     assert(expectedMsgs.empty());
 }
 
@@ -669,7 +670,7 @@ void testIf()
 void testCyclicals()
 {
     alisp::Machine m;
-    assert(!alisp::makeList()->cc->isCyclical());
+    assert(!alisp::makeList(&m)->cc->isCyclical());
     ASSERT_OUTPUT_EQ(m,
                      "(progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z)",
                      "(1 2 3 2 . #2)");

@@ -176,7 +176,7 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
             return quote(parseNext(expr));
         }
         else if (c == '(') {
-            auto l = makeList();
+            auto l = makeList(this);
             bool dot = false;
             auto lastConsCell = l->cc.get();
             assert(lastConsCell);
@@ -203,7 +203,7 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
                 else {
                     if (lastConsCell->car) {
                         assert(!lastConsCell->cdr);
-                        lastConsCell->cdr = std::make_unique<ConsCellObject>();
+                        lastConsCell->cdr = std::make_unique<ConsCellObject>(this);
                         assert(lastConsCell != lastConsCell->next());
                         lastConsCell = lastConsCell->next();
                     }
@@ -249,10 +249,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("setcdr", [](ConsCellObject obj, std::unique_ptr<Object> newcdr) {
         return obj.cc->cdr = newcdr->clone(), std::move(newcdr);
     });
-    defun("car", [](ConsCellObject obj) { 
+    defun("car", [this](ConsCellObject obj) { 
         return obj.cc->car ? obj.cc->car->clone() : makeNil();
     });
-    defun("cdr", [](ConsCellObject obj) {
+    defun("cdr", [this](ConsCellObject obj) {
         return obj.cc->cdr ? obj.cc->cdr->clone() : makeNil();
     });
     defun("consp", [](std::any obj) {
@@ -262,7 +262,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     });
     defun("listp", [](std::any o) { return o.type() == typeid(std::shared_ptr<ConsCell>); });
     defun("nlistp", [](std::any o) { return o.type() != typeid(std::shared_ptr<ConsCell>); });
-    defun("proper-list-p", [](std::any obj) {
+    defun("proper-list-p", [this](std::any obj) {
         if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return makeNil();
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
         std::unique_ptr<Object> r;
@@ -374,11 +374,11 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("make-list", [this](std::int64_t n, ObjectPtr ptr) {
         std::unique_ptr<Object> r = makeNil();
         for (std::int64_t i=0; i < n; i++) {
-            r = std::make_unique<ConsCellObject>(ptr->clone(), r->clone());
+            r = std::make_unique<ConsCellObject>(ptr->clone(), r->clone(), this);
         }
         return r;
     });
-    makeFunc("quote", 1, 1, [](FArgs& args) {
+    makeFunc("quote", 1, 1, [this](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
@@ -453,14 +453,14 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return std::make_unique<StringObject>(str);
     });
-    makeFunc("progn", 0, 0xfffff, [](FArgs& args) {
+    makeFunc("progn", 0, 0xfffff, [&](FArgs& args) {
         std::unique_ptr<Object> ret = makeNil();
         for (auto obj : args) {
             ret = std::move(obj);
         }
         return ret;
     });
-    makeFunc("prog1", 0, 0xfffff, [](FArgs& args) {
+    makeFunc("prog1", 0, 0xfffff, [&](FArgs& args) {
         std::unique_ptr<Object> ret;
         for (auto obj : args) {
             assert(obj);
@@ -546,7 +546,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return std::make_unique<StringObject>(descr);
     });
-    defun("nth", [](std::int64_t index, ConsCellObject list) {
+    defun("nth", [&](std::int64_t index, ConsCellObject list) {
         auto p = list.cc.get();
         auto obj = list.cc->car.get();
         for (size_t i = 0; i < index; i++) {
@@ -562,7 +562,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         if (!sym || !sym->function) {
             throw exceptions::VoidFunction(sym ? sym->name : "nil");
         }
-        auto list = makeList();
+        auto list = makeList(this);
         for (const auto& p : m_syms) {
             list->cc->car = quote(std::make_unique<SymbolObject>(this, p.second, ""));
             FArgs args(*list->cc, *this);
@@ -570,16 +570,16 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return makeNil();
     });
-    makeFunc("cons", 2, 2, [](FArgs &args) {
-        return std::make_unique<ConsCellObject>(args.pop()->clone(), args.pop()->clone());
+    makeFunc("cons", 2, 2, [](FArgs& args) {
+        return std::make_unique<ConsCellObject>(args.pop()->clone(), args.pop()->clone(), &args.m);
     });
     makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
-        auto newList = makeList();
+        auto newList = makeList(&args.m);
         ConsCell *lastCc = newList->cc.get();
         bool first = true;
         for (auto obj : args) {
             if (!first) {
-                lastCc->cdr = std::make_unique<ConsCellObject>();
+                lastCc->cdr = std::make_unique<ConsCellObject>(&args.m);
                 lastCc = lastCc->next();
             }
             lastCc->car = obj->clone();
@@ -653,16 +653,16 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parse(const char *expr)
         return r;
     }
 
-    auto prog = makeList();
+    auto prog = makeList(this);
     prog->cc->car = std::make_unique<SymbolObject>(this, nullptr, "progn");
 
-    auto consCell = makeList();
+    auto consCell = makeList(this);
     consCell->cc->car = std::move(r);
     auto lastCell = consCell->cc.get();
     
     while (!onlyWhitespace(expr)) {
         auto n = parseNext(expr);
-        lastCell->cdr = std::make_unique<ConsCellObject>(std::move(n), nullptr);
+        lastCell->cdr = std::make_unique<ConsCellObject>(std::move(n), nullptr, this);
         lastCell = lastCell->next();
     }
     prog->cc->cdr = std::move(consCell);
@@ -690,6 +690,9 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(StringObject obj)
 {
     return obj.clone();
 }
+
+ALISP_INLINE
+std::unique_ptr<Object> Machine::makeNil() { return alisp::makeNil(this); }
 
 template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::unique_ptr<Object> o)
@@ -769,9 +772,9 @@ ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char *&str
 ALISP_INLINE
 std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj)
 {
-    std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>();
+    std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>(this);
     list->cc->car = std::make_unique<SymbolObject>(this, nullptr, "quote");
-    std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>();
+    std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>(this);
     cdr->cc->car = std::move(obj);
     list->cc->cdr = std::move(cdr);
     return list;

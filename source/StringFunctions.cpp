@@ -92,9 +92,10 @@ void initStringFunctions(Machine& m)
         return sobj;
     });
     m.defun("clear-string", [](std::string& str) { for (auto& c : str) { c = 0; } });
-    m.defun("split-string", [](std::string s,
+    m.defun("split-string", [&m](std::string s,
                                std::optional<std::string> sep,
                                std::optional<bool> omitNulls) -> ObjectPtr {
+        ListBuilder builder(m);
         std::smatch m;
         std::regex e(sep ? *sep : "[ \\n\\t\\r\\v]+");
 
@@ -102,7 +103,6 @@ void initStringFunctions(Machine& m)
             omitNulls = false;
         }
 
-        ListBuilder builder;
         auto addMatch = [&](std::string m) {
             if (!omitNulls || *omitNulls) {
                 if (m.empty()) {
