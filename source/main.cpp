@@ -610,7 +610,9 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(cdar nil)", "nil");
     ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", alisp::exceptions::WrongTypeArgument);    
     ASSERT_OUTPUT_EQ(m, "(caar '((8) 2 3))", "8");
-    ASSERT_OUTPUT_EQ(m, "(progn (defun xx () t) (functionp 'xx))", "tt");
+    ASSERT_OUTPUT_EQ(m, "(progn (defun xx () t) (functionp 'xx))", "t");
+    ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
+    ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
     assert(expectedMsgs.empty());
 }
 
