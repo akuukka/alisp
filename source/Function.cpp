@@ -16,7 +16,7 @@ struct FuncParams {
     std::vector<std::string> names;
 };
 
-inline FuncParams getFuncParams(ConsCellObject& closure)
+inline FuncParams getFuncParams(const ConsCellObject& closure)
 {
     FuncParams fp;
     std::vector<std::string>& argList = fp.names;
@@ -32,14 +32,9 @@ inline FuncParams getFuncParams(ConsCellObject& closure)
     return fp;
 }
 
-struct Closure
+ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
 {
-    std::unique_ptr<ConsCellObject> data;
-};
-
-ObjectPtr Machine::execute(Closure& closure, FArgs& a)
-{
-    const auto fp = getFuncParams(*closure.data);
+    const auto fp = getFuncParams(closure);
     const auto& argList = fp.names;
     size_t i = 0;
     for (size_t i = 0; i < argList.size(); i++) {
@@ -50,9 +45,8 @@ ObjectPtr Machine::execute(Closure& closure, FArgs& a)
             popLocalVariable(*it);
         }
     });
-    assert(closure.data->asList());
     std::unique_ptr<Object> ret = makeNil();
-    for (auto& obj : *closure.data->asList()->cdr()->asList()) {
+    for (auto& obj : *closure.cdr()->asList()) {
         ret = obj.eval();
     }
     return ret;
@@ -67,9 +61,9 @@ void initFunctionFunctions(Machine& m)
         }
         std::string funcName = nameSym->name;
         args.skip();
-        std::shared_ptr<Closure> closure = std::make_shared<Closure>();
-        closure->data = m.makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
-        const FuncParams fp = getFuncParams(*closure->data);
+        std::shared_ptr<ConsCellObject> closure =
+            m.makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
+        const FuncParams fp = getFuncParams(*closure);
         m.makeFunc(funcName.c_str(), fp.min, fp.max, [&m, closure](FArgs& a) {
             return m.execute(*closure, a);
         });
