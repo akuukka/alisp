@@ -25,10 +25,18 @@ ALISP_INLINE std::optional<std::string> getValue(const Object& sym)
 
 ALISP_INLINE std::unique_ptr<Object> StringObject::elt(std::int64_t index) const
 {
-    if (static_cast<size_t>(index) >= value->size()) {
-        throw alisp::exceptions::Error("Index out of range");
+    std::uint32_t encoded;
+    size_t offset = 0;
+    const char* start = value->c_str();
+    for (std::int64_t i = 0; i <= index; i++) {
+        if (offset >= value->size()) {
+            throw alisp::exceptions::Error("Index out of range");
+        }
+        const size_t proceed = utf8::next(start + offset, &encoded);
+        offset += proceed;
     }
-    return std::make_unique<CharacterObject>(value->at(index));
+    const std::uint32_t codepoint = utf8::decode(encoded);
+    return std::make_unique<CharacterObject>(codepoint);
 }
 
 }

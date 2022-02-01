@@ -1,6 +1,7 @@
 #include "ValueObject.hpp"
 #include "alisp.hpp"
 #include <limits>
+#include "UTF8.hpp"
 
 namespace alisp
 {
@@ -38,5 +39,18 @@ ALISP_INLINE std::optional<std::uint32_t> getValue(const Object &sym)
     }
     return std::nullopt;
 }
+
+ALISP_INLINE std::string CharacterObject::toString() const
+{
+    std::string r = std::to_string(value);
+    const std::string encoded = utf8::encode(value);
+    if (encoded.length()) {
+        r += " (";
+        r += encoded;
+        r += ")";
+    }
+    return r;
+}
+
 
 }

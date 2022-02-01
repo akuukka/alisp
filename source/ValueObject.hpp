@@ -32,23 +32,14 @@ struct FloatObject : ValueObject<double>
     std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
 };
 
-struct CharacterObject : ValueObject<std::int32_t>
+struct CharacterObject : ValueObject<std::uint32_t>
 {
-    CharacterObject(char c) : ValueObject<std::int32_t>(c) {}
+    CharacterObject(std::uint32_t c) : ValueObject<std::uint32_t>(c) {}
     std::unique_ptr<Object> clone() const override
     {
         return std::make_unique<CharacterObject>(value);
     }
-    std::string toString() const override
-    {
-        std::string r = std::to_string(value);
-        if (value < 128) {
-            r += " (";
-            r += (char)value;
-            r += ")";
-        }
-        return r;
-    }
+    std::string toString() const override;
     bool isCharacter() const override { return true; }
 };
 

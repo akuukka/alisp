@@ -272,6 +272,10 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((char-to-string 12472))code", R"code("ジ")code");
     ASSERT_OUTPUT_EQ(m, R"code((length "aジb"))code", R"code(3)code");
     ASSERT_OUTPUT_EQ(m, R"code((string-bytes "aジb"))code", R"code(5)code");
+    ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 2))code", R"code(98 (b))code");
+    ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 1))code", R"code(12472 (ジ))code");
+    ASSERT_EXCEPTION(m, R"code((elt "aジb" 3))code", alisp::exceptions::Error);
+    ASSERT_EXCEPTION(m, R"code((elt "" 0))code", alisp::exceptions::Error);
 }
 
 void testDivision()

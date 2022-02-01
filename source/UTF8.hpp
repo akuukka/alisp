@@ -1,3 +1,4 @@
+#include <_types/_uint32_t.h>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -34,6 +35,38 @@ constexpr int u8length(std::uint32_t codepoint)
     return 0;
 }
 
+inline bool u8chrisvalid(std::uint32_t c)
+{
+    if (c <= 0x7F) return true;                    // [1]
+    if (0xC280 <= c && c <= 0xDFBF)             // [2]
+        return ((c & 0xE0C0) == 0xC080);
+    if (0xEDA080 <= c && c <= 0xEDBFBF)         // [3]
+        return 0; // Reject UTF-16 surrogates
+    if (0xE0A080 <= c && c <= 0xEFBFBF)         // [4]
+        return ((c & 0xF0C0C0) == 0xE08080);
+    if (0xF0908080 <= c && c <= 0xF48FBFBF)     // [5]
+        return ((c & 0xF8C0C0C0) == 0xF0808080);
+    return false;
+}
+
+inline size_t next(const char *txt, std::uint32_t* ch = nullptr)
+{
+    int len;
+    std::uint32_t encoding = 0;
+    len = u8length(txt);
+    for (int i=0; i<len && txt[i] != '\0'; i++) {
+        encoding = (encoding << 8) | (unsigned char)txt[i];
+    }
+    errno = 0;
+    if (len == 0 || !u8chrisvalid(encoding)) {
+        encoding = txt[0];
+        len = 1;
+        errno = EINVAL;
+    }
+    if (ch) *ch = encoding;
+    return encoding ? len : 0 ;
+}
+
 inline size_t strlen(const char *s)
 {
     int len=0;
@@ -65,6 +98,19 @@ inline std::string encode(std::uint32_t codepoint)
         s[i] = p[len-i-1];
     }
     return s;
+}
+
+inline std::uint32_t decode(std::uint32_t c)
+{
+    std::uint32_t mask;
+    if (c > 0x7F) {
+        mask = (c <= 0x00EFBFBF)? 0x000F0000 : 0x003F0000 ;
+        c = ((c & 0x07000000) >> 6) |
+            ((c & mask )      >> 4) |
+            ((c & 0x00003F00) >> 2) |
+            (c & 0x0000003F);
+    }    
+    return c;
 }
 
 }}
