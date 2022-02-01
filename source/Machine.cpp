@@ -15,6 +15,7 @@
 
 namespace alisp {
 
+void initFunctionFunctions(Machine& m);
 void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
 void initStringFunctions(Machine& m);
@@ -235,6 +236,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     initMathFunctions(*this);
     initSequenceFunctions(*this);
     initStringFunctions(*this);
+    initFunctionFunctions(*this);
     defun("atom", [](std::any obj) {
         if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
@@ -375,52 +377,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             r = std::make_unique<ConsCellObject>(ptr->clone(), r->clone());
         }
         return r;
-    });
-    makeFunc("defun", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
-        const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
-        if (!nameSym || nameSym->name.empty()) {
-            throw exceptions::WrongTypeArgument(args.cc->car->toString());
-        }
-        std::string funcName = nameSym->name;
-        args.skip();
-        std::vector<std::string> argList;
-        int argc = 0;
-        for (auto& arg : *args.cc->car->asList()) {
-            const auto sym = dynamic_cast<const SymbolObject*>(&arg);
-            if (!sym) {
-                throw exceptions::Error("Malformed arglist: " + args.cc->car->toString());
-            }
-            argList.push_back(sym->name);
-            argc++;
-        }
-        std::shared_ptr<Object> code;
-        code.reset(args.cc->cdr.release());
-        // std::cout << funcName << " defined as: " << *code << " (argc=" << argc << ")\n";
-        makeFunc(funcName.c_str(), argc, argc,
-                 [this, funcName, argList, code](FArgs& a) {
-                     /*if (argList.size()) {
-                       std::cout << funcName << " being called with args="
-                       << a.cc->toString() << std::endl;
-                       }*/
-                     size_t i = 0;
-                     for (size_t i = 0; i < argList.size(); i++) {
-                         pushLocalVariable(argList[i], a.pop()->clone());
-                     }
-                     AtScopeExit onExit([this, argList]() {
-                         for (auto it = argList.rbegin(); it != argList.rend(); ++it) {
-                             popLocalVariable(*it);
-                         }
-                     });
-                     assert(code->asList());
-                     std::unique_ptr<Object> ret = makeNil();
-                     for (auto& obj : *code->asList()) {
-                         //std::cout << "exec: " << obj.toString() << std::endl;
-                         ret = obj.eval();
-                         //std::cout << " => " << ret->toString() << std::endl;
-                     }
-                     return ret;
-                 });
-        return std::make_unique<SymbolObject>(this, nullptr, std::move(funcName));
     });
     makeFunc("quote", 1, 1, [](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();

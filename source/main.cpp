@@ -610,15 +610,8 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(cdar nil)", "nil");
     ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", alisp::exceptions::WrongTypeArgument);    
     ASSERT_OUTPUT_EQ(m, "(caar '((8) 2 3))", "8");
+    ASSERT_OUTPUT_EQ(m, "(progn (defun xx () t) (functionp 'xx))", "tt");
     assert(expectedMsgs.empty());
-    /*
-(defun test (z)
-  (set 'z (+ z 1))
-  (message "%d" z)
-  z)
-(test 1) ; 1
-(message "%d" z) ; 2
-     */
 }
 
 void testLet()

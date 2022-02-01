@@ -16,3 +16,4 @@
 #include "MathFunctions.cpp"
 #include "SequenceFunctions.cpp"
 #include "StringFunctions.cpp"
+#include "Function.cpp"
