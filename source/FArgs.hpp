@@ -43,7 +43,7 @@ struct FArgs
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
-    Object* get();
+    Object* pop();
     
     void skip()
     {
@@ -102,7 +102,7 @@ template<typename T>
 inline typename std::enable_if<std::is_reference_v<T> && !std::is_same_v<T, FArgs&>, T>::type
 getFuncParam(FArgs& args)
 {
-    Object* arg = args.get();
+    Object* arg = args.pop();
     try {
         return arg->value<T>();
     }
@@ -130,7 +130,7 @@ inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& 
     Object* arg;
     bool conversionFailed = false;
     if (args.hasNext()) {
-        arg = args.get();
+        arg = args.pop();
         opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
         if (!opt) {
             if (arg->isNil()) {
@@ -150,7 +150,7 @@ inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& 
 template<typename T>
 inline typename std::enable_if<!specialParamType<T>(), T>::type getFuncParam(FArgs& args)
 {
-    Object* arg = args.get();
+    Object* arg = args.pop();
     std::optional<typename OptCheck<T>::BaseType> opt = arg->valueOrNull<T>();
     if (!opt) {
         throw exceptions::WrongTypeArgument(arg->toString());
@@ -158,7 +158,7 @@ inline typename std::enable_if<!specialParamType<T>(), T>::type getFuncParam(FAr
     return std::move(*opt);
 }
     
-inline Object* FArgs::get()
+inline Object* FArgs::pop()
 {
     if (!cc) {
         return nullptr;

@@ -60,7 +60,7 @@ void initStringFunctions(Machine& m)
     m.defun("string", [](Rest& rest) {
         std::string ret;
         while (rest.hasNext()) {
-            auto arg = rest.get();
+            auto arg = rest.pop();
             const std::optional<std::uint32_t> codepoint =
                 arg->valueOrNull<std::uint32_t>();
             if (!codepoint) {

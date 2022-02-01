@@ -308,11 +308,11 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
     });
     makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
-        if (!!*args.get()) {
-            return args.get()->clone();
+        if (!!*args.pop()) {
+            return args.pop()->clone();
         }
         args.skip();
-        while (auto res = args.get()) {
+        while (auto res = args.pop()) {
             if (!args.hasNext()) {
                 return res->clone();
             }
@@ -404,7 +404,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                        }*/
                      size_t i = 0;
                      for (size_t i = 0; i < argList.size(); i++) {
-                         pushLocalVariable(argList[i], a.get()->clone());
+                         pushLocalVariable(argList[i], a.pop()->clone());
                      }
                      AtScopeExit onExit([this, argList]() {
                          for (auto it = argList.rbegin(); it != argList.rend(); ++it) {
@@ -427,7 +427,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
     makeFunc("make-symbol", 1, 1, [this](FArgs& args) {
-        const auto arg = args.get();
+        const auto arg = args.pop();
         if (!arg->isString()) {
             throw exceptions::WrongTypeArgument(arg->toString());
         }
@@ -436,19 +436,19 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return std::make_unique<SymbolObject>(this, symbol, "");
     });
     makeFunc("symbolp", 1, 1, [this](FArgs& args) {
-        return dynamic_cast<SymbolObject*>(args.get()) ? makeTrue() : makeNil();
+        return dynamic_cast<SymbolObject*>(args.pop()) ? makeTrue() : makeNil();
     });
     makeFunc("symbol-name", 1, 1, [](FArgs& args) {
-        const auto obj = args.get();
+        const auto obj = args.pop();
         const auto sym = dynamic_cast<SymbolObject*>(obj);
         if (!sym) {
             throw exceptions::WrongTypeArgument(obj->toString());
         }
         return std::make_unique<StringObject>(sym->getSymbolName());
     });
-    makeFunc("eval", 1, 1, [](FArgs& args) { return args.get()->eval(); });
+    makeFunc("eval", 1, 1, [](FArgs& args) { return args.pop()->eval(); });
     makeFunc("message", 1, 0xffff, [this](FArgs& args) {
-        auto arg = args.get();
+        auto arg = args.pop();
         if (!arg->isString()) {
             throw exceptions::WrongTypeArgument(arg->toString());
         }
@@ -460,7 +460,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                     str.erase(i, 1);
                 }
                 else if (str[i+1] == 's') {
-                    const auto nextSym = args.get();
+                    const auto nextSym = args.pop();
                     std::string stringVal;
                     if (nextSym->isString()) {
                         stringVal = nextSym->value<std::string>();
@@ -471,7 +471,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                     str = str.substr(0, i) + stringVal + str.substr(i+2);
                 }
                 else if (str[i+1] == 'd') {
-                    const auto nextSym = args.get();
+                    const auto nextSym = args.pop();
                     std::int64_t intVal;
                     if (nextSym->isInt()) {
                         intVal = nextSym->value<std::int64_t>();
@@ -519,7 +519,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             return std::make_unique<SymbolObject>(this, getSymbol(name));
         });
     makeFunc("unintern", 1, 1, [this](FArgs& args) {
-        const auto arg = args.get();
+        const auto arg = args.pop();
         const auto sym = dynamic_cast<SymbolObject*>(arg);
         if (!sym) {
             throw exceptions::WrongTypeArgument(arg->toString());
@@ -528,7 +528,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return uninterned ? makeTrue() : makeNil();
     });
     makeFunc("intern-soft", 1, 1, [this](FArgs& args) {
-        const auto arg = args.get();
+        const auto arg = args.pop();
         if (!arg->isString()) {
             throw exceptions::WrongTypeArgument(arg->toString());
         }
@@ -543,14 +543,14 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     });
     makeFunc("set", 2, 2, [this](FArgs& args) {
         const SymbolObject nil(this, nullptr, "nil");
-        const auto& p1 = args.get();
+        const auto& p1 = args.pop();
         const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
         if (!name) {
             throw exceptions::WrongTypeArgument(p1->toString());
         }
         if (!name->sym && m_locals.count(name->name) && m_locals[name->name].size()) {
             auto& loc = m_locals[name->name].back()->variable;
-            loc = args.get()->clone();
+            loc = args.pop()->clone();
             return loc->clone();
         }
         auto sym = name->getSymbol();
@@ -558,14 +558,14 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         if (sym->constant) {
             throw exceptions::Error("setting-constant " + name->toString());
         }
-        sym->variable = args.get()->clone();
+        sym->variable = args.pop()->clone();
         return sym->variable->clone();
     });
     makeFunc("eq", 2, 2, [this](FArgs& args) {
-        return args.get()->equals(*args.get()) ? makeTrue() : makeNil();
+        return args.pop()->equals(*args.pop()) ? makeTrue() : makeNil();
     });
     makeFunc("describe-variable", 1, 1, [this](FArgs& args) {
-        const auto arg = args.get();
+        const auto arg = args.pop();
         std::string descr = "You did not specify a variable.";
         if (auto sym = dynamic_cast<SymbolObject*>(arg)) {
             const Object* var = nullptr;
@@ -615,7 +615,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return makeNil();
     });
     makeFunc("cons", 2, 2, [](FArgs &args) {
-        return std::make_unique<ConsCellObject>(args.get()->clone(), args.get()->clone());
+        return std::make_unique<ConsCellObject>(args.pop()->clone(), args.pop()->clone());
     });
     makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
         auto newList = makeList();
