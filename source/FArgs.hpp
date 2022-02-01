@@ -20,6 +20,7 @@ struct Function
     int maxArgs = 0xffff;
     bool isMacro = false;
     std::function<std::unique_ptr<Object>(FArgs&)> func;
+    std::shared_ptr<ConsCellObject> closure;
 };
 
 inline int countArgs(const ConsCell* cc)

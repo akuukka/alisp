@@ -92,8 +92,8 @@ public:
     Object* resolveVariable(const std::string& name);
     Function* resolveFunction(const std::string& name);
 
-    void makeFunc(const char *name, int minArgs, int maxArgs,
-                  const std::function<std::unique_ptr<Object>(FArgs &)>& f);
+    Function* makeFunc(const char *name, int minArgs, int maxArgs,
+                       const std::function<std::unique_ptr<Object>(FArgs &)>& f);
 
     Machine(bool initStandardLibrary = true);
 

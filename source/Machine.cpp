@@ -21,8 +21,8 @@ void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
 void initStringFunctions(Machine& m);
 
-ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
-                                    const std::function<std::unique_ptr<Object>(FArgs &)>& f)
+ALISP_INLINE Function* Machine::makeFunc(const char *name, int minArgs, int maxArgs,
+                                         const std::function<std::unique_ptr<Object>(FArgs &)>& f)
 {
     auto func = std::make_unique<Function>();
     func->name = name;
@@ -31,6 +31,7 @@ ALISP_INLINE void Machine::makeFunc(const char *name, int minArgs, int maxArgs,
     func->func = std::move(f);
     auto sym = getSymbol(name);
     sym->function = std::move(func);
+    return sym->function.get();
 }
 
 ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)

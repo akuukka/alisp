@@ -1,11 +1,13 @@
 #include "ConsCellObject.hpp"
 #include "Exception.hpp"
+#include "FunctionObject.hpp"
 #include "Template.hpp"
 #include "ValueObject.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "SymbolObject.hpp"
 #include "AtScopeExit.hpp"
+#include <memory>
 
 namespace alisp
 {
@@ -54,6 +56,18 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
 
 void initFunctionFunctions(Machine& m)
 {
+    m.makeFunc("lambda", 1, std::numeric_limits<int>::max(), [&m](FArgs& args) {
+        auto func = std::make_shared<Function>();
+        func->name = "anon";
+        std::shared_ptr<ConsCellObject> closure =
+            m.makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
+        const FuncParams fp = getFuncParams(*closure);
+        func->minArgs = fp.min;
+        func->maxArgs = fp.max;
+        func->func = [&m, closure](FArgs& a) { return m.execute(*closure, a); };
+        func->closure = closure;
+        return std::make_unique<FunctionObject>(func);
+    });
     m.makeFunc("defun", 2, std::numeric_limits<int>::max(), [&m](FArgs& args) {
         const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
         if (!nameSym || nameSym->name.empty()) {
@@ -66,7 +80,7 @@ void initFunctionFunctions(Machine& m)
         const FuncParams fp = getFuncParams(*closure);
         m.makeFunc(funcName.c_str(), fp.min, fp.max, [&m, closure](FArgs& a) {
             return m.execute(*closure, a);
-        });
+        })->closure = closure;
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(funcName));
     });
     m.defun("functionp", [](const Symbol& sym) {

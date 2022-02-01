@@ -598,7 +598,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(defun foo () (message \"foo\") 5)", "foo");
     ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (message msg) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(symbol-function nil)", "nil");
-    ASSERT_OUTPUT_EQ(m, "(symbol-function 'foo2)", "foo2");
+    ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(msg) (message msg) msg");
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
     ASSERT_EXCEPTION(m, "(foo2)", alisp::exceptions::WrongNumberOfArguments);
     ASSERT_OUTPUT_EQ(m, "(foo2 \"abc\")", "\"abc\"");
@@ -617,6 +617,11 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
     ASSERT_OUTPUT_EQ(m, "(functionp nil)", "nil");
     assert(expectedMsgs.empty());
+    ASSERT_OUTPUT_CONTAINS(m, R"code(
+(lambda (x)
+  "Return the hyperbolic cosine of X."
+  (* 0.5 (+ (exp x) (exp (- x)))))
+)code", "hyperbolic");
 }
 
 void testLet()
