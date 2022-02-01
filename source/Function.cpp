@@ -10,26 +10,49 @@
 namespace alisp
 {
 
+struct FuncParams {
+    int min = 0;
+    int max = 0;
+    std::vector<std::string> names;
+};
+
+inline FuncParams getFuncParams(ConsCellObject& closure)
+{
+    FuncParams fp;
+    std::vector<std::string>& argList = fp.names;
+    for (auto& arg : *closure.cc->car->asList()) {
+        const auto sym = dynamic_cast<const SymbolObject*>(&arg);
+        if (!sym) {
+            throw exceptions::Error("Malformed arglist: " + closure.cc->car->toString());
+        }
+        argList.push_back(sym->name);
+        fp.min++;
+        fp.max++;
+    }
+    return fp;
+}
+
 struct Closure
 {
-    std::vector<std::string> argList;
-    std::unique_ptr<Object> code;
+    std::unique_ptr<ConsCellObject> data;
 };
 
 ObjectPtr Machine::execute(Closure& closure, FArgs& a)
 {
+    const auto fp = getFuncParams(*closure.data);
+    const auto& argList = fp.names;
     size_t i = 0;
-    for (size_t i = 0; i < closure.argList.size(); i++) {
-        pushLocalVariable(closure.argList[i], a.pop()->clone());
+    for (size_t i = 0; i < argList.size(); i++) {
+        pushLocalVariable(argList[i], a.pop()->clone());
     }
-    AtScopeExit onExit([this, &closure]() {
-        for (auto it = closure.argList.rbegin(); it != closure.argList.rend(); ++it) {
+    AtScopeExit onExit([this, argList, &closure]() {
+        for (auto it = argList.rbegin(); it != argList.rend(); ++it) {
             popLocalVariable(*it);
         }
     });
-    assert(closure.code->asList());
+    assert(closure.data->asList());
     std::unique_ptr<Object> ret = makeNil();
-    for (auto& obj : *closure.code->asList()) {
+    for (auto& obj : *closure.data->asList()->cdr()->asList()) {
         ret = obj.eval();
     }
     return ret;
@@ -44,20 +67,10 @@ void initFunctionFunctions(Machine& m)
         }
         std::string funcName = nameSym->name;
         args.skip();
-        std::vector<std::string> argList;
-        int argc = 0;
-        for (auto& arg : *args.cc->car->asList()) {
-            const auto sym = dynamic_cast<const SymbolObject*>(&arg);
-            if (!sym) {
-                throw exceptions::Error("Malformed arglist: " + args.cc->car->toString());
-            }
-            argList.push_back(sym->name);
-            argc++;
-        }
         std::shared_ptr<Closure> closure = std::make_shared<Closure>();
-        closure->argList = std::move(argList);
-        closure->code = args.cc->cdr->clone();
-        m.makeFunc(funcName.c_str(), argc, argc, [&m, closure](FArgs& a) {
+        closure->data = m.makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
+        const FuncParams fp = getFuncParams(*closure->data);
+        m.makeFunc(funcName.c_str(), fp.min, fp.max, [&m, closure](FArgs& a) {
             return m.execute(*closure, a);
         });
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(funcName));
