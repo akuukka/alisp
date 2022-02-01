@@ -622,10 +622,14 @@ void testFunctions()
   "Return the hyperbolic cosine of X."
   (* 0.5 (+ (exp x) (exp (- x)))))
 )code", "hyperbolic");
-    ASSERT_OUTPUT_CONTAINS(m, R"code(
+    ASSERT_OUTPUT_EQ(m, R"code(
 (funcall (lambda (a b c) (+ a b c))
          1 2 3)
 )code", "6");
+    ASSERT_OUTPUT_EQ(m, R"code(
+(funcall (lambda (a b c) (+ a b c)) 1 (* 2 3) 1)
+)code", "8");
+    
 }
 
 void testLet()
