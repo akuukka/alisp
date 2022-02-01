@@ -743,13 +743,24 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::unique_ptr<Object>
 
 inline std::pair<std::uint32_t, size_t> parseNextChar(const char* str)
 {
+    // https://www.gnu.org/software/emacs/manual/html_node/elisp/Basic-Char-Syntax.html
     std::pair<std::uint32_t, size_t> p;
     if (str[0] == '\\') {
         if (!str[1]) {
             throw exceptions::SyntaxError("EOF while parsing");
         }
         const char c = str[1];
-        if (c == 'n') return std::make_pair(static_cast<std::uint32_t>('\n'), 2);
+        if (c == 'a') return std::make_pair(static_cast<std::uint32_t>(7), 2);
+        if (c == 'b') return std::make_pair(static_cast<std::uint32_t>(8), 2);
+        if (c == 't') return std::make_pair(static_cast<std::uint32_t>(9), 2);
+        if (c == 'n') return std::make_pair(static_cast<std::uint32_t>(10), 2);
+        if (c == 'v') return std::make_pair(static_cast<std::uint32_t>(11), 2);
+        if (c == 'f') return std::make_pair(static_cast<std::uint32_t>(12), 2);
+        if (c == 'r') return std::make_pair(static_cast<std::uint32_t>(13), 2);
+        if (c == 'e') return std::make_pair(static_cast<std::uint32_t>(27), 2);
+        if (c == 's') return std::make_pair(static_cast<std::uint32_t>(32), 2);
+        if (c == '\\') return std::make_pair(static_cast<std::uint32_t>(92), 2);
+        if (c == 'd') return std::make_pair(static_cast<std::uint32_t>(127), 2);
         str++;
     }
     p.second = utf8::next(str, &p.first);
