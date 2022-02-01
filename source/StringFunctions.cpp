@@ -75,21 +75,19 @@ void initStringFunctions(Machine& m)
                                   std::variant<std::string, std::uint32_t> obj)
     {
         auto& str = *sobj.value;
+        std::string s;
         try {
             const std::uint32_t c = std::get<std::uint32_t>(obj);
-            if (idx < 0 || idx >= str.size()) {
-                throw exceptions::Error("Index out bounds");
-            }
-            str[idx] = c;
+            s = utf8::encode(c);
         }
         catch (std::bad_variant_access&) {
-            const std::string s = std::get<std::string>(obj);
-            if (idx < 0 || idx + s.size() > str.size()) {
-                throw exceptions::Error("Index out bounds. Can't grow string");
-            }
-            for (size_t i = 0; i < s.length(); i++) {
-                str[idx+i] = s[i];
-            }
+            s = std::get<std::string>(obj);
+        }
+        if (idx < 0 || idx + s.size() > str.size()) {
+            throw exceptions::Error("Index out bounds. Can't grow string");
+        }
+        for (size_t i = 0; i < s.length(); i++) {
+            str[idx+i] = s[i];
         }
         return sobj;
     });
