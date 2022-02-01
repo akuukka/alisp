@@ -11,6 +11,7 @@
 #include "ConsCellObject.hpp"
 #include "SymbolObject.hpp"
 #include "Init.hpp"
+#include "UTF8.hpp"
 
 namespace alisp {
 
@@ -742,18 +743,20 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::unique_ptr<Object>
 
 ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
 {
-    const std::string next = parseNextName(str);
-    if (next.size() && next[0] == '?') {
-        if (next.length() == 2) {
-            return std::make_unique<CharacterObject>(next[1]);
+    if (str[0] == '?') {
+        std::uint32_t encoded;
+        const int nlen = utf8::next(str + 1, &encoded);
+        if (nlen) {
+            const std::uint32_t codepoint = utf8::decode(encoded);
+            str += 1 + nlen;
+            return std::make_unique<CharacterObject>(codepoint);
         }
-        else if (next.size() == 1) {
+        if (!str[1]) {
             throw exceptions::SyntaxError("EOF while parsing");
         }
-        else  {
-            throw exceptions::Error("Invalid read syntax");
-        }
+        throw exceptions::Error("Invalid read syntax");
     }
+    const std::string next = parseNextName(str);
     auto num = getNumericConstant(next);
     if (num) {
         return num;

@@ -168,4 +168,6 @@ inline Object* FArgs::get()
 
 inline std::unique_ptr<Object> FArgs::Iterator::operator*() { return cc->car->eval(); }
 
+using Rest = FArgs;
+
 }
