@@ -613,7 +613,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(progn (defun xx () t) (functionp 'xx))", "t");
     ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
     ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
-    // ASSERT_OUTPUT_EQ(m, "(functionp nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(functionp nil)", "nil");
     assert(expectedMsgs.empty());
 }
 

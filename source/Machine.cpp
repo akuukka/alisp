@@ -94,36 +94,31 @@ ALISP_INLINE void skipWhitespace(const char*& expr)
     }
 }
 
-template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::string str)
 {
     return std::make_unique<StringObject>(str);
 }
 
-template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(const char* value)
 {
     return std::make_unique<StringObject>(std::string(value));
 }
-template<>
+
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::shared_ptr<Symbol> sym)
 {
     return std::make_unique<SymbolObject>(this, sym, "");
 }
 
-template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::int64_t i)
 {
     return makeInt(i);
 }
 
-template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(int i)
 {
     return makeInt(i);
 }
 
-template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(size_t i)
 {
     return makeInt((std::int64_t)i);
@@ -679,14 +674,12 @@ ALISP_INLINE std::string Machine::parseNextName(const char*& str)
     return name;
 }
 
-template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(bool value)
 {
     return value ? makeTrue() : makeNil();
 }
 
-template<>
-ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(StringObject obj)
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(const Object& obj)
 {
     return obj.clone();
 }
@@ -694,7 +687,6 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(StringObject obj)
 ALISP_INLINE
 std::unique_ptr<Object> Machine::makeNil() { return alisp::makeNil(this); }
 
-template<>
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::unique_ptr<Object> o)
 {
     return o;
@@ -767,6 +759,12 @@ ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char *&str
     }
     str++;
     return sym;
+}
+
+ALISP_INLINE
+std::unique_ptr<ConsCellObject> Machine::makeConsCell(ObjectPtr car, ObjectPtr cdr)
+{
+    return std::make_unique<ConsCellObject>(std::move(car), std::move(cdr), this);
 }
 
 ALISP_INLINE

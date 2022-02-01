@@ -7,6 +7,7 @@
 #include "ConsCellObject.hpp"
 #include "Symbol.hpp"
 #include "SymbolObject.hpp"
+#include "Machine.hpp"
 
 namespace alisp
 {
@@ -15,7 +16,7 @@ template<>
 ALISP_INLINE std::optional<const Symbol*> getValue(const Object& sym)
 {
     if (sym.isNil()) {
-        return nullptr;
+        return sym.asList()->parent->getSymbol("nil").get();
     }
     auto s = dynamic_cast<const SymbolObject*>(&sym);
     if (s) {
@@ -28,7 +29,7 @@ template<>
 ALISP_INLINE std::optional<std::shared_ptr<Symbol>> getValue(const Object& sym)
 {
     if (sym.isNil()) {
-        return nullptr;
+        return sym.asList()->parent->getSymbol("nil");
     }
     auto s = dynamic_cast<const SymbolObject*>(&sym);
     if (s) {

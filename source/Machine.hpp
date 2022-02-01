@@ -1,6 +1,7 @@
 #pragma once
 #include <map>
 #include <type_traits>
+#include "Object.hpp"
 #include "alisp.hpp"
 #include "Symbol.hpp"
 #include "ConsCellObject.hpp"
@@ -21,11 +22,16 @@ class Machine
 
     void pushLocalVariable(std::string name, std::unique_ptr<Object> obj);
     bool popLocalVariable(std::string name);
-
-    std::unique_ptr<Object> makeNil();
-
-    template <typename T>
-    std::unique_ptr<Object> makeObject(T);
+    
+    std::unique_ptr<Object> makeObject(std::string str);
+    std::unique_ptr<Object> makeObject(const char* value);
+    std::unique_ptr<Object> makeObject(std::shared_ptr<Symbol> sym);
+    std::unique_ptr<Object> makeObject(std::unique_ptr<Object>);
+    std::unique_ptr<Object> makeObject(std::int64_t i);
+    std::unique_ptr<Object> makeObject(int i);
+    std::unique_ptr<Object> makeObject(size_t i);
+    std::unique_ptr<Object> makeObject(bool);
+    std::unique_ptr<Object> makeObject(const Object&);
 
     template <typename... Args>
     inline size_t getMinArgs()
@@ -45,7 +51,7 @@ class Machine
                    std::index_sequence<Is...>)
     {
         return [=](FArgs& args) {
-            return makeObject<R>(f((getFuncParam<typename std::tuple_element<Is, std::tuple<Args...>>::type>(args))...));
+            return makeObject(f((getFuncParam<typename std::tuple_element<Is, std::tuple<Args...>>::type>(args))...));
         };
     }
 
@@ -75,6 +81,10 @@ class Machine
     std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
     void renameSymbols(ConsCellObject& obj, std::map<std::string, std::unique_ptr<Object>>& conv);
 public:
+    std::unique_ptr<Object> makeNil();
+    std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr);
+
+    
     std::unique_ptr<Object> parse(const char *expr);
     std::unique_ptr<Object> evaluate(const char *expr) { return parse(expr)->eval();  }
     Object* resolveVariable(const std::string& name);

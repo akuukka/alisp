@@ -61,16 +61,10 @@ void initFunctionFunctions(Machine& m)
         return sym->function && !sym->function->isMacro;
     });
     m.defun("func-arity", [&m](const Symbol* sym) {
-        if (!sym || !sym->function) {
-            throw exceptions::VoidFunction("void-function " +
-                                           (sym ? sym->name : std::string("nil")));
+        if (!sym->function) {
+            throw exceptions::VoidFunction("void-function " + sym->name);
         }
-        ConsCellObject cc(&m);
-        auto cell = std::shared_ptr<ConsCell>();
-        cell->car = makeInt(sym->function->minArgs);
-        cell->cdr = makeInt(sym->function->maxArgs);
-        cc.cc = std::move(cell);
-        return cc.clone();
+        return m.makeConsCell(makeInt(sym->function->minArgs), makeInt(sym->function->maxArgs));
     });
 }
 
