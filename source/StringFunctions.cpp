@@ -57,11 +57,17 @@ void initStringFunctions(Machine& m)
         }
         return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
     });
-    m.defun("string", [](std::vector<std::uint32_t> chars) {
+    m.defun("string", [](Rest& rest) {
         std::string ret;
-        std::transform(chars.begin(), chars.end(), std::back_inserter(ret), [](std::uint32_t c) {
-            return static_cast<char>(c);
-        });
+        while (rest.hasNext()) {
+            auto arg = rest.get();
+            const std::optional<std::uint32_t> codepoint =
+                arg->valueOrNull<std::uint32_t>();
+            if (!codepoint) {
+                throw exceptions::WrongTypeArgument(arg->toString());
+            }
+            ret += utf8::encode(*codepoint);
+        }
         return ret;
     });
     m.defun("store-substring", [](StringObject sobj,

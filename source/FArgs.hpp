@@ -87,13 +87,20 @@ struct FArgs
 template<typename T>
 constexpr bool specialParamType()
 {
-    return std::is_reference_v<T> ||
+    return std::is_reference_v<T> || std::is_same_v<T, FArgs&> ||
         OptCheck<T>::value ||
         IsInstantiationOf<std::vector, T>::value;
 }
 
 template<typename T>
-inline typename std::enable_if<std::is_reference_v<T> , T>::type getFuncParam(FArgs& args)
+inline typename std::enable_if<std::is_same_v<T, FArgs&>, T>::type getFuncParam(FArgs& args)
+{
+    return args;
+}
+
+template<typename T>
+inline typename std::enable_if<std::is_reference_v<T> && !std::is_same_v<T, FArgs&>, T>::type
+getFuncParam(FArgs& args)
 {
     Object* arg = args.get();
     try {
