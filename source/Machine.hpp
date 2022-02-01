@@ -9,6 +9,7 @@
 
 namespace alisp {
 
+struct Closure;
 struct StringObject;
 
 class Machine
@@ -80,6 +81,7 @@ class Machine
     std::unique_ptr<Object> parseNext(const char *&expr);
     std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
     void renameSymbols(ConsCellObject& obj, std::map<std::string, std::unique_ptr<Object>>& conv);
+    ObjectPtr execute(Closure& closure, FArgs& a);
 public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr);

@@ -1,5 +1,6 @@
 #include "ConsCellObject.hpp"
 #include "Exception.hpp"
+#include "Template.hpp"
 #include "ValueObject.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
@@ -8,6 +9,31 @@
 
 namespace alisp
 {
+
+struct Closure
+{
+    std::vector<std::string> argList;
+    std::unique_ptr<Object> code;
+};
+
+ObjectPtr Machine::execute(Closure& closure, FArgs& a)
+{
+    size_t i = 0;
+    for (size_t i = 0; i < closure.argList.size(); i++) {
+        pushLocalVariable(closure.argList[i], a.pop()->clone());
+    }
+    AtScopeExit onExit([this, &closure]() {
+        for (auto it = closure.argList.rbegin(); it != closure.argList.rend(); ++it) {
+            popLocalVariable(*it);
+        }
+    });
+    assert(closure.code->asList());
+    std::unique_ptr<Object> ret = makeNil();
+    for (auto& obj : *closure.code->asList()) {
+        ret = obj.eval();
+    }
+    return ret;
+}
 
 void initFunctionFunctions(Machine& m)
 {
@@ -28,33 +54,12 @@ void initFunctionFunctions(Machine& m)
             argList.push_back(sym->name);
             argc++;
         }
-        std::shared_ptr<Object> code;
-        code.reset(args.cc->cdr.release());
-        // std::cout << funcName << " defined as: " << *code << " (argc=" << argc << ")\n";
-        m.makeFunc(funcName.c_str(), argc, argc,
-                 [&m, funcName, argList, code](FArgs& a) {
-                     /*if (argList.size()) {
-                       std::cout << funcName << " being called with args="
-                       << a.cc->toString() << std::endl;
-                       }*/
-                     size_t i = 0;
-                     for (size_t i = 0; i < argList.size(); i++) {
-                         m.pushLocalVariable(argList[i], a.pop()->clone());
-                     }
-                     AtScopeExit onExit([&m, argList]() {
-                         for (auto it = argList.rbegin(); it != argList.rend(); ++it) {
-                             m.popLocalVariable(*it);
-                         }
-                     });
-                     assert(code->asList());
-                     std::unique_ptr<Object> ret = m.makeNil();
-                     for (auto& obj : *code->asList()) {
-                         //std::cout << "exec: " << obj.toString() << std::endl;
-                         ret = obj.eval();
-                         //std::cout << " => " << ret->toString() << std::endl;
-                     }
-                     return ret;
-                 });
+        std::shared_ptr<Closure> closure = std::make_shared<Closure>();
+        closure->argList = std::move(argList);
+        closure->code = args.cc->cdr->clone();
+        m.makeFunc(funcName.c_str(), argc, argc, [&m, closure](FArgs& a) {
+            return m.execute(*closure, a);
+        });
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(funcName));
     });
     m.defun("functionp", [](const Symbol* sym) {
