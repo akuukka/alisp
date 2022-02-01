@@ -12,6 +12,8 @@
 #include "ValueObject.hpp"
 #include "ConsCellObject.hpp"
 
+using namespace alisp;
+
 void ASSERT_EQ(std::string a, std::string b)
 {
     if (a == b) {
@@ -276,6 +278,7 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 1))code", R"code(12472 (ジ))code");
     ASSERT_EXCEPTION(m, R"code((elt "aジb" 3))code", alisp::exceptions::Error);
     ASSERT_EXCEPTION(m, R"code((elt "" 0))code", alisp::exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, R"code((make-string 5 (elt "aジb" 1)))code", R"code("ジジジジジ")code");
 }
 
 void testDivision()

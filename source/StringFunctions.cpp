@@ -18,7 +18,27 @@ void initStringFunctions(Machine& m)
         return obj->isString() || obj->isCharacter();
     });
     m.defun("make-string", [](std::int64_t num, std::uint32_t c) {
-        return std::string(num, c);
+        if (c < 128) {
+            return std::string(num, c);
+        }
+        std::string str;
+        if (num == 0) {
+            return str;
+        }
+        const std::string encoded = utf8::encode(c);
+        str = utf8::encode(c);
+        std::int64_t i = 1;
+        while (i < num) {
+            if (i < num/2) {
+                str = str + str;
+                i = i * 2;
+            }
+            else {
+                str += encoded;
+                i++;
+            }
+        }
+        return str;
     });
     m.defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
     m.defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
