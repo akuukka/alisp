@@ -56,6 +56,7 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
 
 void initFunctionFunctions(Machine& m)
 {
+    m.defun("funcall", [&m](const Function& function, FArgs& args) { return function.func(args); });
     m.makeFunc("lambda", 1, std::numeric_limits<int>::max(), [&m](FArgs& args) {
         auto func = std::make_shared<Function>();
         func->name = "anon";

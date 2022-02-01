@@ -8,6 +8,7 @@
 #include "Symbol.hpp"
 #include "SymbolObject.hpp"
 #include "Machine.hpp"
+#include "FunctionObject.hpp"
 
 namespace alisp
 {
@@ -118,6 +119,21 @@ ALISP_INLINE const Symbol& getValueReference(const Object &sym)
         return *dynamic_cast<const SymbolObject*>(&sym)->getSymbol();
     }
     throw std::runtime_error("Failed to get string arg");
+}
+
+
+template<>
+ALISP_INLINE const Function& getValueReference(const Object &sym)
+{
+    if (auto s = dynamic_cast<const FunctionObject*>(&sym)) {
+        return *s->value;
+    }
+    if (auto s = dynamic_cast<const SymbolObject*>(&sym)) {
+        if (s->getSymbol()->function) {
+            return *s->getSymbol()->function;
+        }
+    }
+    throw std::runtime_error("Failed to get function arg");
 }
 
 }
