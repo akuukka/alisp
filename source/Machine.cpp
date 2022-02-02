@@ -627,8 +627,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("dolist", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         const auto p1 = args.pop(false)->asList();
         const std::string varName = p1->car()->asSymbol()->name;
-        ConsCellObject* list = p1->cdr()->asList()->car()->asList();
-        auto evaluated = list->eval();
+        auto evaluated = p1->cdr()->asList()->car()->eval();
         auto codestart = args.cc;
         for (const auto& obj : *evaluated->asList()) {
             pushLocalVariable(varName, obj.clone());
