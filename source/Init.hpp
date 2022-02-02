@@ -36,5 +36,12 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 (defmacro setq (sym var)
   (list 'set (list 'quote sym) var))
 
+; Yes, this setf for (car x) is incredibly ugly but it's a decent start!
+(defmacro setf (var value)
+  (let ((li (list 'setq var value)))
+    (if (listp var)
+        (if (eq 'car (car var))
+            (setq li (list 'let* (list (list 'v (cadr var))) (list 'setcar 'v value)  ))))
+    li))
 
 )code"; }}
