@@ -83,6 +83,16 @@ struct FArgs
     {
         return Iterator{&m, nullptr};
     }
+
+    ObjectPtr evalAll(ConsCell* begin = nullptr)
+    {
+        auto code = begin ? begin : cc;
+        while (code->next()) {
+            code->car->eval();
+            code = code->next();
+        }
+        return code->car->eval();
+    }
 };
 
 template<typename T>
