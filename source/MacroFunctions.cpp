@@ -63,6 +63,32 @@ ObjectPtr expand(Machine& m, const Macro& macro, std::function<ObjectPtr()> para
     return copied->eval();
 }
 
+ObjectPtr macroExpand(std::shared_ptr<std::map<std::string, Macro>> storage,
+                      bool once,
+                      ObjectPtr obj)
+{
+    if (!obj->isList() || obj->isNil()) {
+        return obj->clone();
+    }
+    for (;;) {
+        const auto form = obj->asList();
+        const auto macroCall = isMacroCall(form);
+        if (!macroCall.first) {
+            break;
+        }
+        auto cc = form->cc.get();
+        assert(storage->count(macroCall.second));
+        const auto& macro = storage->at(macroCall.second);
+        obj = expand(*form->parent,
+                     macro,
+                     [&cc](){ cc = cc->next(); return cc->car->clone(); });
+        if (once) {
+            break;
+        }
+    }
+    return obj->clone();
+}
+
 }
 
 void initMacroFunctions(Machine& m)
@@ -91,23 +117,10 @@ void initMacroFunctions(Machine& m)
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(macroName));
     });
     m.defun("macroexpand", [storage](ObjectPtr obj) {
-        if (!obj->isList() || obj->isNil()) {
-            return obj->clone();
-        }
-        for (;;) {
-            const auto form = obj->asList();
-            const auto macroCall = isMacroCall(form);
-            if (!macroCall.first) {
-                break;
-            }
-            auto cc = form->cc.get();
-            assert(storage->count(macroCall.second));
-            const auto& macro = storage->at(macroCall.second);
-            obj = expand(*form->parent,
-                         macro,
-                         [&cc](){ cc = cc->next(); return cc->car->clone(); });
-        }
-        return obj->clone();
+        return macroExpand(storage, false, std::move(obj));
+    });
+    m.defun("macroexpand-1", [storage](ObjectPtr obj) {
+        return macroExpand(storage, true, std::move(obj));
     });
 }
 
