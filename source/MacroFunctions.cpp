@@ -25,6 +25,19 @@ void renameSymbols(Machine&m, ConsCellObject& obj,
     }
 }
 
+std::pair<bool, std::string> isMacroCall(const ConsCellObject* form)
+{
+    if (form->car() && form->car()->isSymbol()) {
+        const SymbolObject* sym = dynamic_cast<const SymbolObject*>(form->car());
+        assert(sym);
+        const Function* func = sym->parent->resolveFunction(sym->name);
+        if (func && func->isMacro) {
+            return std::make_pair(true, sym->name);
+        }
+    }
+    return std::make_pair(false, std::string());
+}
+
 struct Macro {
     ConsCellObject argList;
     ConsCellObject code;
@@ -37,14 +50,13 @@ struct Macro {
     }
 };
 
-ObjectPtr expand(Machine& m, const Macro& macro, FArgs& a)
+ObjectPtr expand(Machine& m, const Macro& macro, std::function<ObjectPtr()> paramSource)
 {
     std::map<std::string, std::unique_ptr<Object>> conv;
     for (const auto& obj : macro.argList) {
         const SymbolObject* from =
             dynamic_cast<const SymbolObject*>(&obj);
-        conv[from->name] = a.cc->car.get()->clone();
-        a.skip();
+        conv[from->name] = paramSource();
     }
     auto copied = macro.code.deepCopy();
     renameSymbols(m, *copied, conv);
@@ -73,10 +85,29 @@ void initMacroFunctions(Machine& m)
         m.makeFunc(macroName.c_str(), argc, argc, [&m, macroName, storage](FArgs& a) {
             assert(storage->count(macroName));
             const auto& macro = storage->at(macroName);
-            return expand(m, macro, a)->eval();
+            return expand(m, macro, [&a](){ return a.pop(false)->clone(); })->eval();
         });
         m.getSymbol(macroName)->function->isMacro = true;
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(macroName));
+    });
+    m.defun("macroexpand", [storage](ObjectPtr obj) {
+        if (!obj->isList() || obj->isNil()) {
+            return obj->clone();
+        }
+        for (;;) {
+            const auto form = obj->asList();
+            const auto macroCall = isMacroCall(form);
+            if (!macroCall.first) {
+                break;
+            }
+            auto cc = form->cc.get();
+            assert(storage->count(macroCall.second));
+            const auto& macro = storage->at(macroCall.second);
+            obj = expand(*form->parent,
+                         macro,
+                         [&cc](){ cc = cc->next(); return cc->car->clone(); });
+        }
+        return obj->clone();
     });
 }
 
