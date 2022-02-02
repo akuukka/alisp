@@ -1,4 +1,4 @@
-#include <_types/_uint32_t.h>
+#pragma once
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -8,13 +8,12 @@ namespace alisp
 
 namespace utf8 {
 
-static std::uint8_t const u8_length[] = {
-// 0 1 2 3 4 5 6 7 8 9 A B C D E F
-   1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4
-};
-
 constexpr int u8length(const char* s)
 {
+    constexpr std::uint8_t const u8_length[] = {
+        // 0 1 2 3 4 5 6 7 8 9 A B C D E F
+        1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4
+    };
     return u8_length[(((const uint8_t*)(s))[0] & 0xFF) >> 4];
 }
 
