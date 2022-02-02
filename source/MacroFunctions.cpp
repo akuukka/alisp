@@ -37,6 +37,20 @@ struct Macro {
     }
 };
 
+ObjectPtr expand(Machine& m, const Macro& macro, FArgs& a)
+{
+    std::map<std::string, std::unique_ptr<Object>> conv;
+    for (const auto& obj : macro.argList) {
+        const SymbolObject* from =
+            dynamic_cast<const SymbolObject*>(&obj);
+        conv[from->name] = a.cc->car.get()->clone();
+        a.skip();
+    }
+    auto copied = macro.code.deepCopy();
+    renameSymbols(m, *copied, conv);
+    return copied->eval();
+}
+
 }
 
 void initMacroFunctions(Machine& m)
@@ -57,18 +71,9 @@ void initMacroFunctions(Machine& m)
         ConsCellObject code = dynamic_cast<ConsCellObject&>(*args.cc->car);
         (*storage).insert(std::make_pair(macroName, Macro(argList, code)));
         m.makeFunc(macroName.c_str(), argc, argc, [&m, macroName, storage](FArgs& a) {
-            const auto& argList = storage->at(macroName).argList;
-            const auto& code = storage->at(macroName).code;
-            std::map<std::string, std::unique_ptr<Object>> conv;
-            for (const auto& obj : argList) {
-                const SymbolObject* from =
-                    dynamic_cast<const SymbolObject*>(&obj);
-                conv[from->name] = a.cc->car.get()->clone();
-                a.skip();
-            }
-            auto copied = code.deepCopy();
-            renameSymbols(m, *copied, conv);
-            return copied->eval()->eval();
+            assert(storage->count(macroName));
+            const auto& macro = storage->at(macroName);
+            return expand(m, macro, a)->eval();
         });
         m.getSymbol(macroName)->function->isMacro = true;
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(macroName));
