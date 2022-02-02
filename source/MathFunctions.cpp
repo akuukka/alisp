@@ -189,41 +189,39 @@ void initMathFunctions(Machine& m)
         return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
             : static_cast<std::unique_ptr<Object>>(makeInt(i));
     });
-    m.makeFunc("<=", 2, 0xffff, [](FArgs& args) {
-        std::int64_t i = 0;
-        double f = 0;
-        bool fp = false;
-        bool first = true;
-        for (auto sym : args) {
+    m.defun("<=", [](Number first, Rest& rest) {
+        std::int64_t i = first.i;
+        double f = first.f;
+        for (auto sym : rest) {
             if (sym->isFloat()) {
                 const double v = sym->value<double>();
                 if (f <= v) {
 
                 }
-                else if (!first) {
-                    return args.m.makeNil();
+                else {
+                    return false;
                 }
-                fp = true;
+                first.isFloat = true;
                 i = v;
                 f = v;
             }
             else if (sym->isInt()) {
                 const std::int64_t v = sym->value<std::int64_t>();
-                if (fp) {
+                if (first.isFloat) {
                     double fv = static_cast<double>(v);
                     if (f <= fv) {
 
                     }
-                    else if (!first) {
-                        return args.m.makeNil();
+                    else {
+                        return false;
                     }
                 }
                 else {
                     if (i <= v) {
 
                     }
-                    else if (!first) {
-                        return args.m.makeNil();
+                    else {
+                        return false;
                     }
                 }
                 i = v;
@@ -232,9 +230,8 @@ void initMathFunctions(Machine& m)
             else {
                 throw exceptions::WrongTypeArgument(sym->toString());
             }
-            first = false;
         }
-        return args.m.makeTrue();
+        return true;
     });
 }
 

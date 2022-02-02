@@ -32,6 +32,13 @@ struct FloatObject : ValueObject<double>
     std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
 };
 
+struct Number
+{
+    std::int64_t i;
+    double f;
+    bool isFloat;
+};
+
 struct CharacterObject : ValueObject<std::uint32_t>
 {
     CharacterObject(std::uint32_t c) : ValueObject<std::uint32_t>(c) {}
