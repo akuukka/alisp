@@ -820,9 +820,21 @@ void testMemoryLeaks()
     assert(Object::getDebugRefCount() == 0);
 }
 
+void testControlStructures()
+{
+    Machine m;
+    ASSERT_OUTPUT_EQ(m, R"code(
+(let ((str ""))
+  (dolist (elem (list "A" "B" "C"))
+    (setq str (concat str elem)))
+  str)
+)code", "\"ABC\"");
+}
+
 void test()
 {
     testKeywords();
+    testControlStructures();
     testVariables();
     testMemoryLeaks();
     testCyclicals(); // Lot of work to do here still...

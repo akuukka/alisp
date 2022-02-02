@@ -1,3 +1,4 @@
+#include <limits>
 #include <sstream>
 #include "FunctionObject.hpp"
 #include <any>
@@ -606,7 +607,23 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return sym->variable->clone();
     });
-
+    makeFunc("dolist", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
+        const auto p1 = args.pop(false)->asList();
+        const std::string varName = p1->car()->asSymbol()->name;
+        ConsCellObject* list = p1->cdr()->asList()->car()->asList();
+        auto evaluated = list->eval();
+        auto codestart = args.cc;
+        for (const auto& obj : *evaluated->asList()) {
+            pushLocalVariable(varName, obj.clone());
+            AtScopeExit onExit([this, varName](){ popLocalVariable(varName); });
+            auto code = codestart;
+            while (code) {
+                code->car->eval();
+                code = code->next();
+            }
+        }
+        return args.m.makeNil();
+    });
     evaluate(getInitCode());
 }
 
