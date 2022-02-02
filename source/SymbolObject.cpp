@@ -6,7 +6,7 @@ namespace alisp {
 
 ALISP_INLINE std::unique_ptr<Object> SymbolObject::eval() 
 {
-    const auto var = sym ? sym->variable.get() : parent->resolveVariable(name);
+    const auto var = sym ? sym->variable.get() : parent->getSymbol(name)->variable.get();
     if (!var) {
         throw exceptions::VoidVariable(toString());
     }

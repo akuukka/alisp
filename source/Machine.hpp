@@ -89,7 +89,6 @@ public:
     
     std::unique_ptr<Object> parse(const char *expr);
     std::unique_ptr<Object> evaluate(const char *expr) { return parse(expr)->eval();  }
-    Object* resolveVariable(const std::string& name);
     Function* resolveFunction(const std::string& name);
 
     Function* makeFunc(const char *name, int minArgs, int maxArgs,

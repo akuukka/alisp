@@ -51,9 +51,17 @@ ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
         return m_locals[name].back();
     }
     if (!m_syms.count(name)) {
-        m_syms[name] = std::make_shared<Symbol>();
-        m_syms[name]->name = name;
-        m_syms[name]->parent = this;
+        std::cout << "getsym:" << name << std::endl;
+        auto newSym = std::make_shared<Symbol>();
+        newSym->parent = this;
+        if (name.size() && name[0] == ':') {
+            std::cout << "Defined keyword: " << name << std::endl;
+            newSym->constant = true;
+            newSym->variable = std::make_unique<SymbolObject>(this, newSym);
+        }
+        m_syms[name] = newSym;
+        newSym->name = std::move(name);
+        return newSym;
     }
     return m_syms[name];
 }
@@ -131,6 +139,7 @@ inline bool isPartOfSymName(const char c)
     if (c=='.') return true;
     if (c=='?') return true;
     if (c=='+') return true;
+    if (c==':') return true;
     if (c=='%') return true;
     if (c=='*') return true;
     if (c=='=') return true;
@@ -520,15 +529,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("describe-variable", 1, 1, [this](FArgs& args) {
         const auto arg = args.pop();
         std::string descr = "You did not specify a variable.";
-        if (auto sym = dynamic_cast<SymbolObject*>(arg)) {
+        if (auto symObj = dynamic_cast<SymbolObject*>(arg)) {
+            auto sym = symObj->getSymbolOrNull();
             const Object* var = nullptr;
-            if (sym->sym) {
-                var = sym->sym->variable.get();
-            }
-            else {
-                assert(sym->name.size());
-                var = resolveVariable(sym->name);
-            }
+            if (sym) var = sym->variable.get();
             if (!var) {
                 descr = arg->toString() + " is void as a variable.";
             }
@@ -536,7 +540,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                 descr = arg->toString() + "'s value is " + var->toString();
             }
         }
-        else if (auto list = dynamic_cast<ConsCellObject *>(arg)) {
+        else if (auto list = dynamic_cast<ConsCellObject*>(arg)) {
             if (!*list) {
                 descr = arg->toString() + "'s value is " + arg->toString();
             }
@@ -609,17 +613,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     });
 
     evaluate(getInitCode());
-}
-
-ALISP_INLINE Object* Machine::resolveVariable(const std::string& name)
-{
-    if (m_locals.count(name)) {
-        return m_locals[name].back()->variable.get();
-    }
-    if (m_syms.count(name)) {
-        return m_syms[name]->variable.get();
-    }
-    return nullptr;
 }
 
 ALISP_INLINE Function* Machine::resolveFunction(const std::string& name)

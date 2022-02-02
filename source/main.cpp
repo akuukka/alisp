@@ -392,21 +392,29 @@ void testSymbols()
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
         m.evaluate("(symbolp abc)");
     }));
-    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
+    assert(expect<exceptions::WrongTypeArgument>([&]() {
         m.evaluate("(symbol-name 2)");
     }));
     ASSERT_OUTPUT_EQ(m, "(make-symbol \"test\")", "test");
     ASSERT_OUTPUT_EQ(m, "(symbolp (make-symbol \"test\"))", "t");
-    ASSERT_EXCEPTION(m, "(+ 1 (make-symbol \"newint\"))", alisp::exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(+ 1 (make-symbol \"newint\"))", exceptions::WrongTypeArgument);
     ASSERT_EQ(m.evaluate("(progn (setq sym (make-symbol \"foo\"))(symbol-name sym))"), "\"foo\"");
     ASSERT_EQ(m.evaluate("(eq sym 'foo)"), "nil");
     ASSERT_EQ(m.evaluate("'t"), "t");
-    assert(expect<alisp::exceptions::VoidVariable>([&]() {
+    assert(expect<exceptions::VoidVariable>([&]() {
         m.evaluate("(eq 'a a)");
     }));
     ASSERT_EQ(m.evaluate("(symbolp (car (list 'a)))"), "t");
     ASSERT_EXCEPTION(m, "(progn (setq testint (make-symbol \"abracadabra\"))"
-                     "(+ 1 (eval testint)))", alisp::exceptions::VoidVariable);
+                     "(+ 1 (eval testint)))", exceptions::VoidVariable);
+
+}
+
+void testKeywords()
+{
+    Machine m;
+    ASSERT_OUTPUT_EQ(m, ":keyword1", ":keyword1");
+    ASSERT_EXCEPTION(m, "(set :keyword2 1)", exceptions::Error);
 }
 
 void testEqFunction()
@@ -795,6 +803,7 @@ void testMemoryLeaks()
 
 void test()
 {
+    testKeywords();
     testVariables();
     testMemoryLeaks();
     testCyclicals(); // Lot of work to do here still...
