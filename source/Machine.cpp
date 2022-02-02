@@ -607,6 +607,15 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return sym->variable->clone();
     });
+    defun("print", [this](ObjectPtr obj) {
+        if (m_msgHandler) {
+            m_msgHandler(obj->toString());
+        }
+        else {
+            std::cout << obj->toString() << std::endl;
+        }
+        return obj;
+    });
     makeFunc("dolist", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         const auto p1 = args.pop(false)->asList();
         const std::string varName = p1->car()->asSymbol()->name;
