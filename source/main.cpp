@@ -580,6 +580,11 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(macroexpand 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(macroexpand nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(inc r))", "(set 'r (1+ r))");
+    ASSERT_OUTPUT_CONTAINS(m, R"code(
+(defmacro inc2 (var1 var2)
+  (list 'progn (list 'inc var1) (list 'inc var2)))
+(macroexpand '(inc2 r s))
+)code", "(progn (inc r) (inc s))");
 }
 
 void testDeepCopy()
