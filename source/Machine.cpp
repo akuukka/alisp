@@ -523,7 +523,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         sym->variable = args.pop()->clone();
         return sym->variable->clone();
     });
-    makeFunc("defvar", 2, 2, [this](FArgs& args) {
+    makeFunc("defvar", 1, 3, [this](FArgs& args) {
         const SymbolObject nil(this, nullptr, "nil");
         const auto& p1 = args.pop(false);
         const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
@@ -531,7 +531,16 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             throw exceptions::WrongTypeArgument(p1->toString());
         }
         if (!m_syms.count(name->name)) {
-            getSymbol(name->name)->variable = args.pop(true)->clone();
+            auto sym = getSymbol(name->name);
+            if (args.hasNext()) {
+                sym->variable = args.pop(true)->clone();
+            }
+            if (args.hasNext()) {
+                auto docString = args.pop();
+                if (docString->isString()) {
+                    sym->description = docString->value<std::string>();
+                }
+            }
         }
         return std::make_unique<SymbolObject>(this, m_syms[name->name], "");
     });

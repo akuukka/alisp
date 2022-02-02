@@ -15,6 +15,7 @@ struct Symbol
     bool constant = false;
     bool local = false;
     std::string name;
+    std::string description;
     std::unique_ptr<Object> variable;
     std::shared_ptr<Function> function;
 };

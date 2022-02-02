@@ -387,6 +387,9 @@ void testVariables()
     ASSERT_OUTPUT_EQ(m, "var1", "50");
     ASSERT_OUTPUT_EQ(m, "(defvar var1 60)", "var1");
     ASSERT_OUTPUT_EQ(m, "var1", "50");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"var2\")", "nil");
+    ASSERT_OUTPUT_EQ(m, "(defvar var2)", "var2");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"var2\")", "var2");
 }
 
 void testSymbols()
