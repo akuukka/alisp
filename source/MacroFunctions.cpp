@@ -26,7 +26,7 @@ void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::string, Object*
 
 std::pair<bool, std::string> isMacroCall(const ConsCellObject* form)
 {
-    if (form->car() && form->car()->isSymbol()) {
+    if (form && form->car() && form->car()->isSymbol()) {
         const SymbolObject* sym = dynamic_cast<const SymbolObject*>(form->car());
         assert(sym);
         const Function* func = sym->parent->resolveFunction(sym->name);
