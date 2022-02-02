@@ -584,6 +584,9 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(pop li)", "1");
     ASSERT_OUTPUT_EQ(m, "li", "(2 3)");
     ASSERT_EXCEPTION(m, "(pop 1)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(defmacro asetf (var value) (setq ty value) (list 2 3))", "asetf");
+    ASSERT_OUTPUT_EQ(m, "(macroexpand '(asetf 1 2))", "(2 3)");
+    ASSERT_OUTPUT_EQ(m, "ty", "2");
     // ASSERT_OUTPUT_EQ(m, "(macroexpand '(setf (car x) y))", "((let* ((v x)) (setcar v y))");
     ASSERT_OUTPUT_EQ(m, "(macroexpand 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(macroexpand nil)", "nil");
