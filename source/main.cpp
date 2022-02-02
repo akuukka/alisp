@@ -571,19 +571,19 @@ void testEvalFunction()
 
 void testMacros()
 {
-    alisp::Machine m;
-    ASSERT_EXCEPTION(m, "(pop nil)", alisp::exceptions::Error);
+    Machine m;
+    ASSERT_EXCEPTION(m, "(pop nil)", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(setq l '(a b))", "(a b)");
     ASSERT_OUTPUT_EQ(m, "(push 'c l)", "(c a b)");
     ASSERT_OUTPUT_EQ(m, "(push 'd l)", "(d c a b)");
     ASSERT_OUTPUT_EQ(m, "(defmacro inc (var) (list 'setq var (list '1+ var)))", "inc");
     ASSERT_OUTPUT_EQ(m, "(setq x 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(inc x)", "2");
-    ASSERT_EXCEPTION(m, "(inc 1)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(inc 1)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(setq li '(1 2 3))", "(1 2 3)");
     ASSERT_OUTPUT_EQ(m, "(pop li)", "1");
     ASSERT_OUTPUT_EQ(m, "li", "(2 3)");
-    ASSERT_EXCEPTION(m, "(pop 1)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(pop 1)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(defmacro asetf (var value) (setq ty value) (list 2 3))", "asetf");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(asetf 1 2))", "(2 3)");
     ASSERT_OUTPUT_EQ(m, "ty", "2");
@@ -591,6 +591,11 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(macroexpand 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(macroexpand nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(inc r))", "(set 'r (1+ r))");
+    ASSERT_OUTPUT_EQ(m, "(setf x (list 1 2))", "(1 2)");
+    ASSERT_OUTPUT_EQ(m, "(setf (car x) 3)", "3");
+    ASSERT_OUTPUT_EQ(m, "x", "(3 2)");
+    ASSERT_OUTPUT_EQ(m, "(setf (cadr x) 4)", "4");
+    ASSERT_OUTPUT_EQ(m, "x", "(3 4)");
     ASSERT_OUTPUT_CONTAINS(m, R"code(
 (defmacro inc2 (var1 var2)
   (list 'progn (list 'inc var1) (list 'inc var2)))
@@ -600,7 +605,7 @@ void testMacros()
 
 void testDeepCopy()
 {
-    alisp::Machine m;
+    Machine m;
     // Cloning
     auto storage = m.evaluate("'(1 2 3 4)");
     auto list = dynamic_cast<alisp::ConsCellObject*>(storage.get());
