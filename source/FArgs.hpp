@@ -44,7 +44,7 @@ struct FArgs
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
-    Object* pop();
+    Object* pop(bool eval = true);
     
     void skip()
     {
@@ -159,7 +159,7 @@ inline typename std::enable_if<!specialParamType<T>(), T>::type getFuncParam(FAr
     return std::move(*opt);
 }
     
-inline Object* FArgs::pop()
+inline Object* FArgs::pop(bool eval)
 {
     if (!cc) {
         return nullptr;
@@ -168,6 +168,11 @@ inline Object* FArgs::pop()
     if (self) {
         cc = cc->next();
         return self;
+    }
+    if (!eval) {
+        auto ptr = cc->car.get();
+        cc = cc->next();
+        return ptr;
     }
     argStorage.push_back(cc->car->eval());
     cc = cc->next();
