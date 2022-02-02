@@ -57,7 +57,6 @@ void initMacroFunctions(Machine& m)
         ConsCellObject code = dynamic_cast<ConsCellObject&>(*args.cc->car);
         (*storage).insert(std::make_pair(macroName, Macro(argList, code)));
         m.makeFunc(macroName.c_str(), argc, argc, [&m, macroName, storage](FArgs& a) {
-            size_t i = 0;
             const auto& argList = storage->at(macroName).argList;
             const auto& code = storage->at(macroName).code;
             std::map<std::string, std::unique_ptr<Object>> conv;
