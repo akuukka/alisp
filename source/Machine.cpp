@@ -523,6 +523,18 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         sym->variable = args.pop()->clone();
         return sym->variable->clone();
     });
+    makeFunc("defvar", 2, 2, [this](FArgs& args) {
+        const SymbolObject nil(this, nullptr, "nil");
+        const auto& p1 = args.pop(false);
+        const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
+        if (!name || name->name.empty()) {
+            throw exceptions::WrongTypeArgument(p1->toString());
+        }
+        if (!m_syms.count(name->name)) {
+            getSymbol(name->name)->variable = args.pop(true)->clone();
+        }
+        return std::make_unique<SymbolObject>(this, m_syms[name->name], "");
+    });
     makeFunc("eq", 2, 2, [this](FArgs& args) {
         return args.pop()->equals(*args.pop()) ? makeTrue() : makeNil();
     });
