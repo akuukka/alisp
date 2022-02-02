@@ -77,15 +77,13 @@ class Machine
     std::string parseNextName(const char*& str);
     std::unique_ptr<Object> parseNamedObject(const char*& str);    
     std::unique_ptr<StringObject> parseString(const char *&str);
-    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj);    
     std::unique_ptr<Object> parseNext(const char *&expr);
     std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
-    void renameSymbols(ConsCellObject& obj, std::map<std::string, std::unique_ptr<Object>>& conv);
     ObjectPtr execute(const ConsCellObject& closure, FArgs& a);
 public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr);
-
+    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj);    
     
     std::unique_ptr<Object> parse(const char *expr);
     std::unique_ptr<Object> evaluate(const char *expr);

@@ -14,6 +14,7 @@
 #include "StringObject.cpp"
 #include "ValueObject.cpp"
 #include "Converter.cpp"
+#include "MacroFunctions.cpp"
 #include "MathFunctions.cpp"
 #include "SequenceFunctions.cpp"
 #include "StringFunctions.cpp"

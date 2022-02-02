@@ -17,6 +17,7 @@
 namespace alisp {
 
 void initFunctionFunctions(Machine& m);
+void initMacroFunctions(Machine& m);
 void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
 void initStringFunctions(Machine& m);
@@ -239,6 +240,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     setVariable("nil", makeNil(), true);
     setVariable("t", std::make_unique<SymbolObject>(this, nullptr, "t"), true);
     initMathFunctions(*this);
+    initMacroFunctions(*this);
     initSequenceFunctions(*this);
     initStringFunctions(*this);
     initFunctionFunctions(*this);
@@ -286,34 +288,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         r = makeInt(count);
         return r;
-    });
-    makeFunc("defmacro", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
-        const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
-        if (!nameSym || nameSym->name.empty()) {
-            throw exceptions::WrongTypeArgument(args.cc->car->toString());
-        }
-        std::string macroName = nameSym->name;
-        args.skip();
-        ConsCellObject argList = dynamic_cast<ConsCellObject&>(*args.cc->car);
-        const int argc = countArgs(argList.cc.get());
-        args.skip();
-        ConsCellObject code = dynamic_cast<ConsCellObject&>(*args.cc->car);
-        makeFunc(macroName.c_str(), argc, argc,
-                 [this, macroName, argList, code](FArgs& a) {
-                     size_t i = 0;
-                     std::map<std::string, std::unique_ptr<Object>> conv;
-                     for (const auto& obj : argList) {
-                         const SymbolObject* from =
-                             dynamic_cast<const SymbolObject*>(&obj);
-                         conv[from->name] = a.cc->car.get()->clone();
-                         a.skip();
-                     }
-                     auto copied = code.deepCopy();
-                     renameSymbols(*copied, conv);
-                     return copied->eval()->eval();
-                 });
-        getSymbol(macroName)->function->isMacro = true;
-        return std::make_unique<SymbolObject>(this, nullptr, std::move(macroName));
     });
     makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         if (!!*args.pop()) {
@@ -642,25 +616,6 @@ ALISP_INLINE Function* Machine::resolveFunction(const std::string& name)
         return m_syms[name]->function.get();
     }
     return nullptr;
-}
-
-ALISP_INLINE
-void Machine::renameSymbols(ConsCellObject& obj,
-                            std::map<std::string, std::unique_ptr<Object>>& conv)
-{
-    auto p = obj.cc.get();
-    while (p) {
-        auto& obj = *p->car.get();
-        SymbolObject* sym = dynamic_cast<SymbolObject*>(&obj);
-        if (sym && conv.count(sym->name)) {
-            p->car = quote(conv[sym->name]->clone());
-        }
-        ConsCellObject* cc = dynamic_cast<ConsCellObject*>(&obj);
-        if (cc) {
-            renameSymbols(*cc, conv);
-        }
-        p = p->next();
-    }
 }
 
 ALISP_INLINE std::unique_ptr<Object> Machine::parse(const char *expr)
