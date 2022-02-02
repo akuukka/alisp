@@ -59,7 +59,11 @@ ObjectPtr expand(Machine& m, const Macro& macro, std::function<Object*()> paramS
     }
     auto copied = macro.code.deepCopy();
     renameSymbols(m, *copied, conv);
-    return copied->eval();
+    ObjectPtr ret;
+    for (const auto& obj : *copied) {
+        ret = obj.clone()->eval();
+    }
+    return ret;
 }
 
 ObjectPtr macroExpand(std::shared_ptr<std::map<std::string, Macro>> storage,
@@ -105,8 +109,13 @@ void initMacroFunctions(Machine& m)
         ConsCellObject argList = dynamic_cast<ConsCellObject&>(*args.cc->car);
         const int argc = countArgs(argList.cc.get());
         args.skip();
-        ConsCellObject code = dynamic_cast<ConsCellObject&>(*args.cc->car);
-        (*storage).insert(std::make_pair(macroName, Macro(argList, code)));
+        ListBuilder builder(m);
+        while (args.cc) {
+            builder.append(args.cc->car->clone());
+            args.skip();
+        }
+        auto code = builder.get();
+        (*storage).insert(std::make_pair(macroName, Macro(argList, *code)));
         m.makeFunc(macroName.c_str(), argc, argc, [&m, macroName, storage](FArgs& a) {
             assert(storage->count(macroName));
             const auto& macro = storage->at(macroName);
