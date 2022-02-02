@@ -493,6 +493,8 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
     ASSERT_OUTPUT_EQ(m, "(<= 2.1 2)", "nil");
     ASSERT_OUTPUT_EQ(m, "(<= 1 2)", "t");
+    ASSERT_OUTPUT_EQ(m, "(<= 2 2)", "t");
+    ASSERT_OUTPUT_EQ(m, "(< 2 2)", "nil");
     ASSERT_OUTPUT_EQ(m, "(<= 1 2 3)", "t");
     ASSERT_OUTPUT_EQ(m, "(<= 1 2 3 4.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(<= 1 2 3 4.0 3)", "nil");

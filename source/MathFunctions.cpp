@@ -10,6 +10,46 @@
 namespace alisp
 {
 
+template<template<class> class Comp>
+bool numberCompare(Number first,
+                   Rest& rest)
+{
+    Comp<double> fcomp;
+    Comp<std::int64_t> icomp;
+    std::int64_t i = first.i;
+    double f = first.f;
+    for (auto sym : rest) {
+        if (sym->isFloat()) {
+            const double v = sym->value<double>();
+            if (!fcomp(f, v)) {
+                return false;
+            }
+            first.isFloat = true;
+            f = v;
+        }
+        else if (sym->isInt()) {
+            const std::int64_t v = sym->value<std::int64_t>();
+            if (first.isFloat) {
+                double fv = static_cast<double>(v);
+                if (!fcomp(f, fv)) {
+                    return false;
+                }
+            }
+            else {
+                if (!icomp(i, v)) {
+                    return false;
+                }
+            }
+            i = v;
+            f = v;
+        }
+        else {
+            throw exceptions::WrongTypeArgument(sym->toString());
+        }
+    }
+    return true;
+}
+
 ALISP_INLINE double toDouble(std::variant<double, std::int64_t> var)
 {
     try {
@@ -189,50 +229,12 @@ void initMathFunctions(Machine& m)
         return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
             : static_cast<std::unique_ptr<Object>>(makeInt(i));
     });
-    m.defun("<=", [](Number first, Rest& rest) {
-        std::int64_t i = first.i;
-        double f = first.f;
-        for (auto sym : rest) {
-            if (sym->isFloat()) {
-                const double v = sym->value<double>();
-                if (f <= v) {
-
-                }
-                else {
-                    return false;
-                }
-                first.isFloat = true;
-                i = v;
-                f = v;
-            }
-            else if (sym->isInt()) {
-                const std::int64_t v = sym->value<std::int64_t>();
-                if (first.isFloat) {
-                    double fv = static_cast<double>(v);
-                    if (f <= fv) {
-
-                    }
-                    else {
-                        return false;
-                    }
-                }
-                else {
-                    if (i <= v) {
-
-                    }
-                    else {
-                        return false;
-                    }
-                }
-                i = v;
-                f = v;
-            }
-            else {
-                throw exceptions::WrongTypeArgument(sym->toString());
-            }
-        }
-        return true;
-    });
+    m.defun("<=", numberCompare<std::less_equal>);
+    m.defun("<", numberCompare<std::less>);
+    m.defun(">=", numberCompare<std::greater_equal>);
+    m.defun(">", numberCompare<std::greater>);
 }
 
 }
+
+
