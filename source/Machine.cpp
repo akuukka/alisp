@@ -144,6 +144,8 @@ inline bool isPartOfSymName(const char c)
     if (c=='%') return true;
     if (c=='*') return true;
     if (c=='=') return true;
+    if (c=='<') return true;
+    if (c=='>') return true;
     if (c=='/') return true;
     if (c=='-') return true;
     if (c>='a' && c<='z') return true;

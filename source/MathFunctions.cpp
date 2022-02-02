@@ -5,6 +5,7 @@
 #include "alisp.hpp"
 #include <cmath>
 #include <functional>
+#include <limits>
 
 namespace alisp
 {
@@ -188,7 +189,53 @@ void initMathFunctions(Machine& m)
         return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
             : static_cast<std::unique_ptr<Object>>(makeInt(i));
     });
+    m.makeFunc("<=", 2, 0xffff, [](FArgs& args) {
+        std::int64_t i = 0;
+        double f = 0;
+        bool fp = false;
+        bool first = true;
+        for (auto sym : args) {
+            if (sym->isFloat()) {
+                const double v = sym->value<double>();
+                if (f <= v) {
 
+                }
+                else if (!first) {
+                    return args.m.makeNil();
+                }
+                fp = true;
+                i = v;
+                f = v;
+            }
+            else if (sym->isInt()) {
+                const std::int64_t v = sym->value<std::int64_t>();
+                if (fp) {
+                    double fv = static_cast<double>(v);
+                    if (f <= fv) {
+
+                    }
+                    else if (!first) {
+                        return args.m.makeNil();
+                    }
+                }
+                else {
+                    if (i <= v) {
+
+                    }
+                    else if (!first) {
+                        return args.m.makeNil();
+                    }
+                }
+                i = v;
+                f = v;
+            }
+            else {
+                throw exceptions::WrongTypeArgument(sym->toString());
+            }
+            first = false;
+        }
+        return args.m.makeTrue();
+    });
 }
 
 }

@@ -491,6 +491,10 @@ void testBasicArithmetic()
 {
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
+    ASSERT_OUTPUT_EQ(m, "(<= 1 2)", "t");
+    ASSERT_OUTPUT_EQ(m, "(<= 1 2 3)", "t");
+    ASSERT_OUTPUT_EQ(m, "(<= 1 2 3 4.0)", "t");
+    ASSERT_OUTPUT_EQ(m, "(<= 1 2 3 4.0 3)", "nil");
     ASSERT_OUTPUT_EQ(m, "(% 5 2)", "1");
     ASSERT_EXCEPTION(m, "(% 5 2.0)", alisp::exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(+ 1 1)", "2");
@@ -844,11 +848,27 @@ void testControlStructures()
     (setq list (cdr list))))
 (print-elements-of-list animals)
 )code", "nil");
+    ASSERT_OUTPUT_EQ(m, R"code(
+
+(defun triangle (number-of-rows)  ; Version with incrementing counter.
+  "Add up the number of pebbles in a triangle.
+   The first row has one pebble, the second row two pebbles,
+   the third row three pebbles, and so on.
+   The argument is NUMBER-OF-ROWS."
+  (let ((total 0)
+        (row-number 1))
+    (while (<= row-number number-of-rows)
+      (setq total (+ total row-number))
+      (setq row-number (1+ row-number)))
+    total))
+(triangle 7)
+)code", "28");
     assert(expectedMsgs.empty());
 }
 
 void test()
 {
+    testBasicArithmetic();
     testKeywords();
     testControlStructures();
     testVariables();
@@ -862,7 +882,6 @@ void test()
     testFunctions();
     testIf();
     testDeepCopy();
-    testBasicArithmetic();
     testEvalFunction();
     testCarFunction();
     testCdrFunction();
