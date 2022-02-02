@@ -856,6 +856,9 @@ int main(int argc, char** argv)
     while (std::getline(std::cin, expr)) {
         try {
             auto res = m.evaluate(expr.c_str());
+            if (!res) {
+                continue;
+            }
             std::cout << " => " << res->toString() << std::endl;
         }
         catch (alisp::exceptions::Exception& ex) {

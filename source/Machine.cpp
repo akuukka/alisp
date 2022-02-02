@@ -848,4 +848,10 @@ ALISP_INLINE bool Machine::popLocalVariable(std::string name)
     return true;
 }
 
+ALISP_INLINE std::unique_ptr<Object> Machine::evaluate(const char *expr)
+{
+    auto obj = parse(expr);
+    return obj ? obj->eval() : nullptr;
+}
+
 }
