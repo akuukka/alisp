@@ -415,6 +415,7 @@ void testKeywords()
     Machine m;
     ASSERT_OUTPUT_EQ(m, ":keyword1", ":keyword1");
     ASSERT_EXCEPTION(m, "(set :keyword2 1)", exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, "(getf (list :a 1 :b 2 :c 3) :a)", "1");
 }
 
 void testEqFunction()

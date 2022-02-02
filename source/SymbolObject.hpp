@@ -66,6 +66,9 @@ struct SymbolObject : SharedDataObject
         return lhs == rhs;
     }
 
+    SymbolObject* asSymbol() override { return this; }
+    const SymbolObject* asSymbol() const override { return this; }
+
     const void* sharedDataPointer() const override { return sym.get(); }
     size_t sharedDataRefCount() const override { return sym.use_count(); }
     void traverse(const std::function<bool(const Object&)>& f) const override

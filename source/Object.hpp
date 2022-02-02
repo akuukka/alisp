@@ -10,6 +10,7 @@ namespace alisp
 
 struct Function;
 struct ConsCellObject;
+struct SymbolObject;
 
 #ifdef ENABLE_DEBUG_REFCOUNTING
 
@@ -72,6 +73,8 @@ struct Object
 
     virtual ConsCellObject* asList() { return nullptr; }
     virtual const ConsCellObject* asList() const { return nullptr; }
+    virtual SymbolObject* asSymbol() { return nullptr; }
+    virtual const SymbolObject* asSymbol() const { return nullptr; }
 
     template <typename T>
     typename std::enable_if<!std::is_reference<T>::value, T>::type value() const

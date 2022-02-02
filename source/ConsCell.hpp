@@ -30,9 +30,26 @@ struct ConsCell
             return *ptr->car.get();
         }
     };
+    
+    struct ConstIterator
+    {
+        const ConsCell* ptr;
+        bool operator!=(const ConstIterator& rhs) const { return ptr != rhs.ptr; }
+        ConstIterator& operator++()
+        {
+            ptr = ptr->next();
+            return *this;
+        }
+
+        Object& operator*() {
+            return *ptr->car.get();
+        }
+    };
 
     Iterator begin() { return !*this ? end() : Iterator{this}; }
     Iterator end() { return Iterator{nullptr}; }
+    ConstIterator begin() const { return !*this ? end() : ConstIterator{this}; }
+    ConstIterator end() const { return ConstIterator{nullptr}; }
 
     void traverse(const std::function<bool(const ConsCell*)>& f) const;
     bool isCyclical() const;

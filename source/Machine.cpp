@@ -20,6 +20,7 @@ void initFunctionFunctions(Machine& m);
 void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
 void initStringFunctions(Machine& m);
+void initSymbolFunctions(Machine& m);
 
 ALISP_INLINE Function* Machine::makeFunc(const char *name, int minArgs, int maxArgs,
                                          const std::function<std::unique_ptr<Object>(FArgs &)>& f)
@@ -51,13 +52,11 @@ ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
         return m_locals[name].back();
     }
     if (!m_syms.count(name)) {
-        std::cout << "getsym:" << name << std::endl;
         auto newSym = std::make_shared<Symbol>();
         newSym->parent = this;
         if (name.size() && name[0] == ':') {
-            std::cout << "Defined keyword: " << name << std::endl;
             newSym->constant = true;
-            newSym->variable = std::make_unique<SymbolObject>(this, newSym);
+            newSym->variable = std::make_unique<SymbolObject>(this, nullptr, name);
         }
         m_syms[name] = newSym;
         newSym->name = std::move(name);
@@ -243,6 +242,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     initSequenceFunctions(*this);
     initStringFunctions(*this);
     initFunctionFunctions(*this);
+    initSymbolFunctions(*this);
     defun("atom", [](std::any obj) {
         if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
         std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);

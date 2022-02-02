@@ -110,7 +110,7 @@ ALISP_INLINE std::string& getValueReference(const Object &sym)
 }
 
 template<>
-ALISP_INLINE const Symbol& getValueReference(const Object &sym)
+ALISP_INLINE const Symbol& getValueReference(const Object& sym)
 {
     if (sym.isNil()) {
         return *sym.asList()->parent->getSymbol("nil");
@@ -121,6 +121,14 @@ ALISP_INLINE const Symbol& getValueReference(const Object &sym)
     throw std::runtime_error("Failed to get string arg");
 }
 
+template<>
+ALISP_INLINE const ConsCell& getValueReference(const Object& sym)
+{
+    if (sym.isList()) {
+        return *sym.asList()->cc;
+    }
+    throw std::runtime_error("Failed to get string arg");
+}
 
 template<>
 ALISP_INLINE const Function& getValueReference(const Object &sym)

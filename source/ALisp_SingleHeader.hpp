@@ -10,6 +10,7 @@
 #include "ConsCellObject.cpp"
 #include "SharedDataObject.cpp"
 #include "SymbolObject.cpp"
+#include "SymbolFunctions.cpp"
 #include "StringObject.cpp"
 #include "ValueObject.cpp"
 #include "Converter.cpp"
