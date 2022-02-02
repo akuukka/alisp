@@ -7,8 +7,7 @@ namespace alisp
 
 namespace {
 
-void renameSymbols(Machine&m, ConsCellObject& obj,
-                   std::map<std::string, std::unique_ptr<Object>>& conv)
+void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::string, Object*>& conv)
 {
     auto p = obj.cc.get();
     while (p) {
@@ -50,9 +49,9 @@ struct Macro {
     }
 };
 
-ObjectPtr expand(Machine& m, const Macro& macro, std::function<ObjectPtr()> paramSource)
+ObjectPtr expand(Machine& m, const Macro& macro, std::function<Object*()> paramSource)
 {
-    std::map<std::string, std::unique_ptr<Object>> conv;
+    std::map<std::string, Object*> conv;
     for (const auto& obj : macro.argList) {
         const SymbolObject* from =
             dynamic_cast<const SymbolObject*>(&obj);
@@ -81,7 +80,7 @@ ObjectPtr macroExpand(std::shared_ptr<std::map<std::string, Macro>> storage,
         const auto& macro = storage->at(macroCall.second);
         obj = expand(*form->parent,
                      macro,
-                     [&cc](){ cc = cc->next(); return cc->car->clone(); });
+                     [&cc](){ cc = cc->next(); return cc->car.get(); });
         if (once) {
             break;
         }
@@ -111,7 +110,7 @@ void initMacroFunctions(Machine& m)
         m.makeFunc(macroName.c_str(), argc, argc, [&m, macroName, storage](FArgs& a) {
             assert(storage->count(macroName));
             const auto& macro = storage->at(macroName);
-            return expand(m, macro, [&a](){ return a.pop(false)->clone(); })->eval();
+            return expand(m, macro, [&a](){ return a.pop(false); })->eval();
         });
         m.getSymbol(macroName)->function->isMacro = true;
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(macroName));
