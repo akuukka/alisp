@@ -829,6 +829,22 @@ void testControlStructures()
     (setq str (concat str elem)))
   str)
 )code", "\"ABC\"");
+    std::set<std::string> expectedMsgs = {
+        "gazelle", "giraffe", "lion", "tiger"
+    };
+    m.setMessageHandler([&](std::string msg) {
+        expectedMsgs.erase(msg);
+    });
+    ASSERT_OUTPUT_EQ(m, R"code(
+(setq animals '(gazelle giraffe lion tiger))
+(defun print-elements-of-list (list)
+  "Print each element of LIST on a line of its own."
+  (while list
+    (print (car list))
+    (setq list (cdr list))))
+(print-elements-of-list animals)
+)code", "nil");
+    assert(expectedMsgs.empty());
 }
 
 void test()

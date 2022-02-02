@@ -616,6 +616,17 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return obj;
     });
+    makeFunc("while", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
+        auto codestart = args.cc;
+        while (!codestart->car->eval()->isNil()) {
+            auto code = codestart;
+            while (code) {
+                code->car->eval();
+                code = code->next();
+            }
+        }
+        return makeNil();
+    });
     makeFunc("dolist", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         const auto p1 = args.pop(false)->asList();
         const std::string varName = p1->car()->asSymbol()->name;
@@ -631,7 +642,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                 code = code->next();
             }
         }
-        return args.m.makeNil();
+        return makeNil();
     });
     evaluate(getInitCode());
 }
