@@ -1,4 +1,7 @@
 #include "Exception.hpp"
+#include <sstream>
+#include <fstream>
+#include <ios>
 #define ENABLE_DEBUG_REFCOUNTING
 #ifdef ALISP_SINGLE_HEADER
 #include "ALisp_SingleHeader.hpp"
@@ -845,26 +848,56 @@ FOO                 ; A symbol named ‘FOO’, different from ‘foo’.
      */
 }
 
+namespace alisp {
+
+void eval(Machine& m, const std::string& expr, bool interactive)
+{
+    try {
+        auto res = m.evaluate(expr.c_str());
+        if (!res || !interactive) {
+            return;
+        }
+        std::cout << " => " << res->toString() << std::endl;
+    }
+    catch (alisp::exceptions::Exception& ex) {
+        std::cerr << "An error was encountered:\n";
+        std::cerr << ex.what() << std::endl;
+    }
+}
+
+static bool exists(const std::string& name)
+{
+    std::ifstream f(name);
+    return f.good();
+}
+
+static std::string readFile(const std::string &file_path) {
+    const std::ifstream input_stream(file_path, std::ios_base::binary);
+    if (input_stream.fail()) {
+        throw std::runtime_error("Failed to open file");
+    }
+    std::stringstream buffer;
+    buffer << input_stream.rdbuf();
+    return buffer.str();
+}
+
+}
+
 int main(int argc, char** argv)
 {
     if (argc >= 2 && std::string(argv[1]) == "--test") {
         test();
         return 0;
     }
+    else if (argc >=2 && exists(std::string(argv[1]))) {
+        Machine m;
+        eval(m, readFile(std::string(argv[1])), false);
+        return 0;
+    }
     std::string expr;
-    alisp::Machine m;
+    Machine m;
     while (std::getline(std::cin, expr)) {
-        try {
-            auto res = m.evaluate(expr.c_str());
-            if (!res) {
-                continue;
-            }
-            std::cout << " => " << res->toString() << std::endl;
-        }
-        catch (alisp::exceptions::Exception& ex) {
-            std::cerr << "An error was encountered:\n";
-            std::cerr << ex.what() << std::endl;
-        }
+        eval(m, expr, true);
     }
     return 0;
 }
