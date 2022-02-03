@@ -227,9 +227,11 @@ void testStrings()
     ASSERT_EQ(String("アブラカダブラ").substr(0), "アブラカダブラ");
     ASSERT_EQ(String("アブラカダブラ").substr(2), "ラカダブラ");
     ASSERT_EQ(String("アブラカダブラ").substr(3, 2), "カダ");
-    std::cout << String("アブジカダブラ")[2] << std::endl;
-    
-    std::exit(0);
+    std::set<std::uint32_t> chars = {49,50,51,12472};
+    for (auto ch : String("12ジ3")) {
+        chars.erase(ch);
+    }
+    assert(chars.empty());
     
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 2)", "\"cdefg\"");
     ASSERT_EXCEPTION(m, "(substring \"abcdefg\" 2.0)", alisp::exceptions::WrongTypeArgument);

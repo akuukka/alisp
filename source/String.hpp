@@ -60,13 +60,39 @@ public:
     std::uint32_t operator[](size_t index) const
     {
         size_t to = mapToUnderlying(index);
-        std::uint32_t codepoint;
-        std::cout << "bytestart=" << to << std::endl;
-        if (utf8::next(c_str() + to, &codepoint) == 0) {
+        std::uint32_t enc;
+        if (utf8::next(c_str() + to, &enc) == 0) {
             throw std::runtime_error("String index out of range");
         }
-        return codepoint;
+        return utf8::decode(enc);
     }
+
+    struct ConstIterator
+    {
+        const String* str;
+        size_t pos;
+        bool operator!=(const ConstIterator& o) const { return pos != o.pos; };
+        const ConstIterator& operator++()
+        {
+            const size_t proceed = utf8::next(str->c_str() + pos);
+            pos += proceed;
+            if (!utf8::next(str->c_str() + pos)) {
+                pos = npos;
+            }
+            return *this;
+        }
+        std::uint32_t operator*() const
+        {
+            std::uint32_t enc;
+            if (!utf8::next(str->c_str() + pos, &enc)) {
+                throw std::runtime_error("String index out of range");
+            }
+            return utf8::decode(enc);
+        }
+    };
+
+    ConstIterator begin() const { return ConstIterator{this, 0}; }
+    ConstIterator end() const { return ConstIterator{this, npos}; }
 
     bool operator==(const char* cstr) const { return (!m_str && !cstr[0]) || *m_str == cstr; }
 };
