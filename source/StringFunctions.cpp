@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <ostream>
 #include <regex>
+#include <sstream>
 #include <string>
 #include "UTF8.hpp"
 #include "String.hpp"
@@ -167,6 +168,17 @@ void initStringFunctions(Machine& m)
         std::string str;
         std::getline(*stream.istream, str);
         return str;
+    });
+    m.defun("string-to-number", [](std::string str) -> ObjectPtr {
+        std::stringstream ss(str);
+        if (str.find("e") == std::string::npos && str.find(".") == std::string::npos) {
+            std::int64_t i;
+            ss >> i;
+            return makeInt(i);
+        }
+        double f;
+        ss >> f;
+        return makeFloat(f);
     });
     m.defun("parse-integer", [](std::string str) -> ObjectPtr {
         std::int64_t i = std::atoi(str.c_str());
