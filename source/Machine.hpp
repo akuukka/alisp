@@ -91,7 +91,7 @@ public:
     std::unique_ptr<Object> evaluate(const char *expr);
     Function* resolveFunction(const std::string& name);
 
-    Function* makeFunc(const char *name, int minArgs, int maxArgs,
+    Function* makeFunc(std::string name, int minArgs, int maxArgs,
                        const std::function<std::unique_ptr<Object>(FArgs &)>& f);
 
     Machine(bool initStandardLibrary = true);

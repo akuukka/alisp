@@ -112,4 +112,25 @@ inline std::uint32_t decode(std::uint32_t c)
     return c;
 }
 
+inline std::string toUpper(const std::string& str)
+{
+    std::string ret = str;
+    auto it = ret.c_str();
+    std::uint32_t enc;
+    size_t p = 0;
+    for (;;) {
+        const size_t proceed = next(it + p, &enc);
+        if (!proceed) {
+            break;
+        }
+        const std::uint32_t decoded = decode(enc);
+        if (decoded < 128) {
+            ret[p] = ::_toupper(decoded);
+        }
+        p += proceed;
+    }
+    std::cout << str << " => " << ret << std::endl;
+    return ret;
+}
+
 }}

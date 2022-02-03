@@ -25,9 +25,12 @@ void initSequenceFunctions(Machine& m);
 void initStringFunctions(Machine& m);
 void initSymbolFunctions(Machine& m);
 
-ALISP_INLINE Function* Machine::makeFunc(const char *name, int minArgs, int maxArgs,
+ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxArgs,
                                          const std::function<std::unique_ptr<Object>(FArgs &)>& f)
 {
+    if (ConvertParsedNamesToUpperCase) {
+        name = utf8::toUpper(name);
+    }
     auto func = std::make_unique<Function>();
     func->name = name;
     func->minArgs = minArgs;
@@ -748,7 +751,7 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
         }
         throw exceptions::Error("Invalid read syntax");
     }
-    const std::string next = parseNextName(str);
+    std::string next = parseNextName(str);
     auto num = getNumericConstant(next);
     if (num) {
         return num;
@@ -760,7 +763,10 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
         //  which representation was actually written by the programmer.'
         return makeNil();
     }
-    return std::make_unique<SymbolObject>(this, nullptr, next);
+    if (ConvertParsedNamesToUpperCase) {
+        next = utf8::toUpper(next);
+    }
+    return std::make_unique<SymbolObject>(this, nullptr, std::move(next));
 }
 
 ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char *&str)
