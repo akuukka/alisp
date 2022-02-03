@@ -45,6 +45,8 @@ struct StreamObject : Object
         return "<stream>";
     }
 
+    std::string typeId() const override { return "stream"; }
+
     ObjectPtr clone() const override
     {
         return std::make_unique<StreamObject>(stream);

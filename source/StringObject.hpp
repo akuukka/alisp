@@ -20,6 +20,7 @@ struct StringObject : Object, Sequence
     }
 
     bool isString() const override { return true; }
+    std::string typeId() const override { return "string"; }
 
     std::unique_ptr<Object> clone() const override
     {

@@ -59,6 +59,7 @@ struct ConsCellObject : SharedDataObject, Sequence
     size_t length() const override;
     std::unique_ptr<Object> eval() override;
     std::unique_ptr<Object> elt(std::int64_t index) const override;
+    std::string typeId() const override { return "cons"; }
 
     ConsCell::Iterator begin() const
     {

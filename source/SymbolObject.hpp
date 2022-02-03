@@ -34,6 +34,7 @@ struct SymbolObject : SharedDataObject
 
     std::shared_ptr<Symbol> getSymbol() const;
     Symbol* getSymbolOrNull() const;
+    std::string typeId() const override { return "symbol"; }
     
     Function* resolveFunction() override;
 
