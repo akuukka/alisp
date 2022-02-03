@@ -6,6 +6,7 @@
 #include "Symbol.hpp"
 #include "ConsCellObject.hpp"
 #include "FArgs.hpp"
+#include "String.hpp"
 
 namespace alisp {
 
@@ -25,6 +26,7 @@ class Machine
     bool popLocalVariable(std::string name);
     
     std::unique_ptr<Object> makeObject(std::string str);
+    std::unique_ptr<Object> makeObject(String str);
     std::unique_ptr<Object> makeObject(const char* value);
     std::unique_ptr<Object> makeObject(std::shared_ptr<Symbol> sym);
     std::unique_ptr<Object> makeObject(std::unique_ptr<Object>);

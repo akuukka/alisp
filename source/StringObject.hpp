@@ -1,6 +1,7 @@
 #pragma once
 #include "Object.hpp"
 #include "Sequence.hpp"
+#include "String.hpp"
 
 namespace alisp
 {
@@ -11,6 +12,7 @@ struct StringObject : Object, Sequence
 
     StringObject(std::string value) : value(std::make_shared<std::string>(value)) {}
     StringObject(const StringObject& o) : value(o.value) {}
+    StringObject(const String& o) : value(o.sharedPointer()) {}
 
     std::string toString() const override { return "\"" + *value + "\""; }
 

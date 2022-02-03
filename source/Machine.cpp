@@ -1,4 +1,5 @@
 #include <limits>
+#include <memory>
 #include <sstream>
 #include "FunctionObject.hpp"
 #include <any>
@@ -103,6 +104,11 @@ ALISP_INLINE void skipWhitespace(const char*& expr)
         }
         expr++;
     }
+}
+
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(String str)
+{
+    return std::make_unique<StringObject>(str);
 }
 
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::string str)

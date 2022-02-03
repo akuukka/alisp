@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <regex>
 #include "UTF8.hpp"
+#include "String.hpp"
 
 namespace alisp
 {
@@ -46,7 +47,7 @@ void initStringFunctions(Machine& m)
         return static_cast<std::int64_t>(s.size());
     });
     m.defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });
-    m.defun("substring", [](const std::string& str,
+    m.defun("substring", [](String str,
                             std::optional<std::int64_t> start,
                             std::optional<std::int64_t> end) {
         if (start && *start < 0) {
@@ -149,6 +150,12 @@ void initStringFunctions(Machine& m)
         return std::to_string(val);
     });
     m.defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
+    m.defun("format", [](bool toStdOut, const std::string& formatString, Rest& args) {
+        if (!toStdOut) {
+            throw exceptions::Error("Only output to stdout currently supported.");
+        }
+        std::cout << formatString << std::endl;
+    });
 }
 
 }

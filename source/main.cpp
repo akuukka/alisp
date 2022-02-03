@@ -26,6 +26,24 @@ void ASSERT_EQ(std::string a, std::string b)
     assert(false);
 }
 
+void ASSERT_EQ(std::string a, const char* b)
+{
+    if (a == b) {
+        return;
+    }
+    std::cerr << "Was expecting " << b << " but got " << a << std::endl;
+    assert(false);
+}
+
+void ASSERT_EQ(String a, const char* b)
+{
+    if (a == b) {
+        return;
+    }
+    std::cerr << "Was expecting " << b << " but got " << a << std::endl;
+    assert(false);
+}
+
 void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
 {
     ASSERT_EQ(a->toString(), b);
@@ -193,13 +211,26 @@ void testCarFunction()
 
 void testSyntaxErrorDetection()
 {
-    alisp::Machine m;
+    Machine m;
     assert(expect<alisp::exceptions::SyntaxError>([&]() { m.evaluate("(car"); }));
 }
 
 void testStrings()
 {
-    alisp::Machine m;
+    Machine m;
+    String s1("abba");
+    ASSERT_EQ(std::string("").substr(0), "");
+    ASSERT_EQ(String("").substr(0, 0), "");
+
+    ASSERT_EQ(s1.substr(2), "ba");
+    ASSERT_EQ(String("AbbaBaba").substr(4), "Baba");
+    ASSERT_EQ(String("アブラカダブラ").substr(0), "アブラカダブラ");
+    ASSERT_EQ(String("アブラカダブラ").substr(2), "ラカダブラ");
+    ASSERT_EQ(String("アブラカダブラ").substr(3, 2), "カダ");
+    std::cout << String("アブジカダブラ")[2] << std::endl;
+    
+    std::exit(0);
+    
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 2)", "\"cdefg\"");
     ASSERT_EXCEPTION(m, "(substring \"abcdefg\" 2.0)", alisp::exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(substring \"abcdefg\" 0 3)", "\"abc\"");

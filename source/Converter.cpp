@@ -57,6 +57,16 @@ ALISP_INLINE std::optional<StringObject> getValue(const Object& sym)
 }
 
 template<>
+ALISP_INLINE std::optional<String> getValue(const Object& sym)
+{
+    if (sym.isString()) {
+        String str(dynamic_cast<const StringObject&>(sym).value);
+        return str;
+    }
+    return std::nullopt;
+}
+
+template<>
 ALISP_INLINE std::optional<Number> getValue(const Object& sym)
 {
     if (sym.isInt() || sym.isFloat()) {
