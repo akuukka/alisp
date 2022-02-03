@@ -162,6 +162,7 @@ void initStringFunctions(Machine& m)
             = { std::make_pair(args.cc, formatString.begin()) };
         
         std::string s;
+        int col = 0;
         for (auto it = formatString.begin(); it != formatString.end();) {
             const std::uint32_t ch = *it;
             if (ch == '~') {
@@ -169,6 +170,24 @@ void initStringFunctions(Machine& m)
                 const std::uint32_t n = *it;
                 if (n == '%') {
                     s += "\n";
+                    col = 0;
+                }
+                else if (n >= '0' && n <= '9') {
+                    std::string num;
+                    while (*it >= '0' && *it <= '9') {
+                        num += (char)*it;
+                        ++it;
+                    }
+                    int i = std::atoi(num.c_str());
+                    if (*it == 't') {
+                        while (col < i) {
+                            s += " ";
+                            col++;
+                        }
+                    }
+                    else {
+                        assert(false && "Unknown stuff after number");
+                    }
                 }
                 else if (n == '{') {
                     auto arg = args.pop();
@@ -184,9 +203,15 @@ void initStringFunctions(Machine& m)
                     getFrom.pop_back();
                 }
                 else if (n == 'a') {
-                    s += getFrom.back().first->car->eval()->toString(true);
+                    const std::string add = getFrom.back().first->car->eval()->toString(true);
+                    col += utf8::strlen(add.c_str());
+                    s += add;
                     getFrom.back().first = getFrom.back().first->next();
                 }
+            }
+            else {
+                s += utf8::encode(ch);
+                col++;
             }
             ++it;
         }
