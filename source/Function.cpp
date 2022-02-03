@@ -22,13 +22,22 @@ inline FuncParams getFuncParams(const ConsCellObject& closure)
 {
     FuncParams fp;
     std::vector<std::string>& argList = fp.names;
+    bool opt = false;
     for (auto& arg : *closure.cc->car->asList()) {
         const auto sym = dynamic_cast<const SymbolObject*>(&arg);
         if (!sym) {
             throw exceptions::Error("Malformed arglist: " + closure.cc->car->toString());
         }
+        if (sym->name == closure.parent->parsedSymbolName("&optional"))
+        {
+            assert(!opt && "&optional should be present just once");
+            opt = true;
+            continue;
+        }
         argList.push_back(sym->name);
-        fp.min++;
+        if (!opt) {
+            fp.min++;
+        }
         fp.max++;
     }
     return fp;
@@ -40,7 +49,12 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
     const auto& argList = fp.names;
     size_t i = 0;
     for (size_t i = 0; i < argList.size(); i++) {
-        pushLocalVariable(argList[i], a.pop()->clone());
+        if (!a.hasNext()) {
+            pushLocalVariable(argList[i], a.m.makeNil());
+        }
+        else {
+            pushLocalVariable(argList[i], a.pop()->clone());
+        }
     }
     AtScopeExit onExit([this, argList, &closure]() {
         for (auto it = argList.rbegin(); it != argList.rend(); ++it) {

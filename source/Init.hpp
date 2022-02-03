@@ -47,4 +47,13 @@ namespace alisp { inline const char* getInitCode() { return R"code(
         (setq li (list 'let* (list (list 'v (cadr var))) (list 'setcar (list 'cdr 'v) value)  )))
     li))
 
+(defun getf(plist indicator &optional default)
+  (let ((ret default))
+    (while (cdr plist)
+      (if (eq (car plist) indicator)
+          (setq ret (cadr plist)))
+      (setq plist (cddr plist)))
+    ret
+    ))
+
 )code"; }}

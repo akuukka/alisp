@@ -153,6 +153,7 @@ inline bool isPartOfSymName(const char c)
     if (c==':') return true;
     if (c=='%') return true;
     if (c=='*') return true;
+    if (c=='&') return true;
     if (c=='=') return true;
     if (c=='<') return true;
     if (c=='>') return true;
@@ -250,6 +251,8 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     if (!initStandardLibrary) {
         return;
     }
+    setVariable(parsedSymbolName("&optional"),
+                std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName("&optional")), true);
     setVariable(NilName, makeNil(), true);
     setVariable(TName,
                 std::make_unique<SymbolObject>(this, nullptr, TName), true);
