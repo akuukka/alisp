@@ -3,6 +3,7 @@
 #include "Exception.hpp"
 #include "Machine.hpp"
 #include "Object.hpp"
+#include "StreamObject.hpp"
 #include "StringObject.hpp"
 #include "alisp.hpp"
 #include <algorithm>
@@ -11,6 +12,7 @@
 #include <regex>
 #include "UTF8.hpp"
 #include "String.hpp"
+#include "SymbolObject.hpp"
 
 namespace alisp
 {
@@ -153,11 +155,23 @@ void initStringFunctions(Machine& m)
     });
     m.defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
 
-    m.defun("format", [](bool toStdOut, String formatString, Rest& args) {
-        if (!toStdOut) {
-            throw exceptions::Error("Only output to stdout currently supported.");
-        }
+    m.defun("format", [](ObjectPtr stream, String formatString, Rest& args) -> ObjectPtr {
+        std::ostream* ostream = nullptr;
+        if (stream->isNil()) {
 
+        }
+        else if (stream->isSymbol()) {
+            if (stream->asSymbol()->getSymbol() == args.m.getSymbol(TName)) {
+                ostream = &std::cout;
+            }
+        }
+        else if (auto streamObj = dynamic_cast<StreamObject*>(stream.get())) {
+            ostream = streamObj->ostream;
+        }
+        else {
+            throw exceptions::WrongTypeArgument(stream->toString());
+        }
+        
         std::vector<std::pair<ConsCell*, String::ConstIterator>> getFrom
             = { std::make_pair(args.cc, formatString.begin()) };
         auto pop = [&]() {
@@ -220,8 +234,11 @@ void initStringFunctions(Machine& m)
             }
             ++it;
         }
-        std::cout << s;
-        return s;
+        if (stream->isNil()) {
+            return std::make_unique<StringObject>(s);
+        }
+        (*ostream) << s;
+        return args.m.makeNil();
     });
 }
 

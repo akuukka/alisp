@@ -15,6 +15,7 @@
 #include "SymbolObject.hpp"
 #include "Init.hpp"
 #include "UTF8.hpp"
+#include "StreamObject.hpp"
 
 namespace alisp {
 
@@ -252,6 +253,12 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     setVariable(NilName, makeNil(), true);
     setVariable(TName,
                 std::make_unique<SymbolObject>(this, nullptr, TName), true);
+    setVariable(parsedSymbolName("*query-io*"),
+                std::make_unique<StreamObject>(&std::cin, &std::cout));
+    setVariable(parsedSymbolName("*standard-input*"),
+                std::make_unique<StreamObject>(&std::cin, nullptr));
+    setVariable(parsedSymbolName("*standard-output*"),
+                std::make_unique<StreamObject>(nullptr, &std::cout));
     initMathFunctions(*this);
     initMacroFunctions(*this);
     initSequenceFunctions(*this);

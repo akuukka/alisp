@@ -21,6 +21,9 @@ using namespace alisp;
 
 void ASSERT_EQ(std::string a, std::string b)
 {
+    std::string oa, ob;
+    oa = a;
+    ob = b;
     if (ConvertParsedNamesToUpperCase) {
         a = utf8::toUpper(a);
         b = utf8::toUpper(b);
@@ -29,7 +32,7 @@ void ASSERT_EQ(std::string a, std::string b)
     if (a == b) {
         return;
     }
-    std::cerr << "Was expecting " << b << " but got " << a << std::endl;
+    std::cerr << "Was expecting " << ob << " but got " << oa << std::endl;
     assert(false);
 }
 
@@ -57,13 +60,16 @@ void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, std::string res)
     // std::cout << expr << std::endl;
     try {
         std::string out = m.evaluate(expr)->toString();
+        std::string oout, ores;
+        oout = out;
+        ores = res;
         if (ConvertParsedNamesToUpperCase) {
             out = utf8::toUpper(out);
             res = utf8::toUpper(res);
         }
         if (out != res) {
-            std::cerr << "Expected '" << expr << "' to output '" << res << "' but ";
-            std::cerr << " got '" << out << "' instead.\n";
+            std::cerr << "Expected '" << expr << "' to output '" << ores << "' but ";
+            std::cerr << " got '" << oout << "' instead.\n";
             exit(1);
         }
     }
@@ -332,6 +338,9 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((make-string 2 ?\n))code", "\"\n\n\"");
     ASSERT_OUTPUT_EQ(m, R"code((make-string 4 ?\s))code", R"code("    ")code");
     ASSERT_OUTPUT_EQ(m, R"code((make-string 4 ?\\))code", R"code("\\\\")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format t "format t"))code", R"code(nil)code");
+    ASSERT_OUTPUT_EQ(m, R"code((format nil "format nil"))code", R"code("format nil")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format *standard-output* "format stdout"))code", R"code(nil)code");
 }
 
 void testDivision()
