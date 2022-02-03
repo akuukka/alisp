@@ -1,4 +1,5 @@
 #include <any>
+#include "StreamObject.hpp"
 #include <optional>
 #include "ValueObject.hpp"
 #include "StringObject.hpp"
@@ -52,6 +53,24 @@ ALISP_INLINE std::optional<StringObject> getValue(const Object& sym)
 {
     if (sym.isString()) {
         return dynamic_cast<const StringObject&>(sym);
+    }
+    return std::nullopt;
+}
+
+template<>
+ALISP_INLINE std::optional<Stream> getValue(const Object& sym)
+{
+    auto stream = dynamic_cast<const StreamObject*>(&sym);
+    if (stream) {
+        return stream->stream ? *stream->stream : Stream::getEmptyStream();
+    }
+    if (sym.isSymbol()) {
+        if (sym.asSymbol()->getSymbol() == sym.asSymbol()->parent->getSymbol(TName)) {
+            return Stream(nullptr, &std::cout);
+        }
+    }
+    if (sym.isNil()) {
+        return Stream::getEmptyStream();
     }
     return std::nullopt;
 }

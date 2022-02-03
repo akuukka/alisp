@@ -344,6 +344,8 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((format t "format t"))code", R"code(nil)code");
     ASSERT_OUTPUT_EQ(m, R"code((format nil "format nil"))code", R"code("format nil")code");
     ASSERT_OUTPUT_EQ(m, R"code((format *standard-output* "format stdout"))code", R"code(nil)code");
+    ASSERT_OUTPUT_EQ(m, R"code((force-output *standard-output*))code", "nil");
+    ASSERT_OUTPUT_EQ(m, R"code((force-output *query-io*))code", "nil");
 }
 
 void testDivision()
@@ -972,6 +974,8 @@ void test()
     testSyntaxErrorDetection();
     testNullFunction();
     testPrognFunction();
+    //std::cout << "Remaining objects:\n";
+    //Object::printAllObjects();
     assert(alisp::Object::getDebugRefCount() == 0);
     /*
 foo                 ; A symbol named ‘foo’.

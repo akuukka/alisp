@@ -154,22 +154,19 @@ void initStringFunctions(Machine& m)
         return std::to_string(val);
     });
     m.defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
-
-    m.defun("format", [](ObjectPtr stream, String formatString, Rest& args) -> ObjectPtr {
+    m.defun("force-output", [](Stream stream) {
+        if (stream.ostream) {
+            (*stream.ostream) << std::flush;
+        }
+        return false;
+    });
+    m.defun("format", [](Stream stream, String formatString, Rest& args) -> ObjectPtr {
         std::ostream* ostream = nullptr;
-        if (stream->isNil()) {
+        if (stream.isNilStream()) {
 
-        }
-        else if (stream->isSymbol()) {
-            if (stream->asSymbol()->getSymbol() == args.m.getSymbol(TName)) {
-                ostream = &std::cout;
-            }
-        }
-        else if (auto streamObj = dynamic_cast<StreamObject*>(stream.get())) {
-            ostream = streamObj->ostream;
         }
         else {
-            throw exceptions::WrongTypeArgument(stream->toString());
+            ostream = stream.ostream;
         }
         
         std::vector<std::pair<ConsCell*, String::ConstIterator>> getFrom
@@ -234,7 +231,7 @@ void initStringFunctions(Machine& m)
             }
             ++it;
         }
-        if (stream->isNil()) {
+        if (stream.isNilStream()) {
             return std::make_unique<StringObject>(s);
         }
         (*ostream) << s;
