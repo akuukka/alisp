@@ -1,4 +1,5 @@
 #include "alisp.hpp"
+#include "Machine.hpp"
 #include "SymbolObject.hpp"
 #include "ConsCellObject.hpp"
 #include "AtScopeExit.hpp"
@@ -52,7 +53,7 @@ ALISP_INLINE void ConsCellObject::traverse(const std::function<bool(const Object
 ALISP_INLINE std::string ConsCellObject::toString(bool aesthetic) const
 {
     if (!cc->car && !cc->cdr) {
-        return "nil";
+        return NilName;
     }
 
     std::vector<const ConsCell*> cellPtrs;
@@ -69,7 +70,7 @@ ALISP_INLINE std::string ConsCellObject::toString(bool aesthetic) const
     }
 
     const SymbolObject* carSym = dynamic_cast<const SymbolObject*>(car());
-    const bool quote = carSym && carSym->name == "quote";
+    const bool quote = carSym && carSym->name == parent->parsedSymbolName("quote");
     if (quote) {
         return "'" + (cc->next() ? cc->next()->car->toString() : std::string(""));
     }

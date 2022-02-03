@@ -85,7 +85,8 @@ class Machine
 public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr);
-    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj);    
+    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj);
+    std::string parsedSymbolName(std::string name);
     
     std::unique_ptr<Object> parse(const char *expr);
     std::unique_ptr<Object> evaluate(const char *expr);

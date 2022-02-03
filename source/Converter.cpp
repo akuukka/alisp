@@ -17,7 +17,7 @@ template<>
 ALISP_INLINE std::optional<std::shared_ptr<Symbol>> getValue(const Object& sym)
 {
     if (sym.isNil()) {
-        return sym.asList()->parent->getSymbol("nil");
+        return sym.asList()->parent->getSymbol(NilName);
     }
     auto s = dynamic_cast<const SymbolObject*>(&sym);
     if (s) {
@@ -140,7 +140,7 @@ template<>
 ALISP_INLINE const Symbol& getValueReference(const Object& sym)
 {
     if (sym.isNil()) {
-        return *sym.asList()->parent->getSymbol("nil");
+        return *sym.asList()->parent->getSymbol(NilName);
     }
     if (sym.isSymbol()) {
         return *dynamic_cast<const SymbolObject*>(&sym)->getSymbol();

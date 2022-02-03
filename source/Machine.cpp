@@ -249,8 +249,9 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     if (!initStandardLibrary) {
         return;
     }
-    setVariable("nil", makeNil(), true);
-    setVariable("t", std::make_unique<SymbolObject>(this, nullptr, "t"), true);
+    setVariable(NilName, makeNil(), true);
+    setVariable(TName,
+                std::make_unique<SymbolObject>(this, nullptr, TName), true);
     initMathFunctions(*this);
     initMacroFunctions(*this);
     initSequenceFunctions(*this);
@@ -490,7 +491,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return r;
     });
     makeFunc("set", 2, 2, [this](FArgs& args) {
-        const SymbolObject nil(this, nullptr, "nil");
+        const SymbolObject nil(this, nullptr, parsedSymbolName("nil"));
         const auto& p1 = args.pop();
         const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
         if (!name) {
@@ -510,7 +511,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return sym->variable->clone();
     });
     makeFunc("defvar", 1, 3, [this](FArgs& args) {
-        const SymbolObject nil(this, nullptr, "nil");
+        const SymbolObject nil(this, nullptr, parsedSymbolName("nil"));
         const auto& p1 = args.pop(false);
         const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
         if (!name || name->name.empty()) {
@@ -660,6 +661,14 @@ ALISP_INLINE Function* Machine::resolveFunction(const std::string& name)
     return nullptr;
 }
 
+ALISP_INLINE std::string Machine::parsedSymbolName(std::string name)
+{
+    if (!ConvertParsedNamesToUpperCase) {
+        return name;
+    }
+    return utf8::toUpper(name);
+}
+
 ALISP_INLINE std::unique_ptr<Object> Machine::parse(const char *expr)
 {
     auto r = parseNext(expr);
@@ -668,8 +677,9 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parse(const char *expr)
     }
 
     auto prog = makeList(this);
-    prog->cc->car = std::make_unique<SymbolObject>(this, nullptr, "progn");
-
+    prog->cc->car =
+        std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName("progn"));
+    
     auto consCell = makeList(this);
     consCell->cc->car = std::move(r);
     auto lastCell = consCell->cc.get();
@@ -756,15 +766,15 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
     if (num) {
         return num;
     }
-    if (next == "nil") {
+    if (ConvertParsedNamesToUpperCase) {
+        next = utf8::toUpper(next);
+    }
+    if (next == parsedSymbolName("nil")) {
         // It's optimal to return nil already at this point.
         // Note that even the GNU elisp manual says:
         // 'After the Lisp reader has read either `()' or `nil', there is no way to determine
         //  which representation was actually written by the programmer.'
         return makeNil();
-    }
-    if (ConvertParsedNamesToUpperCase) {
-        next = utf8::toUpper(next);
     }
     return std::make_unique<SymbolObject>(this, nullptr, std::move(next));
 }
@@ -793,7 +803,7 @@ ALISP_INLINE
 std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj)
 {
     std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>(this);
-    list->cc->car = std::make_unique<SymbolObject>(this, nullptr, "quote");
+    list->cc->car = std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName("quote"));
     std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>(this);
     cdr->cc->car = std::move(obj);
     list->cc->cdr = std::move(cdr);
@@ -848,7 +858,7 @@ std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) cons
 
 ALISP_INLINE std::unique_ptr<Object> Machine::makeTrue() 
 {
-    return std::make_unique<SymbolObject>(this, nullptr, "t");
+    return std::make_unique<SymbolObject>(this, nullptr, TName);
 }
 
 ALISP_INLINE void Machine::pushLocalVariable(std::string name, ObjectPtr obj)

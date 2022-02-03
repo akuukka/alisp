@@ -129,7 +129,6 @@ inline std::string toUpper(const std::string& str)
         }
         p += proceed;
     }
-    std::cout << str << " => " << ret << std::endl;
     return ret;
 }
 

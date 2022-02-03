@@ -1,4 +1,6 @@
 #include "Exception.hpp"
+#include "UTF8.hpp"
+#include "alisp.hpp"
 #include <sstream>
 #include <fstream>
 #include <ios>
@@ -19,6 +21,11 @@ using namespace alisp;
 
 void ASSERT_EQ(std::string a, std::string b)
 {
+    if (ConvertParsedNamesToUpperCase) {
+        a = utf8::toUpper(a);
+        b = utf8::toUpper(b);
+    }
+
     if (a == b) {
         return;
     }
@@ -28,11 +35,7 @@ void ASSERT_EQ(std::string a, std::string b)
 
 void ASSERT_EQ(std::string a, const char* b)
 {
-    if (a == b) {
-        return;
-    }
-    std::cerr << "Was expecting " << b << " but got " << a << std::endl;
-    assert(false);
+    ASSERT_EQ(a, std::string(b));
 }
 
 void ASSERT_EQ(String a, const char* b)
@@ -49,11 +52,15 @@ void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
     ASSERT_EQ(a->toString(), b);
 }
 
-void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, const char* res)
+void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, std::string res)
 {
     // std::cout << expr << std::endl;
     try {
-        const std::string out = m.evaluate(expr)->toString();
+        std::string out = m.evaluate(expr)->toString();
+        if (ConvertParsedNamesToUpperCase) {
+            out = utf8::toUpper(out);
+            res = utf8::toUpper(res);
+        }
         if (out != res) {
             std::cerr << "Expected '" << expr << "' to output '" << res << "' but ";
             std::cerr << " got '" << out << "' instead.\n";
@@ -67,9 +74,13 @@ void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, const char* res)
     // std::cout << " => " << out << std::endl;
 }
 
-void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, const char* res)
+void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res)
 {
-    const std::string out = m.evaluate(expr)->toString();
+    std::string out = m.evaluate(expr)->toString();
+    if (ConvertParsedNamesToUpperCase) {
+        out = utf8::toUpper(out);
+        res = utf8::toUpper(res);
+    }
     if (out.find(res) == std::string::npos) {
         std::cerr << "Expected the output of '" << expr << "' to contain '" << res << "' but ";
         std::cerr << " it didn't. The output was '" << out << "'.\n";
@@ -159,19 +170,19 @@ bool expect(std::function<void(void)> code)
 
 void testNullFunction()
 {
-    alisp::Machine m;
-    assert(m.evaluate("(null nil)")->toString() == "t");
-    assert(m.evaluate("(null ())")->toString() == "t");
+    Machine m;
+    assert(m.evaluate("(null nil)")->toString() == m.parsedSymbolName("t"));
+    assert(m.evaluate("(null ())")->toString() == m.parsedSymbolName("t"));
     assert(expect<alisp::exceptions::VoidFunction>([&]() {
         m.evaluate("(null (test))");
     }));
     assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null)"); }));
     assert(expect<alisp::exceptions::WrongNumberOfArguments>([&]() { m.evaluate("(null 1 2)"); }));
-    assert(m.evaluate("(null '(1))")->toString() == "nil");
-    assert(m.evaluate("(null '())")->toString() == "t");
+    assert(m.evaluate("(null '(1))")->toString() == NilName);
+    assert(m.evaluate("(null '())")->toString() == TName);
 
-    assert(m.evaluate("(null (null t))")->toString() == "t");
-    assert(m.evaluate("(null (null (null nil)))")->toString() == "t");
+    assert(m.evaluate("(null (null t))")->toString() == TName);
+    assert(m.evaluate("(null (null (null nil)))")->toString() == TName);
 }
 
 void testQuote()
@@ -195,9 +206,9 @@ void testCarFunction()
     assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
         m.evaluate("(car (+ 1 1))");
     }));
-    assert(m.evaluate("(car nil)")->toString() == "nil");
-    assert(m.evaluate("(car ())")->toString() == "nil");
-    assert(m.evaluate("(car '())")->toString() == "nil");
+    assert(m.evaluate("(car nil)")->toString() == NilName);
+    assert(m.evaluate("(car ())")->toString() == NilName);
+    assert(m.evaluate("(car '())")->toString() == NilName);
     assert(m.evaluate("(car '(1 2))")->toString() == "1");
     assert(expect<alisp::exceptions::VoidFunction>([&]() {
         m.evaluate("(car (1 2))");
@@ -276,10 +287,10 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m,
                      R"code((split-string "ooo" "o*" t))code",
                      R"code(nil)code");
-    assert(m.evaluate("(stringp (car '(\"a\")))")->toString() == "t");
-    assert(m.evaluate("(stringp \"abc\")")->toString() == "t");
-    assert(m.evaluate("(stringp 1)")->toString() == "nil");
-    assert(m.evaluate("(stringp ())")->toString() == "nil");
+    ASSERT_OUTPUT_EQ(m, "(stringp (car '(\"a\")))", "t");
+    ASSERT_OUTPUT_EQ(m, "(stringp \"abc\")", "t");
+    ASSERT_OUTPUT_EQ(m, "(stringp 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(stringp ())", "nil");
     std::set<std::string> expectedMsgs = {
         "test", "a%b", "num: 50.%", "15"
     };
@@ -420,18 +431,24 @@ void testVariables()
     ASSERT_OUTPUT_EQ(m, "var1", "50");
     ASSERT_OUTPUT_EQ(m, "(defvar var1 60)", "var1");
     ASSERT_OUTPUT_EQ(m, "var1", "50");
-    ASSERT_OUTPUT_EQ(m, "(intern-soft \"var2\")", "nil");
+    ASSERT_OUTPUT_EQ(
+        m,
+        ConvertParsedNamesToUpperCase ? "(intern-soft \"VAR2\")" : "(intern-soft \"var2\")",
+        "nil");
     ASSERT_OUTPUT_EQ(m, "(defvar var2)", "var2");
-    ASSERT_OUTPUT_EQ(m, "(intern-soft \"var2\")", "var2");
+    ASSERT_OUTPUT_EQ(
+        m,
+        ConvertParsedNamesToUpperCase ? "(intern-soft \"VAR2\")" : "(intern-soft \"var2\")",
+        "var2");
 }
 
 void testSymbols()
 {
-    alisp::Machine m;
+    Machine m;
     ASSERT_OUTPUT_EQ(m, "'('a 'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "'('a'b)", "('a 'b)");
-    assert(m.evaluate("(symbolp 'abc)")->toString() == "t");
-    assert(m.evaluate("(symbol-name 'abc)")->toString() == "\"abc\"");
+    ASSERT_OUTPUT_EQ(m, "(symbolp 'abc)", "t");
+    ASSERT_OUTPUT_EQ(m, "(symbol-name 'abc)", "\"abc\"");
     assert(expect<alisp::exceptions::VoidVariable>([&]() {
         m.evaluate("(symbolp abc)");
     }));
@@ -482,30 +499,30 @@ void testInternFunction()
     alisp::Machine m;
     m.setMessageHandler([](std::string msg){});
     ASSERT_OUTPUT_EQ(m, "(intern \"\")", "##");
-    ASSERT_OUTPUT_EQ(m, "(eq (intern \"tt\") 'tt)", "t");
-    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"foo\"))", "foo");
-    ASSERT_OUTPUT_EQ(m, "(eq sym 'foo)", "t");
-    ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "nil");
-    ASSERT_EQ(m.evaluate("(setq sym (intern \"frazzle\"))"), "frazzle");
-    ASSERT_EQ(m.evaluate("(intern-soft \"frazzle\")"), "frazzle");
-    ASSERT_EQ(m.evaluate("(eq sym 'frazzle)"), "t");
-    ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "nil");
-    ASSERT_EQ(m.evaluate("(setq sym (intern \"abc\"))"), "abc");
-    ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "abc");
-    ASSERT_EQ(m.evaluate("(unintern sym)"), "t");
-    ASSERT_EQ(m.evaluate("(intern-soft \"abc\")"), "nil");
+    ASSERT_OUTPUT_EQ(m, "(eq (intern \"TT\") 'TT)", "t");
+    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"FOO\"))", "FOO");
+    ASSERT_OUTPUT_EQ(m, "(eq sym 'FOO)", "t");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"FRAZZLE\")", "nil");
+    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"FRAZZLE\"))", "FRAZZLE");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"FRAZZLE\")", "FRAZZLE");
+    ASSERT_OUTPUT_EQ(m, "(eq sym 'FRAZZLE)", "t");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"abc\")", "nil");
+    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"abc\"))", "abc");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"abc\")", "abc");
+    ASSERT_OUTPUT_EQ(m, "(unintern sym)", "t");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"abc\")", "nil");
 
     // Ensure same functionality as emacs: if sym refers to abra and then abra is uninterned,
     // after that describe-variable still can show what sym pointed to.
-    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"abra\"))", "abra");
-    ASSERT_OUTPUT_EQ(m, "(setq abra 500)", "500");
-    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'abra)", "abra's value is 500");
-    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "abra's value is 500");
-    ASSERT_OUTPUT_EQ(m, "(message \"%d\" abra)", "\"500\"");
+    ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"ABRA\"))", "ABRA");
+    ASSERT_OUTPUT_EQ(m, "(setq ABRA 500)", "500");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'ABRA)", "ABRA's value is 500");
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "ABRA's value is 500");
+    ASSERT_OUTPUT_EQ(m, "(message \"%d\" ABRA)", "\"500\"");
     ASSERT_EXCEPTION(m, "(message \"%d\" sym)", alisp::exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(unintern sym)", "t"); // this removes abra from objarray
-    ASSERT_EXCEPTION(m, "(message \"%d\" abra)", alisp::exceptions::VoidVariable);
-    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "abra's value is 500");
+    ASSERT_EXCEPTION(m, "(message \"%d\" ABRA)", alisp::exceptions::VoidVariable);
+    ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "ABRA's value is 500");
 }
 
 void testDescribeVariableFunction()
@@ -832,9 +849,10 @@ void testMemoryLeaks()
         auto obj = m->evaluate("(progn (set 'z (list 1 2 3 4 5 6 7))"
                                "(setcdr (cdr (cdr (cdr (cdr (cdr (cdr z)))))) (cdr z))"
                                "z)");
-        m->getSymbolOrNull("z");
-        assert(obj->equals(*m->getSymbolOrNull("z")->variable));
-        assert(obj->equals(*m->evaluate("z")));
+        const std::string zname = m->parsedSymbolName("z");
+        m->getSymbolOrNull(zname);
+        assert(obj->equals(*m->getSymbolOrNull(zname)->variable));
+        assert(obj->equals(*m->evaluate(zname.c_str())));
         assert(Object::getDebugRefCount() > baseCount && "Circular2");
         auto clone = obj->clone();
         clone = nullptr;
@@ -879,7 +897,8 @@ void testControlStructures()
   str)
 )code", "\"ABC\"");
     std::set<std::string> expectedMsgs = {
-        "gazelle", "giraffe", "lion", "tiger"
+        m.parsedSymbolName("gazelle"), m.parsedSymbolName("giraffe"),
+        m.parsedSymbolName("lion"), m.parsedSymbolName("tiger")
     };
     m.setMessageHandler([&](std::string msg) {
         expectedMsgs.erase(msg);

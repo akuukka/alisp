@@ -219,7 +219,7 @@ void initStringFunctions(Machine& m)
             }
             ++it;
         }
-        std::cout << s << std::endl;
+        std::cout << s;
         return s;
     });
 }
