@@ -161,7 +161,8 @@ void initStringFunctions(Machine& m)
         std::vector<std::pair<ConsCell*, String::ConstIterator>> getFrom
             = { std::make_pair(args.cc, formatString.begin()) };
         auto pop = [&]() {
-            ObjectPtr ptr = getFrom.back().first->car->eval();
+            ObjectPtr ptr = getFrom.size() == 1 ? getFrom.back().first->car->eval() :
+                getFrom.back().first->car->clone();
             getFrom.back().first = getFrom.back().first->next();
             return ptr;
         };
