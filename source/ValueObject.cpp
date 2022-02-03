@@ -26,10 +26,13 @@ ALISP_INLINE std::optional<std::int64_t> getValue(const Object &sym)
     return std::nullopt;
 }
 
-ALISP_INLINE std::string CharacterObject::toString() const
+ALISP_INLINE std::string CharacterObject::toString(bool aesthetic) const
 {
-    std::string r = std::to_string(value);
     const std::string encoded = utf8::encode(value);
+    if (aesthetic) {
+        return encoded;
+    }
+    std::string r = std::to_string(value);
     if (encoded.length()) {
         r += " (";
         r += encoded;

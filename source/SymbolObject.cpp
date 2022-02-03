@@ -22,6 +22,17 @@ ALISP_INLINE Function* SymbolObject::resolveFunction()
     return parent->resolveFunction(name);
 }
 
+ALISP_INLINE std::string SymbolObject::toString(bool aesthetic) const
+{
+    // Interned symbols with empty string as name have special printed form of ##. See:
+    // https://www.gnu.org/software/emacs/manual/html_node/elisp/Special-Read-Syntax.html
+    std::string n = sym ? sym->name : name;
+    if (aesthetic && n.size() && n[0] == ':') {
+        n = n.substr(1);
+    }
+    return n.size() ? n : "##";
+}
+
 ALISP_INLINE Symbol* SymbolObject::getSymbolOrNull() const
 {
     return sym ? sym.get() : parent->getSymbolOrNull(name).get();

@@ -39,14 +39,7 @@ struct SymbolObject : SharedDataObject
 
     void reset() override { sym.reset(); }
     bool isSymbol() const override { return true; }
-
-    std::string toString() const override
-    {
-        // Interned symbols with empty string as name have special printed form of ##. See:
-        // https://www.gnu.org/software/emacs/manual/html_node/elisp/Special-Read-Syntax.html
-        std::string n = sym ? sym->name : name;
-        return n.size() ? n : "##";
-    }
+    std::string toString(bool aesthetic = false) const override;
 
     std::unique_ptr<Object> clone() const override
     {

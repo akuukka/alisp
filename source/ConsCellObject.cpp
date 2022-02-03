@@ -49,7 +49,7 @@ ALISP_INLINE void ConsCellObject::traverse(const std::function<bool(const Object
     }    
 }
 
-ALISP_INLINE std::string ConsCellObject::toString() const
+ALISP_INLINE std::string ConsCellObject::toString(bool aesthetic) const
 {
     if (!cc->car && !cc->cdr) {
         return "nil";

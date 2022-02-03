@@ -184,7 +184,7 @@ void initStringFunctions(Machine& m)
                     getFrom.pop_back();
                 }
                 else if (n == 'a') {
-                    s += getFrom.back().first->car->eval()->toString();
+                    s += getFrom.back().first->car->eval()->toString(true);
                     getFrom.back().first = getFrom.back().first->next();
                 }
             }

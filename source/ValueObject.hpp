@@ -14,7 +14,7 @@ struct ValueObject : Object
         const ValueObject<T>* op = dynamic_cast<const ValueObject<T>*>(&o);
         return op && op->value == value;
     }
-    std::string toString() const override { return std::to_string(value); }
+    std::string toString(bool aesthetic = false) const override { return std::to_string(value); }
     Object* trySelfEvaluate() override { return this; }
 };
 
@@ -46,7 +46,7 @@ struct CharacterObject : ValueObject<std::uint32_t>
     {
         return std::make_unique<CharacterObject>(value);
     }
-    std::string toString() const override;
+    std::string toString(bool aesthetic = false) const override;
     bool isCharacter() const override { return true; }
 };
 

@@ -14,7 +14,10 @@ struct StringObject : Object, Sequence
     StringObject(const StringObject& o) : value(o.value) {}
     StringObject(const String& o) : value(o.sharedPointer()) {}
 
-    std::string toString() const override { return "\"" + *value + "\""; }
+    std::string toString(bool aesthetic = false) const override
+    {
+        return aesthetic ? *value : ("\"" + *value + "\"");
+    }
 
     bool isString() const override { return true; }
 

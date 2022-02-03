@@ -33,7 +33,7 @@ struct ConsCellObject : SharedDataObject, Sequence
     }        
 
     void reset() override { cc.reset(); }
-    std::string toString() const override;
+    std::string toString(bool aesthetic = false) const override;
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
     bool operator!() const override { return !(*cc); }
