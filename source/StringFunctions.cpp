@@ -1,15 +1,18 @@
 #include "ConsCell.hpp"
+#include "MultiValueObject.hpp"
 #include "ConsCellObject.hpp"
 #include "Exception.hpp"
 #include "Machine.hpp"
 #include "Object.hpp"
 #include "StreamObject.hpp"
 #include "StringObject.hpp"
+#include "ValueObject.hpp"
 #include "alisp.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <ostream>
 #include <regex>
+#include <string>
 #include "UTF8.hpp"
 #include "String.hpp"
 #include "SymbolObject.hpp"
@@ -159,6 +162,17 @@ void initStringFunctions(Machine& m)
             (*stream.ostream) << std::flush;
         }
         return false;
+    });
+    m.defun("read-line", [](Stream stream) {
+        std::string str;
+        std::getline(*stream.istream, str);
+        return str;
+    });
+    m.defun("parse-integer", [](std::string str) -> ObjectPtr {
+        std::int64_t i = std::atoi(str.c_str());
+        auto vals = std::make_unique<MultiValueObject<IntObject>>(i);
+        vals->additionalValues.push_back(makeInt(str.size()));
+        return vals;
     });
     m.defun("format", [](Stream stream, String formatString, Rest& args) -> ObjectPtr {
         std::ostream* ostream = nullptr;

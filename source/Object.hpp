@@ -30,6 +30,13 @@ struct Object
         changeRefCount(1);
         getAllObjects().insert(this);
     }
+    
+    Object(const Object&)
+    {
+        changeRefCount(1);
+        getAllObjects().insert(this);
+    }
+    
     virtual ~Object()
     {
         changeRefCount(-1);

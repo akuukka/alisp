@@ -346,6 +346,8 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((format *standard-output* "format stdout"))code", R"code(nil)code");
     ASSERT_OUTPUT_EQ(m, R"code((force-output *standard-output*))code", "nil");
     ASSERT_OUTPUT_EQ(m, R"code((force-output *query-io*))code", "nil");
+    ASSERT_OUTPUT_EQ(m, R"code((parse-integer "1"))code", "1\n1");
+    ASSERT_OUTPUT_EQ(m, R"code((parse-integer "123"))code", "123\n3");
 }
 
 void testDivision()
@@ -1013,7 +1015,8 @@ static bool exists(const std::string& name)
     return f.good();
 }
 
-static std::string readFile(const std::string &file_path) {
+static std::string readFile(const std::string &file_path)
+{
     const std::ifstream input_stream(file_path, std::ios_base::binary);
     if (input_stream.fail()) {
         throw std::runtime_error("Failed to open file");

@@ -9,6 +9,11 @@ struct ValueObject : Object
 {
     T value;
     ValueObject(T t) : value(t) {}
+    ValueObject(const ValueObject& o) :
+        Object(o),
+        value(o.value)
+    {}
+    
     bool equals(const Object& o) const override
     {
         const ValueObject<T>* op = dynamic_cast<const ValueObject<T>*>(&o);
