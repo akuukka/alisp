@@ -100,7 +100,13 @@ public:
         }
     };
 
-    ConstIterator begin() const { return ConstIterator{this, 0}; }
+    ConstIterator begin() const
+    {
+        if (!utf8::next(c_str())) {
+            return end();
+        }
+        return ConstIterator{this, 0};
+    }
     ConstIterator end() const { return ConstIterator{this, npos}; }
 
     bool operator==(const char* cstr) const { return (!m_str && !cstr[0]) || *m_str == cstr; }

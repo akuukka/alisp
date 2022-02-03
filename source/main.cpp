@@ -235,6 +235,9 @@ void testSyntaxErrorDetection()
 void testStrings()
 {
     Machine m;
+    for (auto ch : String("")) {
+        assert(false && "Iterating empty string!");
+    }
     String s1("abba");
     ASSERT_EQ(std::string("").substr(0), "");
     ASSERT_EQ(String("").substr(0, 0), "");
