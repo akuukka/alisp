@@ -160,6 +160,11 @@ void initStringFunctions(Machine& m)
 
         std::vector<std::pair<ConsCell*, String::ConstIterator>> getFrom
             = { std::make_pair(args.cc, formatString.begin()) };
+        auto pop = [&]() {
+            ObjectPtr ptr = getFrom.back().first->car->eval();
+            getFrom.back().first = getFrom.back().first->next();
+            return ptr;
+        };
         
         std::string s;
         int col = 0;
@@ -190,7 +195,7 @@ void initStringFunctions(Machine& m)
                     }
                 }
                 else if (n == '{') {
-                    auto arg = args.pop();
+                    auto arg = pop();
                     assert(arg->asList());
                     getFrom.emplace_back(arg->asList()->cc.get(), it);
                 }
@@ -203,10 +208,9 @@ void initStringFunctions(Machine& m)
                     getFrom.pop_back();
                 }
                 else if (n == 'a') {
-                    const std::string add = getFrom.back().first->car->eval()->toString(true);
+                    const std::string add = pop()->toString(true);
                     col += utf8::strlen(add.c_str());
                     s += add;
-                    getFrom.back().first = getFrom.back().first->next();
                 }
             }
             else {
