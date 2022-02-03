@@ -89,6 +89,15 @@ public:
             }
             return utf8::decode(enc);
         }
+        ConstIterator operator-(std::int64_t i) const
+        {
+            ConstIterator ni;
+            ni.str = this->str;
+            std::int64_t p = pos;
+            p -= i;
+            ni.pos = p;
+            return ni;
+        }
     };
 
     ConstIterator begin() const { return ConstIterator{this, 0}; }

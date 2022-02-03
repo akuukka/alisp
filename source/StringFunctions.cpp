@@ -1,3 +1,4 @@
+#include "ConsCell.hpp"
 #include "ConsCellObject.hpp"
 #include "Exception.hpp"
 #include "Machine.hpp"
@@ -6,6 +7,7 @@
 #include "alisp.hpp"
 #include <algorithm>
 #include <cstdint>
+#include <ostream>
 #include <regex>
 #include "UTF8.hpp"
 #include "String.hpp"
@@ -150,11 +152,46 @@ void initStringFunctions(Machine& m)
         return std::to_string(val);
     });
     m.defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
-    m.defun("format", [](bool toStdOut, const std::string& formatString, Rest& args) {
+
+    m.defun("format", [](bool toStdOut, String formatString, Rest& args) {
         if (!toStdOut) {
             throw exceptions::Error("Only output to stdout currently supported.");
         }
-        std::cout << formatString << std::endl;
+
+        std::vector<std::pair<ConsCell*, String::ConstIterator>> getFrom
+            = { std::make_pair(args.cc, formatString.begin()) };
+        
+        std::string s;
+        for (auto it = formatString.begin(); it != formatString.end();) {
+            const std::uint32_t ch = *it;
+            if (ch == '~') {
+                ++it;
+                const std::uint32_t n = *it;
+                if (n == '%') {
+                    s += "\n";
+                }
+                else if (n == '{') {
+                    auto arg = args.pop();
+                    assert(arg->asList());
+                    getFrom.emplace_back(arg->asList()->cc.get(), it);
+                }
+                else if (n == '}') {
+                    if (getFrom.back().first) {
+                        it = getFrom.back().second;
+                        ++it;
+                        continue;
+                    }
+                    getFrom.pop_back();
+                }
+                else if (n == 'a') {
+                    s += getFrom.back().first->car->eval()->toString();
+                    getFrom.back().first = getFrom.back().first->next();
+                }
+            }
+            ++it;
+        }
+        std::cout << s << std::endl;
+        return s;
     });
 }
 
