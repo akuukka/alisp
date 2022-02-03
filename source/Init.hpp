@@ -48,10 +48,12 @@ namespace alisp { inline const char* getInitCode() { return R"code(
     li))
 
 (defun getf(plist indicator &optional default)
-  (let ((ret default))
-    (while (cdr plist)
+  (let ((ret default) (found nil) )
+    (while (and (cdr plist) (eq found nil) )
       (if (eq (car plist) indicator)
-          (setq ret (cadr plist)))
+          (progn
+            (setq ret (cadr plist))
+            (setq found t)))
       (setq plist (cddr plist)))
     ret
     ))

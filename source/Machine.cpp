@@ -589,6 +589,16 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return makeNil();
     });
+    defun("and", [](Rest& args) -> ObjectPtr {
+        ObjectPtr ret = args.m.makeTrue();
+        while (args.cc) {
+            ret = args.pop()->clone();
+            if (ret->isNil()) {
+                break;
+            }
+        }
+        return ret;
+    });
     makeFunc("cons", 2, 2, [](FArgs& args) {
         return std::make_unique<ConsCellObject>(args.pop()->clone(), args.pop()->clone(), &args.m);
     });

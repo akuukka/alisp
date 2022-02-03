@@ -909,6 +909,9 @@ void testMemoryLeaks()
 void testControlStructures()
 {
     Machine m;
+    ASSERT_OUTPUT_EQ(m, "(and 1 2)", "2");
+    ASSERT_OUTPUT_EQ(m, "(and 1 nil 2)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(and)", "t");
     ASSERT_OUTPUT_EQ(m, R"code(
 (let ((str ""))
   (dolist (elem (list "A" "B" "C"))
