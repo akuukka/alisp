@@ -560,16 +560,17 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         if (!obj.isList()) {
             throw exceptions::WrongTypeArgument(obj.toString());
         }
-        auto p = obj.asList()->cc.get();
-        auto ret = &obj;
+        const Object* p = obj.asList();
         for (size_t i = 0; i < index; i++) {
-            if (!p) {
+            if (!p || !p->asList()) {
+                if (p && !p->asList()) {
+                    throw exceptions::WrongTypeArgument(p->toString());
+                }
                 return makeNil();
             }
-            ret = p->cdr.get();
-            p = p->next();
+            p = p->asList()->cdr();
         }
-        return ret->clone();
+        return p->clone();
     });
     defun("mapatoms", [this](const Symbol& sym) {
         if (!sym.function) {

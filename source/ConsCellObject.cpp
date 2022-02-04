@@ -5,6 +5,7 @@
 #include "AtScopeExit.hpp"
 #include "FArgs.hpp"
 #include <cstring>
+#include <stdexcept>
 
 namespace alisp
 {

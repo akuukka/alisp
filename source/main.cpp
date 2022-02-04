@@ -385,6 +385,9 @@ void testCdrFunction()
     ASSERT_OUTPUT_EQ(m, "(nthcdr 20 '(pine fir oak maple))", "nil");
     ASSERT_OUTPUT_EQ(m, "(nthcdr 20 nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(nthcdr 0 '(pine fir oak maple))", "(pine fir oak maple)");
+    ASSERT_OUTPUT_EQ(m, "(nthcdr 0 (cons 1 2))", "(1 . 2)");
+    ASSERT_OUTPUT_EQ(m, "(nthcdr 1 (cons 1 2))", "2");
+    ASSERT_EXCEPTION(m, "(nthcdr 2 (cons 1 2))", exceptions::WrongTypeArgument);
 }
 
 void testPrognFunction()
