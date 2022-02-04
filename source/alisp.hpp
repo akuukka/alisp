@@ -3,6 +3,6 @@
 #define ALISP_INLINE  
 #endif
 
-constexpr bool ConvertParsedNamesToUpperCase = true;
+constexpr bool ConvertParsedNamesToUpperCase = false;
 constexpr const char* NilName = ConvertParsedNamesToUpperCase ? "NIL" : "nil";
 constexpr const char* TName = ConvertParsedNamesToUpperCase ? "T" : "t";

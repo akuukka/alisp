@@ -8,33 +8,36 @@
 #include "SymbolObject.hpp"
 #include "AtScopeExit.hpp"
 #include <memory>
+#include "Function.hpp"
 
 namespace alisp
 {
 
-struct FuncParams {
-    int min = 0;
-    int max = 0;
-    std::vector<std::string> names;
-};
-
-inline FuncParams getFuncParams(const ConsCellObject& closure)
+ALISP_INLINE FuncParams getFuncParams(const ConsCellObject& closure)
 {
     FuncParams fp;
     std::vector<std::string>& argList = fp.names;
     bool opt = false;
+    fp.rest = false;
     for (auto& arg : *closure.cc->car->asList()) {
         const auto sym = dynamic_cast<const SymbolObject*>(&arg);
         if (!sym) {
             throw exceptions::Error("Malformed arglist: " + closure.cc->car->toString());
         }
-        if (sym->name == closure.parent->parsedSymbolName("&optional"))
-        {
+        if (sym->name == closure.parent->parsedSymbolName("&optional")) {
             assert(!opt && "&optional should be present just once");
             opt = true;
             continue;
         }
+        else if (sym->name == closure.parent->parsedSymbolName("&rest")) {
+            fp.rest = true;
+            fp.max = std::numeric_limits<int>::max();
+            continue;
+        }
         argList.push_back(sym->name);
+        if (fp.rest) {
+            break;
+        }
         if (!opt) {
             fp.min++;
         }

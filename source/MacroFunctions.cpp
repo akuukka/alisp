@@ -1,4 +1,5 @@
 #include "ConsCellObject.hpp"
+#include "Function.hpp"
 #include "Machine.hpp"
 #include "SymbolObject.hpp"
 
@@ -38,24 +39,17 @@ std::pair<bool, std::string> isMacroCall(const ConsCellObject* form)
 }
 
 struct Macro {
-    ConsCellObject argList;
     ConsCellObject code;
-    
-    Macro(const ConsCellObject& argList, const ConsCellObject& code) :
-        argList(argList),
-        code(code)
-    {
-        
-    }
+    FuncParams params;
+    Macro(const ConsCellObject& code, FuncParams fp) : code(code), params(fp) { }
 };
 
 ObjectPtr expand(Machine& m, const Macro& macro, std::function<Object*()> paramSource)
 {
     std::map<std::string, Object*> conv;
-    for (const auto& obj : macro.argList) {
-        const SymbolObject* from =
-            dynamic_cast<const SymbolObject*>(&obj);
-        conv[from->name] = paramSource();
+    const int nc = static_cast<int>(macro.params.names.size());
+    for (int i = 0; i < nc; i++) {
+        conv[macro.params.names[i]] = paramSource();
     }
     auto copied = macro.code.deepCopy();
     renameSymbols(m, *copied, conv);
@@ -106,8 +100,13 @@ void initMacroFunctions(Machine& m)
         }
         std::string macroName = nameSym->name;
         args.skip();
-        ConsCellObject argList = dynamic_cast<ConsCellObject&>(*args.cc->car);
-        const int argc = countArgs(argList.cc.get());
+        const auto params = getFuncParams(*m.makeConsCell(args.cc->car->clone(), nullptr));
+        if (macroName == "when") {
+            std::cout << "when function params: " << params.min << " " << params.max << std::endl;
+            for (auto p: params.names) {
+                std::cout << p << std::endl;
+            }
+        }
         args.skip();
         ListBuilder builder(m);
         while (args.cc) {
@@ -115,8 +114,8 @@ void initMacroFunctions(Machine& m)
             args.skip();
         }
         auto code = builder.get();
-        (*storage).insert(std::make_pair(macroName, Macro(argList, *code)));
-        m.makeFunc(macroName.c_str(), argc, argc, [&m, macroName, storage](FArgs& a) {
+        (*storage).insert(std::make_pair(macroName, Macro(*code, params)));
+        m.makeFunc(macroName.c_str(), params.min, params.max, [&m, macroName, storage](FArgs& a) {
             assert(storage->count(macroName));
             const auto& macro = storage->at(macroName);
             return expand(m, macro, [&a](){ return a.pop(false); })->eval();
