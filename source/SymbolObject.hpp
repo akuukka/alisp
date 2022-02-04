@@ -38,7 +38,7 @@ struct SymbolObject :
     std::shared_ptr<Symbol> getSymbol() const;
     Symbol* getSymbolOrNull() const;
     
-    Function* resolveFunction() override;
+    std::shared_ptr<Function> resolveFunction() const override;
 
     void reset() override { sym.reset(); }
     bool isSymbol() const override { return true; }

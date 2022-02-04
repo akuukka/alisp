@@ -715,11 +715,24 @@ void testDeepCopy()
 
 void testFunctions()
 {
-    alisp::Machine m;
+    Machine m;
     std::set<std::string> expectedMsgs = {
         "foo", "abc"
     };
     m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    ASSERT_OUTPUT_EQ(m, "(functionp 5)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
+    ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(functionp nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(lambda (x) (* x x))", "(lambda (x) (* x x))");
+    ASSERT_OUTPUT_EQ(m, "((lambda (x) (+ x 1)) 1)", "2");
+    ASSERT_OUTPUT_EQ(m, "(function (lambda (x) (* x x)))", "(lambda (x) (* x x))");
+    ASSERT_OUTPUT_EQ(m, "(macroexpand '(lambda (x) (+ x 1)))", "#'(lambda (x) (+ x 1))");
+    ASSERT_OUTPUT_EQ(m, "(functionp (lambda (x) (+ x 1)))", "t");
+    ASSERT_OUTPUT_EQ(m, "(listp (function (lambda (x) (* x x))))", "t");
+    ASSERT_EXCEPTION(m, "(funcall + 1 2)", exceptions::VoidVariable);
+    ASSERT_EXCEPTION(m, "(funcall 1 2)", exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, "(funcall '+ 1 2)", "3");
     ASSERT_OUTPUT_EQ(m, "(car (car nil))", "nil");
     ASSERT_OUTPUT_EQ(m, "(car (car 'nil))", "nil");
     ASSERT_OUTPUT_EQ(m, "(caar 'nil)", "nil");
@@ -728,7 +741,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(symbol-function nil)", "nil");
     ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(msg) (message msg) msg");
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
-    ASSERT_EXCEPTION(m, "(foo2)", alisp::exceptions::WrongNumberOfArguments);
+    ASSERT_EXCEPTION(m, "(foo2)", exceptions::WrongNumberOfArguments);
     ASSERT_OUTPUT_EQ(m, "(foo2 \"abc\")", "\"abc\"");
     ASSERT_OUTPUT_EQ(m, "(cadr '(1 2 3))", "2");
     ASSERT_OUTPUT_EQ(m, "(cadr nil)", "nil");
@@ -738,12 +751,9 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(car-safe 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdar '((1 4) 2 3))", "(4)");    
     ASSERT_OUTPUT_EQ(m, "(cdar nil)", "nil");
-    ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", alisp::exceptions::WrongTypeArgument);    
+    ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", exceptions::WrongTypeArgument);    
     ASSERT_OUTPUT_EQ(m, "(caar '((8) 2 3))", "8");
     ASSERT_OUTPUT_EQ(m, "(progn (defun xx () t) (functionp 'xx))", "t");
-    ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
-    ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
-    ASSERT_OUTPUT_EQ(m, "(functionp nil)", "nil");
     assert(expectedMsgs.empty());
     ASSERT_OUTPUT_CONTAINS(m, R"code(
 (lambda (x)
@@ -757,7 +767,6 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, R"code(
 (funcall (lambda (a b c) (+ a b c)) 1 (* 2 3) 1)
 )code", "8");
-    
 }
 
 void testLet()
@@ -990,6 +999,7 @@ void testConverter()
 
 void test()
 {
+    testFunctions();
     testListBasics();
     testNullFunction();
     testCarFunction();
@@ -1003,7 +1013,6 @@ void test()
     testLet();
     testQuote();
     testSymbols();
-    testFunctions();
     testIf();
     testDeepCopy();
     testEvalFunction();

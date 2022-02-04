@@ -6,9 +6,6 @@
 namespace alisp
 {
 
-/*
- TODO: get rid of this class. funcall should support ConsCell/Symbol parameters
- */
 struct FunctionObject : Object, ConvertibleTo<const Function&>
 {
     std::shared_ptr<Function> value;

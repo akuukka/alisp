@@ -73,18 +73,12 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
 
 void initFunctionFunctions(Machine& m)
 {
-    m.defun("funcall", [&m](const Function& function, FArgs& args) { return function.func(args); });
-    m.makeFunc("lambda", 1, std::numeric_limits<int>::max(), [&m](FArgs& args) {
-        auto func = std::make_shared<Function>();
-        func->name = "anon";
-        std::shared_ptr<ConsCellObject> closure =
-            m.makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
-        const FuncParams fp = getFuncParams(*closure);
-        func->minArgs = fp.min;
-        func->maxArgs = fp.max;
-        func->func = [&m, closure](FArgs& a) { return m.execute(*closure, a); };
-        func->closure = closure;
-        return std::make_unique<FunctionObject>(func);
+    m.defun("funcall", [&m](const Object& obj, FArgs& args) {
+        auto func = obj.resolveFunction();
+        if (!func) {
+            throw exceptions::Error("Invalid function " + obj.toString());
+        }
+        return func->func(args);
     });
     m.makeFunc("defun", 2, std::numeric_limits<int>::max(), [&m](FArgs& args) {
         const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
@@ -101,8 +95,9 @@ void initFunctionFunctions(Machine& m)
         })->closure = closure;
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(funcName));
     });
-    m.defun("functionp", [](const Symbol& sym) {
-        return sym.function && !sym.function->isMacro;
+    m.defun("functionp", [](const Object& obj) {
+        auto func = obj.resolveFunction();
+        return func != nullptr && !func->isMacro;
     });
     m.defun("func-arity", [&m](const Symbol& sym) {
         if (!sym.function) {

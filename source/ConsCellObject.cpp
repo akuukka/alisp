@@ -4,11 +4,34 @@
 #include "ConsCellObject.hpp"
 #include "AtScopeExit.hpp"
 #include "FArgs.hpp"
+#include "Function.hpp"
 #include <cstring>
 #include <stdexcept>
 
 namespace alisp
 {
+
+ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
+{
+    if (isNil() || !car()->isSymbol()) {
+        return nullptr;
+    }
+    auto& m = *parent;
+    if (car()->asSymbol()->getSymbol() == m.getSymbol(m.parsedSymbolName("lambda"))) {
+        auto func = std::make_shared<Function>();
+
+        auto cc = this->cc->next();
+        std::shared_ptr<ConsCellObject> closure =
+            parent->makeConsCell(cc->car->clone(), cc->cdr->clone());
+        const FuncParams fp = getFuncParams(*closure);
+        func->minArgs = fp.min;
+        func->maxArgs = fp.max;
+        func->func = [&m, closure](FArgs& a) { return m.execute(*closure, a); };
+        func->closure = closure;
+        return func;
+    }
+    return nullptr;
+}
 
 ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
 {
@@ -23,15 +46,14 @@ ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
     if (!c) {
         return std::make_unique<ConsCellObject>(parent);
     }
-    const Function* f = c.car->resolveFunction();
+    const auto f = c.car->resolveFunction();
     if (f) {
-        auto &m = *dynamic_cast<const SymbolObject*>(c.car.get())->parent;
         const int argc = countArgs(c.next());
         if (argc < f->minArgs || argc > f->maxArgs) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
-        FArgs args(*c.next(), m);
-        args.funcName = c.car->toString();
+        FArgs args(*c.next(), *parent);
+        args.funcName = f->name;
         return f->func(args);
     }
     throw exceptions::VoidFunction(c.car->toString());
@@ -75,6 +97,10 @@ ALISP_INLINE std::string ConsCellObject::toString(bool aesthetic) const
     const bool quote = carSym && carSym->name == parent->parsedSymbolName("quote");
     if (quote) {
         return "'" + (cc->next() ? cc->next()->car->toString() : std::string(""));
+    }
+    const bool fquote = carSym && carSym->name == parent->parsedSymbolName("function");
+    if (fquote) {
+        return "#'" + (cc->next() ? cc->next()->car->toString() : std::string(""));
     }
 
     auto carToString = [&](const Object* car) -> std::string {

@@ -48,6 +48,7 @@ struct ConsCellObject :
     const ConsCellObject* asList() const override { return this; }
     Object* car() const { return cc->car.get();  };
     Object* cdr() const { return cc->cdr.get();  };
+    std::shared_ptr<Function> resolveFunction() const override;
 
     std::unique_ptr<Object> clone() const override
     {

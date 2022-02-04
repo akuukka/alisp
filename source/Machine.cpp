@@ -372,6 +372,9 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("quote", 1, 1, [this](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
+    makeFunc("function", 1, 1, [this](FArgs& args) {
+        return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
+    });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
     makeFunc("symbolp", 1, 1, [this](FArgs& args) {
         return dynamic_cast<SymbolObject*>(args.pop()) ? makeTrue() : makeNil();
@@ -668,10 +671,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     evaluate(getInitCode());
 }
 
-ALISP_INLINE Function* Machine::resolveFunction(const std::string& name)
+ALISP_INLINE std::shared_ptr<Function> Machine::resolveFunction(const std::string& name)
 {
     if (m_syms.count(name)) {
-        return m_syms[name]->function.get();
+        return m_syms[name]->function;
     }
     return nullptr;
 }

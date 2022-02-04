@@ -13,10 +13,10 @@ ALISP_INLINE std::unique_ptr<Object> SymbolObject::eval()
     return var->clone();
 }
 
-ALISP_INLINE Function* SymbolObject::resolveFunction()
+ALISP_INLINE std::shared_ptr<Function> SymbolObject::resolveFunction() const
 {
     if (sym) {
-        return sym->function.get();
+        return sym->function;
     }
     assert(name.size());
     return parent->resolveFunction(name);

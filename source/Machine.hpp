@@ -81,7 +81,6 @@ class Machine
     std::unique_ptr<StringObject> parseString(const char *&str);
     std::unique_ptr<Object> parseNext(const char *&expr);
     std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
-    ObjectPtr execute(const ConsCellObject& closure, FArgs& a);
 public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr);
@@ -90,7 +89,8 @@ public:
     
     std::unique_ptr<Object> parse(const char *expr);
     std::unique_ptr<Object> evaluate(const char *expr);
-    Function* resolveFunction(const std::string& name);
+    std::shared_ptr<Function> resolveFunction(const std::string& name);
+    ObjectPtr execute(const ConsCellObject& lambda, FArgs& a);
 
     Function* makeFunc(std::string name, int minArgs, int maxArgs,
                        const std::function<std::unique_ptr<Object>(FArgs &)>& f);

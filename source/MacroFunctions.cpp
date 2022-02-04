@@ -30,7 +30,7 @@ std::pair<bool, std::string> isMacroCall(const ConsCellObject* form)
     if (form && form->car() && form->car()->isSymbol()) {
         const SymbolObject* sym = dynamic_cast<const SymbolObject*>(form->car());
         assert(sym);
-        const Function* func = sym->parent->resolveFunction(sym->name);
+        const std::shared_ptr<Function> func = sym->parent->resolveFunction(sym->name);
         if (func && func->isMacro) {
             return std::make_pair(true, sym->name);
         }
