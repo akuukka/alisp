@@ -614,12 +614,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return newList;
     });
-    defun("symbol-function", [](const Symbol& sym) -> ObjectPtr {
-        if (!sym.function) {
-            return sym.parent->makeNil();
-        }
-        return std::make_unique<FunctionObject>(sym.function);
-    });
     defun("boundp", [](const Symbol& sym) { return sym.variable ? true : false; });
     defun("makunbound", [](std::shared_ptr<Symbol> sym) {
         if (!sym || sym->constant) {

@@ -105,6 +105,24 @@ void initFunctionFunctions(Machine& m)
         }
         return m.makeConsCell(makeInt(sym.function->minArgs), makeInt(sym.function->maxArgs));
     });
+    m.defun("symbol-function", [&m](const Symbol& sym) -> ObjectPtr {
+        if (!sym.function) {
+            return sym.parent->makeNil();
+        }
+        if (!sym.function->closure) {
+            struct SubrObject : ValueObject<std::shared_ptr<Function>>  {
+                SubrObject(std::shared_ptr<Function> f) :
+                    ValueObject<std::shared_ptr<Function>>(f) {}
+                std::string toString(bool) const { return "#<subr "+value->name+">"; }
+                ObjectPtr clone() const { return std::make_unique<SubrObject>(value); }
+            };
+            return std::make_unique<SubrObject>(sym.function);
+        }
+        else {
+            return sym.function->closure->clone();
+        }
+        return m.makeNil();
+    });
 }
 
 }

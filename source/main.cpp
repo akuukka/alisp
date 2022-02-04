@@ -217,9 +217,7 @@ void testCarFunction()
     assert(m.evaluate("(car ())")->toString() == NilName);
     assert(m.evaluate("(car '())")->toString() == NilName);
     assert(m.evaluate("(car '(1 2))")->toString() == "1");
-    assert(expect<alisp::exceptions::VoidFunction>([&]() {
-        m.evaluate("(car (1 2))");
-    }));
+    ASSERT_EXCEPTION(m, "(car (1 2))", exceptions::Error);
     assert(m.evaluate("(car '(1 2))")->toString() == "1");
     assert(m.evaluate("(car '((1 2)))")->toString() == "(1 2)");
     ASSERT_OUTPUT_EQ(m, "(setq test (list 'a 'b' c))", "(a b c)");
@@ -720,6 +718,9 @@ void testFunctions()
         "foo", "abc"
     };
     m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    ASSERT_EXCEPTION(m, "(y 1 1)", exceptions::VoidFunction);
+    ASSERT_EXCEPTION(m, "('y 1 1)", exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, "(symbol-function '+)", "#<subr +>");
     ASSERT_OUTPUT_EQ(m, "(functionp 5)", "nil");
     ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
     ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");

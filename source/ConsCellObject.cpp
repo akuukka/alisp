@@ -33,7 +33,7 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
     return nullptr;
 }
 
-ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
+ALISP_INLINE ObjectPtr ConsCellObject::eval()
 {
     thread_local int depth = 0;
     depth++;
@@ -56,7 +56,12 @@ ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
         args.funcName = f->name;
         return f->func(args);
     }
-    throw exceptions::VoidFunction(c.car->toString());
+    if (c.car->isSymbol()) {
+        throw exceptions::VoidFunction(c.car->toString());
+    }
+    else {
+        throw exceptions::Error("Invalid function " + c.car->toString());
+    }
 }
 
 ALISP_INLINE void ConsCellObject::traverse(const std::function<bool(const Object&)>& f) const
