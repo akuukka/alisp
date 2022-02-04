@@ -29,6 +29,7 @@ struct IntObject : ValueObject<std::int64_t>
     bool isInt() const override { return true; }
     std::string typeId() const override { return "integer"; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<IntObject>(value); }
+    bool isCharacter() const override;
 };
 
 struct FloatObject : ValueObject<double>
@@ -44,18 +45,6 @@ struct Number
     std::int64_t i;
     double f;
     bool isFloat;
-};
-
-struct CharacterObject : ValueObject<std::uint32_t>
-{
-    CharacterObject(std::uint32_t c) : ValueObject<std::uint32_t>(c) {}
-    std::unique_ptr<Object> clone() const override
-    {
-        return std::make_unique<CharacterObject>(value);
-    }
-    std::string typeId() const override { return "char"; }
-    std::string toString(bool aesthetic = false) const override;
-    bool isCharacter() const override { return true; }
 };
 
 inline std::unique_ptr<IntObject> makeInt(std::int64_t value)

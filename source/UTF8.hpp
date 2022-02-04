@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <iostream>
+#include <limits>
 #include <string>
 
 namespace alisp
@@ -34,9 +35,9 @@ constexpr int u8length(std::uint32_t codepoint)
     return 0;
 }
 
-inline bool u8chrisvalid(std::uint32_t c)
+inline bool isValidCodepoint(std::uint32_t c)
 {
-    if (c <= 0x7F) return true;                    // [1]
+    if (c <= 0x7F) return true;                 // [1]
     if (0xC280 <= c && c <= 0xDFBF)             // [2]
         return ((c & 0xE0C0) == 0xC080);
     if (0xEDA080 <= c && c <= 0xEDBFBF)         // [3]
@@ -48,6 +49,12 @@ inline bool u8chrisvalid(std::uint32_t c)
     return false;
 }
 
+inline bool isValidCodepoint(std::int64_t i)
+{
+    return i >= 0 && i <= std::numeric_limits<std::uint32_t>::max()
+        && isValidCodepoint(static_cast<std::uint32_t>(i));
+}
+
 inline size_t next(const char *txt, std::uint32_t* ch = nullptr)
 {
     int len;
@@ -57,7 +64,7 @@ inline size_t next(const char *txt, std::uint32_t* ch = nullptr)
         encoding = (encoding << 8) | (unsigned char)txt[i];
     }
     errno = 0;
-    if (len == 0 || !u8chrisvalid(encoding)) {
+    if (len == 0 || !isValidCodepoint(encoding)) {
         encoding = txt[0];
         len = 1;
         errno = EINVAL;

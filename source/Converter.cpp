@@ -105,13 +105,9 @@ ALISP_INLINE std::optional<Number> getValue(const Object& sym)
 template<>
 ALISP_INLINE std::optional<std::uint32_t> getValue(const Object &sym)
 {
-    auto s = dynamic_cast<const CharacterObject*>(&sym);
-    if (s) {
-        return s->value;
-    }
     auto i = dynamic_cast<const IntObject*>(&sym);
-    if (i && i->value >=0 && i->value <= std::numeric_limits<std::uint32_t>::max()) {
-        return i->value;
+    if (i) {
+        return static_cast<std::uint32_t>(i->value);
     }
     return std::nullopt;
 }

@@ -35,8 +35,7 @@ ALISP_INLINE std::unique_ptr<Object> StringObject::elt(std::int64_t index) const
         const size_t proceed = utf8::next(start + offset, &encoded);
         offset += proceed;
     }
-    const std::uint32_t codepoint = utf8::decode(encoded);
-    return std::make_unique<CharacterObject>(codepoint);
+    return makeInt(utf8::decode(encoded));
 }
 
 }

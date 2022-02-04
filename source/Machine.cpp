@@ -777,7 +777,7 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
         if (nchar.second) {
             const std::uint32_t codepoint = utf8::decode(nchar.first);
             str += 1 + nchar.second;
-            return std::make_unique<CharacterObject>(codepoint);
+            return std::make_unique<IntObject>(codepoint);
         }
         throw exceptions::Error("Invalid read syntax");
     }

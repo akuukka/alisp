@@ -263,7 +263,8 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, "(length \"abc\")", "3");
     ASSERT_OUTPUT_EQ(m, "(char-or-string-p (elt \"abc\" 0))", "t");
     ASSERT_OUTPUT_EQ(m, "(char-or-string-p \"abc\")", "t");
-    ASSERT_OUTPUT_EQ(m, "(char-or-string-p 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(char-or-string-p 1)", "t");
+    ASSERT_OUTPUT_EQ(m, "(char-or-string-p 100000000)", "nil");
     ASSERT_OUTPUT_EQ(m, "(string ?a ?b ?c)", "\"abc\"");
     ASSERT_OUTPUT_EQ(m, "(string)", "\"\"");
     ASSERT_OUTPUT_EQ(m, "(split-string \"  two words \")", "(\"two\" \"words\")");
@@ -333,8 +334,8 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((char-equal 12472 ?ジ))code", R"code(t)code");
     ASSERT_OUTPUT_EQ(m, R"code((length "aジb"))code", R"code(3)code");
     ASSERT_OUTPUT_EQ(m, R"code((string-bytes "aジb"))code", R"code(5)code");
-    ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 2))code", R"code(98 (b))code");
-    ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 1))code", R"code(12472 (ジ))code");
+    ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 2))code", R"code(98)code");
+    ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 1))code", R"code(12472)code");
     ASSERT_EXCEPTION(m, R"code((elt "aジb" 3))code", alisp::exceptions::Error);
     ASSERT_EXCEPTION(m, R"code((elt "" 0))code", alisp::exceptions::Error);
     ASSERT_OUTPUT_EQ(m, R"code((make-string 5 (elt "aジb" 1)))code", R"code("ジジジジジ")code");
