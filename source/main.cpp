@@ -718,6 +718,8 @@ void testFunctions()
         "foo", "abc"
     };
     m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    ASSERT_OUTPUT_EQ(m, "(progn (setq plus '+)(setq plus2 plus)(setq plus3 plus)"
+                     "(indirect-function plus2))", "#<subr +>");
     ASSERT_EXCEPTION(m, "(y 1 1)", exceptions::VoidFunction);
     ASSERT_EXCEPTION(m, "('y 1 1)", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(symbol-function '+)", "#<subr +>");

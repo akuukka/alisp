@@ -66,7 +66,10 @@ namespace alisp { inline const char* getInitCode() { return R"code(
   "Return an anonymous function."
   (list 'function (cons 'lambda cdr)))
 
-
+(defun indirect-function (function)
+  (if (symbolp function)
+      (indirect-function (symbol-function function))
+    function))
 
 
 
