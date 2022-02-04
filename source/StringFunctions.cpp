@@ -4,7 +4,6 @@
 #include "Exception.hpp"
 #include "Machine.hpp"
 #include "Object.hpp"
-#include "StreamObject.hpp"
 #include "StringObject.hpp"
 #include "ValueObject.hpp"
 #include "alisp.hpp"
@@ -158,17 +157,6 @@ void initStringFunctions(Machine& m)
         return std::to_string(val);
     });
     m.defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
-    m.defun("force-output", [](Stream stream) {
-        if (stream.ostream) {
-            (*stream.ostream) << std::flush;
-        }
-        return false;
-    });
-    m.defun("read-line", [](Stream stream) {
-        std::string str;
-        std::getline(*stream.istream, str);
-        return str;
-    });
     m.defun("string-to-number", [](std::string str) -> ObjectPtr {
         std::stringstream ss(str);
         if (str.find("e") == std::string::npos && str.find(".") == std::string::npos) {
@@ -188,6 +176,17 @@ void initStringFunctions(Machine& m)
     });
     // Common lisp format prototype...
     /*
+    m.defun("force-output", [](Stream stream) {
+        if (stream.ostream) {
+            (*stream.ostream) << std::flush;
+        }
+        return false;
+    });
+    m.defun("read-line", [](Stream stream) {
+        std::string str;
+        std::getline(*stream.istream, str);
+        return str;
+    });
     m.defun("format", [](Stream stream, String formatString, Rest& args) -> ObjectPtr {
         std::ostream* ostream = nullptr;
         if (stream.isNilStream()) {

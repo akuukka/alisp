@@ -14,7 +14,6 @@ struct FunctionObject : Object, ConvertibleTo<const Function&>
     std::shared_ptr<Function> value;
 
     FunctionObject(std::shared_ptr<Function> func) : value(func) { }
-    std::string typeId() const override { return "function"; }
     std::string toString(bool aesthetic) const override
     {
         return value->closure ? value->closure->toString(aesthetic) : value->name;

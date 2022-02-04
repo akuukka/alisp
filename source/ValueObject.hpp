@@ -1,6 +1,8 @@
 #pragma once
 #include "Object.hpp"
 #include <cstdint>
+#include <ios>
+#include <sstream>
 
 namespace alisp {
 
@@ -19,9 +21,15 @@ struct ValueObject : Object, ConvertibleTo<T>
         const ValueObject<T>* op = dynamic_cast<const ValueObject<T>*>(&o);
         return op && op->value == value;
     }
-    std::string toString(bool aesthetic = false) const override { return std::to_string(value); }
+
+    std::string toString(bool aesthetic = false) const override {
+        std::stringstream ss;
+        ss << std::fixed << value;
+        return ss.str();
+    }
     Object* trySelfEvaluate() override { return this; }
     T convertTo(typename ConvertibleTo<T>::Tag) const override { return value; }
+    ObjectPtr clone() const override { return std::make_unique<ValueObject>(value); }
 };
 
 struct Number
@@ -42,7 +50,6 @@ struct IntObject :
 {
     IntObject(std::int64_t value) : ValueObject<std::int64_t>(value) {}
     bool isInt() const override { return true; }
-    std::string typeId() const override { return "integer"; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<IntObject>(value); }
     bool isCharacter() const override;
 
@@ -59,7 +66,6 @@ struct FloatObject :
 {
     FloatObject(double value) : ValueObject<double>(value) {}
     bool isFloat() const override { return true; }
-    std::string typeId() const override { return "float"; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
     Number convertTo(ConvertibleTo<Number>::Tag) const override {
         return Number(value);
