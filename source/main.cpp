@@ -374,13 +374,17 @@ void testDivision()
 
 void testCdrFunction()
 {
-    alisp::Machine m;
+    Machine m;
     ASSERT_OUTPUT_EQ(m, "(cdr '(a b c))", "(b c)");
     ASSERT_OUTPUT_EQ(m, "(cdr '(a))", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr '())", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr (cdr '(a b c)))", "(c)");
     ASSERT_EXCEPTION(m, "(cdr 1)", alisp::exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(cdr-safe '(a b c))", "(b c)");
+    ASSERT_OUTPUT_EQ(m, "(nthcdr 2 '(pine fir oak maple))", "(oak maple)");
+    ASSERT_OUTPUT_EQ(m, "(nthcdr 20 '(pine fir oak maple))", "nil");
+    ASSERT_OUTPUT_EQ(m, "(nthcdr 20 nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(nthcdr 0 '(pine fir oak maple))", "(pine fir oak maple)");
 }
 
 void testPrognFunction()

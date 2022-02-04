@@ -556,6 +556,21 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return obj->clone();
     });
+    defun("nthcdr", [&](std::int64_t index, const Object& obj) {
+        if (!obj.isList()) {
+            throw exceptions::WrongTypeArgument(obj.toString());
+        }
+        auto p = obj.asList()->cc.get();
+        auto ret = &obj;
+        for (size_t i = 0; i < index; i++) {
+            if (!p) {
+                return makeNil();
+            }
+            ret = p->cdr.get();
+            p = p->next();
+        }
+        return ret->clone();
+    });
     defun("mapatoms", [this](const Symbol& sym) {
         if (!sym.function) {
             throw exceptions::VoidFunction(sym.name);
