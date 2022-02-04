@@ -372,15 +372,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
-    makeFunc("make-symbol", 1, 1, [this](FArgs& args) {
-        const auto arg = args.pop();
-        if (!arg->isString()) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
-        std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
-        symbol->name = arg->value<std::string>();
-        return std::make_unique<SymbolObject>(this, symbol, "");
-    });
     makeFunc("symbolp", 1, 1, [this](FArgs& args) {
         return dynamic_cast<SymbolObject*>(args.pop()) ? makeTrue() : makeNil();
     });
