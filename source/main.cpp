@@ -740,6 +740,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(defun foo () (message \"foo\") 5)", "foo");
     ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (message msg) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(symbol-function nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(listp (symbol-function 'foo2))", "t");
     ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(msg) (message msg) msg");
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
     ASSERT_EXCEPTION(m, "(foo2)", exceptions::WrongNumberOfArguments);
