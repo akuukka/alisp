@@ -91,7 +91,7 @@ ObjectPtr macroExpand(std::shared_ptr<std::map<std::string, Macro>> storage,
         const auto& macro = storage->at(macroCall.second);
         obj = expand(*form->parent,
                      macro,
-                     [&cc](){ cc = cc->next(); return cc->car.get(); });
+                     [&cc](){ cc = cc->next(); return cc ? cc->car.get() : nullptr; });
         if (once) {
             break;
         }
