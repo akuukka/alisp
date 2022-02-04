@@ -81,9 +81,12 @@ class Machine
     std::unique_ptr<StringObject> parseString(const char *&str);
     std::unique_ptr<Object> parseNext(const char *&expr);
     std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
+
+    void initFunctionFunctions();
 public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr);
+    std::unique_ptr<SymbolObject> makeSymbol(std::string name, bool parsedName);
     std::unique_ptr<Object> quote(std::unique_ptr<Object> obj);
     std::string parsedSymbolName(std::string name);
     

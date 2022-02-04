@@ -71,16 +71,16 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
     return ret;
 }
 
-void initFunctionFunctions(Machine& m)
+void Machine::initFunctionFunctions()
 {
-    m.defun("funcall", [&m](const Object& obj, FArgs& args) {
+    defun("funcall", [](const Object& obj, FArgs& args) {
         auto func = obj.resolveFunction();
         if (!func) {
             throw exceptions::Error("Invalid function " + obj.toString());
         }
         return func->func(args);
     });
-    m.makeFunc("defun", 2, std::numeric_limits<int>::max(), [&m](FArgs& args) {
+    makeFunc("defun", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
         if (!nameSym || nameSym->name.empty()) {
             throw exceptions::WrongTypeArgument(args.cc->car->toString());
@@ -88,24 +88,24 @@ void initFunctionFunctions(Machine& m)
         std::string funcName = nameSym->name;
         args.skip();
         std::shared_ptr<ConsCellObject> closure =
-            m.makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
+            makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
         const FuncParams fp = getFuncParams(*closure);
-        m.makeFunc(funcName.c_str(), fp.min, fp.max, [&m, closure](FArgs& a) {
-            return m.execute(*closure, a);
+        makeFunc(funcName.c_str(), fp.min, fp.max, [this, closure](FArgs& a) {
+            return execute(*closure, a);
         })->closure = closure;
-        return std::make_unique<SymbolObject>(&m, nullptr, std::move(funcName));
+        return makeSymbol(funcName, false);
     });
-    m.defun("functionp", [](const Object& obj) {
+    defun("functionp", [](const Object& obj) {
         auto func = obj.resolveFunction();
         return func != nullptr && !func->isMacro;
     });
-    m.defun("func-arity", [&m](const Symbol& sym) {
+    defun("func-arity", [&](const Symbol& sym) {
         if (!sym.function) {
             throw exceptions::VoidFunction("void-function " + sym.name);
         }
-        return m.makeConsCell(makeInt(sym.function->minArgs), makeInt(sym.function->maxArgs));
+        return makeConsCell(makeInt(sym.function->minArgs), makeInt(sym.function->maxArgs));
     });
-    m.defun("symbol-function", [&m](const Symbol& sym) -> ObjectPtr {
+    defun("symbol-function", [&](const Symbol& sym) -> ObjectPtr {
         if (!sym.function) {
             return sym.parent->makeNil();
         }
@@ -113,12 +113,9 @@ void initFunctionFunctions(Machine& m)
             return std::make_unique<FunctionObject>(sym.function);
         }
         else {
-            return m.makeConsCell(std::make_unique<SymbolObject>(&m,
-                                                                 nullptr,
-                                                                 m.parsedSymbolName("lambda")),
-                                  sym.function->closure->clone());
+            return makeConsCell(makeSymbol("lambda", true), sym.function->closure->clone());
         }
-        return m.makeNil();
+        return makeNil();
     });
 }
 

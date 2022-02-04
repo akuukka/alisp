@@ -20,7 +20,6 @@
 
 namespace alisp {
 
-void initFunctionFunctions(Machine& m);
 void initMacroFunctions(Machine& m);
 void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
@@ -262,11 +261,11 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                 std::make_unique<IStreamObject>(&std::cin));
     setVariable(parsedSymbolName("*query-io*"),
                 std::make_unique<IOStreamObject>(&std::cin, &std::cout));
+    initFunctionFunctions();
     initMathFunctions(*this);
     initMacroFunctions(*this);
     initSequenceFunctions(*this);
     initStringFunctions(*this);
-    initFunctionFunctions(*this);
     initSymbolFunctions(*this);
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
     defun("null", [](bool isNil) { return !isNil; });
@@ -809,6 +808,14 @@ ALISP_INLINE
 std::unique_ptr<ConsCellObject> Machine::makeConsCell(ObjectPtr car, ObjectPtr cdr)
 {
     return std::make_unique<ConsCellObject>(std::move(car), std::move(cdr), this);
+}
+
+ALISP_INLINE
+std::unique_ptr<SymbolObject> Machine::makeSymbol(std::string name, bool parsedName)
+{
+    return std::make_unique<SymbolObject>(this,
+                                          nullptr,
+                                          parsedName ? parsedSymbolName(name) : name);
 }
 
 ALISP_INLINE
