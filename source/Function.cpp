@@ -119,7 +119,10 @@ void initFunctionFunctions(Machine& m)
             return std::make_unique<SubrObject>(sym.function);
         }
         else {
-            return sym.function->closure->clone();
+            return m.makeConsCell(std::make_unique<SymbolObject>(&m,
+                                                                 nullptr,
+                                                                 m.parsedSymbolName("lambda")),
+                                  sym.function->closure->clone());
         }
         return m.makeNil();
     });

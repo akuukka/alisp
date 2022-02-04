@@ -741,7 +741,8 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (message msg) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(symbol-function nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-function 'foo2))", "t");
-    ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(msg) (message msg) msg");
+    ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(lambda (msg) (message msg) msg)");
+    ASSERT_EXCEPTION(m, "((symbol-function 'foo2) \"fsda\")", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
     ASSERT_EXCEPTION(m, "(foo2)", exceptions::WrongNumberOfArguments);
     ASSERT_OUTPUT_EQ(m, "(foo2 \"abc\")", "\"abc\"");
