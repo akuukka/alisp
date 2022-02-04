@@ -17,7 +17,6 @@ if (NOT SINGLE_HEADER)
     ${CMAKE_SOURCE_DIR}/source/StringFunctions.cpp
     ${CMAKE_SOURCE_DIR}/source/Function.cpp
     ${CMAKE_SOURCE_DIR}/source/ConsCell.cpp
-    ${CMAKE_SOURCE_DIR}/source/Converter.cpp
     ${CMAKE_SOURCE_DIR}/source/MacroFunctions.cpp
     ${CMAKE_SOURCE_DIR}/source/SymbolObject.cpp
     ${CMAKE_SOURCE_DIR}/source/SymbolFunctions.cpp

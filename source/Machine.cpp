@@ -2,7 +2,6 @@
 #include <memory>
 #include <sstream>
 #include "FunctionObject.hpp"
-#include <any>
 #include "Exception.hpp"
 #include "Object.hpp"
 #include "Sequence.hpp"
@@ -268,34 +267,22 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     initStringFunctions(*this);
     initFunctionFunctions(*this);
     initSymbolFunctions(*this);
-    defun("atom", [](std::any obj) {
-        if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return true;
-        std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
-        return !(cc && !!(*cc));
-    });
+    defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
     defun("null", [](bool isNil) { return !isNil; });
-    defun("setcar", [](ConsCellObject obj, std::unique_ptr<Object> newcar) {
-        return obj.cc->car = newcar->clone(), std::move(newcar);
+    defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {
+        return cc.car = newcar->clone(), std::move(newcar);
     });
-    defun("setcdr", [](ConsCellObject obj, std::unique_ptr<Object> newcdr) {
-        return obj.cc->cdr = newcdr->clone(), std::move(newcdr);
+    defun("setcdr", [](ConsCell& cc, ObjectPtr newcdr) {
+        return cc.cdr = newcdr->clone(), std::move(newcdr);
     });
-    defun("car", [this](ConsCellObject obj) { 
-        return obj.cc->car ? obj.cc->car->clone() : makeNil();
-    });
-    defun("cdr", [this](ConsCellObject obj) {
-        return obj.cc->cdr ? obj.cc->cdr->clone() : makeNil();
-    });
-    defun("consp", [](std::any obj) {
-        if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return false;
-        std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
-        return cc && !!(*cc);
-    });
-    defun("listp", [](std::any o) { return o.type() == typeid(std::shared_ptr<ConsCell>); });
-    defun("nlistp", [](std::any o) { return o.type() != typeid(std::shared_ptr<ConsCell>); });
-    defun("proper-list-p", [this](std::any obj) {
-        if (obj.type() != typeid(std::shared_ptr<ConsCell>)) return makeNil();
-        std::shared_ptr<ConsCell> cc = std::any_cast<std::shared_ptr<ConsCell>>(obj);
+    defun("car", [this](const ConsCell& cc) { return cc.car ? cc.car->clone() : makeNil(); });
+    defun("cdr", [this](const ConsCell& cc) { return cc.cdr ? cc.cdr->clone() : makeNil(); });
+    defun("consp", [](const Object& obj) { return obj.isList() && !obj.isNil(); });
+    defun("listp", [](const Object& obj) { return obj.isList(); });
+    defun("nlistp", [](const Object& obj) { return !obj.isList(); });
+    defun("proper-list-p", [this](ObjectPtr obj) {
+        if (!obj->isList()) return makeNil();
+        std::shared_ptr<ConsCell> cc = obj->asList()->cc;
         std::unique_ptr<Object> r;
         auto p = cc.get();
         if (cc->isCyclical()) {
@@ -565,9 +552,9 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return std::make_unique<StringObject>(descr);
     });
-    defun("nth", [&](std::int64_t index, ConsCellObject list) {
-        auto p = list.cc.get();
-        auto obj = list.cc->car.get();
+    defun("nth", [&](std::int64_t index, const ConsCell& list) {
+        auto p = &list;
+        auto obj = list.car.get();
         for (size_t i = 0; i < index; i++) {
             p = p->next();
             if (!p) {

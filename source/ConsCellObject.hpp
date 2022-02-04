@@ -1,5 +1,6 @@
 #pragma once
 #include "ConsCell.hpp"
+#include "Object.hpp"
 #include "SharedDataObject.hpp"
 #include "Sequence.hpp"
 #include "Exception.hpp"
@@ -7,8 +8,14 @@
 namespace alisp {
 
 class Machine;
+struct Symbol;
 
-struct ConsCellObject : SharedDataObject, Sequence
+struct ConsCellObject :
+        SharedDataObject,
+        Sequence,
+        ConvertibleTo<const Symbol&>,
+        ConvertibleTo<const ConsCell&>,
+        ConvertibleTo<ConsCell&>
 {
     std::shared_ptr<ConsCell> cc;
     Machine* parent = nullptr;
@@ -105,6 +112,11 @@ struct ConsCellObject : SharedDataObject, Sequence
 
     const void* sharedDataPointer() const override { return cc.get(); }
     size_t sharedDataRefCount() const override { return cc.use_count(); }
+
+    const Symbol& convertTo(ConvertibleTo<const Symbol&>::Tag) const override;
+    const ConsCell& convertTo(ConvertibleTo<const ConsCell&>::Tag) const override;
+    ConsCell& convertTo(ConvertibleTo<ConsCell&>::Tag) const override;
+    bool canConvertTo(ConvertibleTo<const Symbol&>::Tag) const override;
 };
 
 inline std::unique_ptr<Object> makeNil(Machine* parent)

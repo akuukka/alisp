@@ -6,7 +6,10 @@
 namespace alisp
 {
 
-struct SymbolObject : SharedDataObject
+struct SymbolObject :
+        SharedDataObject,
+        ConvertibleTo<const Symbol&>,
+        ConvertibleTo<std::shared_ptr<Symbol>>
 {
     std::shared_ptr<Symbol> sym;
     std::string name;
@@ -70,6 +73,16 @@ struct SymbolObject : SharedDataObject
         if (f(*this) && sym && sym->variable) {
             sym->variable->traverse(f);
         }
+    }
+
+    const Symbol& convertTo(ConvertibleTo<const Symbol&>::Tag) const override
+    {
+        return *getSymbol();
+    }
+
+    std::shared_ptr<Symbol> convertTo(ConvertibleTo<std::shared_ptr<Symbol>>::Tag) const override
+    {
+        return getSymbol();
     }
 };
 

@@ -1,4 +1,5 @@
 #include "Exception.hpp"
+#include <variant>
 #include "UTF8.hpp"
 #include "alisp.hpp"
 #include <sstream>
@@ -112,7 +113,7 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res
 
 void testListBasics()
 {
-    alisp::Machine m;
+    Machine m;
     ASSERT_OUTPUT_EQ(m, "(make-list 3 'pigs)", "(pigs pigs pigs)");
     ASSERT_OUTPUT_EQ(m, "(make-list 0 'pigs)", "nil");
     ASSERT_OUTPUT_EQ(m, "(setq l (make-list 3 '(a b)))", "((a b) (a b) (a b))");
@@ -205,7 +206,7 @@ void testQuote()
 
 void testCarFunction()
 {
-    alisp::Machine m;
+    Machine m;
     assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
         m.evaluate("(car 1)");
     }));
@@ -342,11 +343,15 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((make-string 2 ?\n))code", "\"\n\n\"");
     ASSERT_OUTPUT_EQ(m, R"code((make-string 4 ?\s))code", R"code("    ")code");
     ASSERT_OUTPUT_EQ(m, R"code((make-string 4 ?\\))code", R"code("\\\\")code");
+    /*
+// These common lisp functions are currently disabled as the stream object needs to be
+// implemented in a more elegant manner.
     ASSERT_OUTPUT_EQ(m, R"code((format t "format t"))code", R"code(nil)code");
     ASSERT_OUTPUT_EQ(m, R"code((format nil "format nil"))code", R"code("format nil")code");
     ASSERT_OUTPUT_EQ(m, R"code((format *standard-output* "format stdout"))code", R"code(nil)code");
     ASSERT_OUTPUT_EQ(m, R"code((force-output *standard-output*))code", "nil");
     ASSERT_OUTPUT_EQ(m, R"code((force-output *query-io*))code", "nil");
+    */
     ASSERT_OUTPUT_EQ(m, R"code((parse-integer "1"))code", "1\n1");
     ASSERT_OUTPUT_EQ(m, R"code((parse-integer "123"))code", "123\n3");
     ASSERT_OUTPUT_EQ(m, R"code((string-to-number "3"))code", "3");
@@ -958,16 +963,38 @@ void testControlStructures()
     assert(expectedMsgs.empty());
 }
 
+void testConverter()
+{
+    Machine m;
+    auto intObj = m.evaluate("5");
+    assert(intObj->isConvertibleTo<int>());
+    assert(intObj->isConvertibleTo<std::int64_t>());
+    assert(intObj->isConvertibleTo<std::uint32_t>());
+    if (!intObj->isConvertibleTo<std::variant<double, int>>()) {
+        assert(false && "Convertible to int but not std::variant<int, double>");
+    }
+    auto variant = intObj->
+        value<std::variant<double, int>>();
+    int ival = std::get<int>(variant);
+    assert(ival == 5);
+    auto strObj = m.evaluate("\"ABC\"");
+    assert(strObj->isConvertibleTo<std::string>());
+    assert(strObj->isConvertibleTo<const std::string&>());
+    assert(strObj->isConvertibleTo<std::string&>());
+}
+
 void test()
 {
+    testListBasics();
+    testNullFunction();
+    testCarFunction();
+    testConverter();
     testBasicArithmetic();
-    testKeywords();
     testControlStructures();
     testVariables();
     testMemoryLeaks();
     testCyclicals(); // Lot of work to do here still...
     testMacros();
-    testListBasics();
     testLet();
     testQuote();
     testSymbols();
@@ -975,10 +1002,10 @@ void test()
     testIf();
     testDeepCopy();
     testEvalFunction();
-    testCarFunction();
     testCdrFunction();
     testConsFunction();
     testListFunction();
+    testKeywords();
     testNthFunction();
     testStrings();
     testDescribeVariableFunction();
@@ -986,7 +1013,6 @@ void test()
     testEqFunction();
     testDivision();
     testSyntaxErrorDetection();
-    testNullFunction();
     testPrognFunction();
     //std::cout << "Remaining objects:\n";
     //Object::printAllObjects();

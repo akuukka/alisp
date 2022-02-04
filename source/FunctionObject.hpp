@@ -6,7 +6,10 @@
 namespace alisp
 {
 
-struct FunctionObject : Object
+/*
+ TODO: get rid of this class. funcall should support ConsCell/Symbol parameters
+ */
+struct FunctionObject : Object, ConvertibleTo<const Function&>
 {
     std::shared_ptr<Function> value;
 
@@ -29,6 +32,11 @@ struct FunctionObject : Object
             return false;
         }
         return value == op->value;
+    }
+
+    const Function& convertTo(ConvertibleTo<const Function&>::Tag) const override
+    {
+        return *value;
     }
 };
 

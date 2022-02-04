@@ -30,6 +30,7 @@ ALISP_INLINE std::unique_ptr<Object> ConsCellObject::eval()
             throw exceptions::WrongNumberOfArguments(argc);
         }
         FArgs args(*c.next(), m);
+        args.funcName = c.car->toString();
         return f->func(args);
     }
     throw exceptions::VoidFunction(c.car->toString());
@@ -127,16 +128,6 @@ ALISP_INLINE std::string ConsCellObject::toString(bool aesthetic) const
     return s;
 }
 
-template <>
-ALISP_INLINE std::optional<ConsCellObject> getValue(const Object& sym)
-{
-    auto s = dynamic_cast<const ConsCellObject*>(&sym);
-    if (s) {
-        return *s;
-    }
-    return std::nullopt;
-}
-
 ALISP_INLINE size_t ConsCellObject::length() const
 {
     if (!*this) {
@@ -198,6 +189,27 @@ ALISP_INLINE std::unique_ptr<ConsCellObject> ListBuilder::get()
     m_list = nullptr;
     m_last = nullptr;
     return std::move(r);
+}
+
+const Symbol& ConsCellObject::convertTo(ConvertibleTo<const Symbol&>::Tag) const
+{
+    assert(isNil());
+    return *parent->getSymbol(NilName);
+}
+
+const ConsCell& ConsCellObject::convertTo(ConvertibleTo<const ConsCell&>::Tag) const
+{
+    return *cc;
+}
+
+ConsCell& ConsCellObject::convertTo(ConvertibleTo<ConsCell&>::Tag) const
+{
+    return *cc;
+}
+
+bool ConsCellObject::canConvertTo(ConvertibleTo<const Symbol&>::Tag) const
+{
+    return isNil();
 }
 
 }

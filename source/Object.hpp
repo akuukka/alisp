@@ -1,9 +1,12 @@
 #pragma once
+#include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <iostream>
 #include <type_traits>
-#include "Converter.hpp"
+#include <variant>
+#include "Template.hpp"
 
 namespace alisp
 {
@@ -22,8 +25,50 @@ inline int changeRefCount(int i) {
 
 #endif
 
-struct Object
+template<typename T>
+struct ConvertibleTo
 {
+    struct Tag{};
+    virtual T convertTo(Tag) const = 0;
+    virtual bool canConvertTo(Tag) const { return true; };
+};
+
+struct Object :
+        ConvertibleTo<bool>,
+        ConvertibleTo<const Object&>,
+        ConvertibleTo<std::unique_ptr<Object>>
+{
+    template<typename T>
+    bool isConvertibleTo() const
+    {
+        if constexpr (IsInstantiationOf<std::variant, T>::value) {
+            return isConvertibleToVariant<T, 0>();
+        }
+        else {
+            auto asConvertible = dynamic_cast<const ConvertibleTo<T>*>(this);
+            return asConvertible &&
+                asConvertible->canConvertTo(typename ConvertibleTo<T>::Tag());
+        }
+    }
+
+    template<typename T, size_t I> const
+    bool isConvertibleToVariant() const
+    {
+        if constexpr (I == std::variant_size_v<T>) {
+            return false;
+        }
+        else {
+            return isConvertibleTo<std::variant_alternative_t<I, T>>() ||
+                isConvertibleToVariant<T, I+1>();
+        }
+    }
+
+    bool convertTo(ConvertibleTo<bool>::Tag) const { return !isNil(); }
+    const Object& convertTo(ConvertibleTo<const Object&>::Tag) const { return *this; }
+    std::unique_ptr<Object> convertTo(ConvertibleTo<std::unique_ptr<Object>>::Tag) const {
+        return clone();
+    }
+    
 #ifdef ENABLE_DEBUG_REFCOUNTING
     Object()
     {
@@ -85,25 +130,37 @@ struct Object
     virtual const SymbolObject* asSymbol() const { return nullptr; }
 
     template <typename T>
-    typename std::enable_if<!std::is_reference<T>::value, T>::type value() const
+    T value() const
     {
-        const std::optional<T> opt = Converter<T>()(*this);
-        if (opt) {
-            return std::move(*opt);
+        if (!isConvertibleTo<T>()) {
+            throw std::runtime_error("No type conversion available.");
         }
-        throw std::runtime_error("Unable to convert object to desired type.");
+        if constexpr (IsInstantiationOf<std::variant, T>::value) {
+            return valueToVariant<T, 0>();
+        }
+        else {
+            auto asConvertible = dynamic_cast<const ConvertibleTo<T>*>(this);
+            return asConvertible->convertTo(typename ConvertibleTo<T>::Tag());
+        }
     }
 
-    template <typename T>
-    typename std::enable_if<std::is_reference<T>::value, T>::type value() const
+    template <typename T, size_t I>
+    T valueToVariant() const
     {
-        return Converter<T>()(*this);
+        if constexpr (I == std::variant_size_v<T>) {
+            throw std::runtime_error("Conversion to variant failed.");
+        }
+        else {
+            if (isConvertibleTo<std::variant_alternative_t<I, T>>()) {
+                return value<std::variant_alternative_t<I, T>>();
+            }
+            return valueToVariant<T, I+1>();
+        }
     }
 
     template <typename T> std::optional<T> valueOrNull() const
     {
-        Converter<T> conv;
-        return conv(*this);
+        return isConvertibleTo<T>() ? std::optional<T>(value<T>()) : std::nullopt;
     }
 
     virtual std::unique_ptr<Object> eval() { return clone(); }    

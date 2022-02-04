@@ -13,16 +13,6 @@ size_t StringObject::length() const
     return value ? utf8::strlen(value->c_str()) : 0;
 }
 
-template<>
-ALISP_INLINE std::optional<std::string> getValue(const Object& sym)
-{
-    auto s = dynamic_cast<const StringObject*>(&sym);
-    if (s) {
-        return *s->value;
-    }
-    return std::nullopt;
-}
-
 ALISP_INLINE std::unique_ptr<Object> StringObject::elt(std::int64_t index) const
 {
     std::uint32_t encoded;

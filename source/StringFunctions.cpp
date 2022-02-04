@@ -79,11 +79,11 @@ void initStringFunctions(Machine& m)
         }
         return ret;
     });
-    m.defun("store-substring", [](StringObject sobj,
+    m.defun("store-substring", [](String sobj,
                                   std::int64_t idx,
                                   std::variant<std::string, std::uint32_t> obj)
     {
-        auto& str = *sobj.value;
+        auto& str = *sobj.sharedPointer();
         std::string s;
         try {
             const std::uint32_t c = std::get<std::uint32_t>(obj);
@@ -98,7 +98,7 @@ void initStringFunctions(Machine& m)
         for (size_t i = 0; i < s.length(); i++) {
             str[idx+i] = s[i];
         }
-        return sobj;
+        return StringObject(sobj);
     });
     m.defun("clear-string", [](std::string& str) { for (auto& c : str) { c = 0; } });
     m.defun("split-string", [&m](std::string s,
@@ -186,6 +186,8 @@ void initStringFunctions(Machine& m)
         vals->additionalValues.push_back(makeInt(str.size()));
         return vals;
     });
+    // Common lisp format prototype...
+    /*
     m.defun("format", [](Stream stream, String formatString, Rest& args) -> ObjectPtr {
         std::ostream* ostream = nullptr;
         if (stream.isNilStream()) {
@@ -263,6 +265,7 @@ void initStringFunctions(Machine& m)
         (*ostream) << s;
         return args.m.makeNil();
     });
+    */
 }
 
 }

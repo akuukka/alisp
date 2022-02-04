@@ -40,6 +40,7 @@ struct FArgs
 {
     ConsCell* cc;
     Machine& m;
+    std::string funcName = ""; // For debugging until proper stack traces will be available
     std::vector<std::unique_ptr<Object>> argStorage;
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
@@ -118,7 +119,6 @@ getFuncParam(FArgs& args)
         return arg->value<T>();
     }
     catch (std::runtime_error& ex) {
-        std::cout << "err: " << ex.what() << std::endl;
         throw exceptions::WrongTypeArgument(arg->toString());
     }
 }
@@ -153,7 +153,7 @@ inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& 
         }
     }
     if (conversionFailed) {
-        throw exceptions::WrongTypeArgument(arg->toString());
+        throw exceptions::WrongTypeArgument(arg->toString() + "abba1");
     }
     return opt;
 }
@@ -164,7 +164,9 @@ inline typename std::enable_if<!specialParamType<T>(), T>::type getFuncParam(FAr
     Object* arg = args.pop();
     std::optional<typename OptCheck<T>::BaseType> opt = arg->valueOrNull<T>();
     if (!opt) {
-        throw exceptions::WrongTypeArgument(arg->toString());
+        throw exceptions::WrongTypeArgument(arg->toString() +
+                                            " passed as parameter to " +
+                                            args.funcName);
     }
     return std::move(*opt);
 }
