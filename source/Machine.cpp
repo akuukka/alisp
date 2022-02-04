@@ -1,5 +1,7 @@
+#include <istream>
 #include <limits>
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include "FunctionObject.hpp"
 #include "Exception.hpp"
@@ -14,6 +16,7 @@
 #include "SymbolObject.hpp"
 #include "Init.hpp"
 #include "UTF8.hpp"
+#include "StreamObject.hpp"
 
 namespace alisp {
 
@@ -243,7 +246,6 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
     return nullptr;
 }
 
-
 ALISP_INLINE Machine::Machine(bool initStandardLibrary)
 {
     if (!initStandardLibrary) {
@@ -255,16 +257,11 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     setVariable(TName,
                 std::make_unique<SymbolObject>(this, nullptr, TName), true);
     setVariable(parsedSymbolName("*standard-output*"),
-                std::make_unique<ValueObject<std::ostream*>>(&std::cout));
-
-    /*
-    setVariable(parsedSymbolName("*query-io*"),
-                std::make_unique<StreamObject>(&std::cin, &std::cout));
+                std::make_unique<OStreamObject>(&std::cout));
     setVariable(parsedSymbolName("*standard-input*"),
-                std::make_unique<StreamObject>(&std::cin, nullptr));
-    setVariable(parsedSymbolName("*standard-output*"),
-                std::make_unique<StreamObject>(nullptr, &std::cout));
-    */
+                std::make_unique<IStreamObject>(&std::cin));
+    setVariable(parsedSymbolName("*query-io*"),
+                std::make_unique<IOStreamObject>(&std::cin, &std::cout));
     initMathFunctions(*this);
     initMacroFunctions(*this);
     initSequenceFunctions(*this);

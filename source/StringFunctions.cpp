@@ -174,19 +174,17 @@ void initStringFunctions(Machine& m)
         vals->additionalValues.push_back(makeInt(str.size()));
         return vals;
     });
-    // Common lisp format prototype...
-    /*
-    m.defun("force-output", [](Stream stream) {
-        if (stream.ostream) {
-            (*stream.ostream) << std::flush;
-        }
-        return false;
+    m.defun("force-output", [](std::ostream* stream) {
+        assert(stream);
+        return (*stream) << std::flush, false;
     });
-    m.defun("read-line", [](Stream stream) {
+    m.defun("read-line", [](std::istream* stream) {
         std::string str;
-        std::getline(*stream.istream, str);
+        std::getline(*stream, str);
         return str;
     });
+    // Common lisp format prototype...
+    /*
     m.defun("format", [](Stream stream, String formatString, Rest& args) -> ObjectPtr {
         std::ostream* ostream = nullptr;
         if (stream.isNilStream()) {

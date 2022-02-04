@@ -344,14 +344,12 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((make-string 4 ?\s))code", R"code("    ")code");
     ASSERT_OUTPUT_EQ(m, R"code((make-string 4 ?\\))code", R"code("\\\\")code");
     /*
-// These common lisp functions are currently disabled as the stream object needs to be
-// implemented in a more elegant manner.
     ASSERT_OUTPUT_EQ(m, R"code((format t "format t"))code", R"code(nil)code");
     ASSERT_OUTPUT_EQ(m, R"code((format nil "format nil"))code", R"code("format nil")code");
     ASSERT_OUTPUT_EQ(m, R"code((format *standard-output* "format stdout"))code", R"code(nil)code");
+    */
     ASSERT_OUTPUT_EQ(m, R"code((force-output *standard-output*))code", "nil");
     ASSERT_OUTPUT_EQ(m, R"code((force-output *query-io*))code", "nil");
-    */
     ASSERT_OUTPUT_EQ(m, R"code((parse-integer "1"))code", "1\n1");
     ASSERT_OUTPUT_EQ(m, R"code((parse-integer "123"))code", "123\n3");
     ASSERT_OUTPUT_EQ(m, R"code((string-to-number "3"))code", "3");
