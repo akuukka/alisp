@@ -46,10 +46,23 @@ struct Macro {
 
 ObjectPtr expand(Machine& m, const Macro& macro, std::function<Object*()> paramSource)
 {
+    ListBuilder builder(m);
+    ObjectPtr restList;
     std::map<std::string, Object*> conv;
     const int nc = static_cast<int>(macro.params.names.size());
     for (int i = 0; i < nc; i++) {
-        conv[macro.params.names[i]] = paramSource();
+        if (macro.params.rest && i == nc - 1) {
+            auto next = paramSource();
+            while (next) {
+                builder.append(next->clone());
+                next = paramSource();
+            }
+            restList = builder.get();
+            conv[macro.params.names[i]] = restList.get();
+        }
+        else {
+            conv[macro.params.names[i]] = paramSource();
+        }
     }
     auto copied = macro.code.deepCopy();
     renameSymbols(m, *copied, conv);
@@ -101,12 +114,6 @@ void initMacroFunctions(Machine& m)
         std::string macroName = nameSym->name;
         args.skip();
         const auto params = getFuncParams(*m.makeConsCell(args.cc->car->clone(), nullptr));
-        if (macroName == "when") {
-            std::cout << "when function params: " << params.min << " " << params.max << std::endl;
-            for (auto p: params.names) {
-                std::cout << p << std::endl;
-            }
-        }
         args.skip();
         ListBuilder builder(m);
         while (args.cc) {

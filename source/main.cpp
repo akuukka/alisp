@@ -641,8 +641,11 @@ void testEvalFunction()
 void testMacros()
 {
     Machine m;
-    //ASSERT_OUTPUT_EQ(m, "(when t 1 2 3)", "3");
-    //ASSERT_OUTPUT_EQ(m, "(when (= 1 2) 1 2 3)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(when t)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(when nil t)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(when t nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(when t 1 2 3)", "3");
+    ASSERT_OUTPUT_EQ(m, "(when (= 1 2) 1 2 3)", "nil");
     ASSERT_EXCEPTION(m, "(pop nil)", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(setq l '(a b))", "(a b)");
     ASSERT_OUTPUT_EQ(m, "(push 'c l)", "(c a b)");

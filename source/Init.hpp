@@ -58,8 +58,8 @@ namespace alisp { inline const char* getInitCode() { return R"code(
     ret
     ))
 
-;(defmacro when (cond &rest body)
-;  "If COND yields non-nil, do BODY, else return nil."
-;  (list 'if cond (cons 'progn body)))
+(defmacro when (cond &rest body)
+  "If COND yields non-nil, do BODY, else return nil."
+  (list 'if cond (cons 'progn body)))
 
 )code"; }}
