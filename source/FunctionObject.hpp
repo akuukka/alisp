@@ -13,7 +13,10 @@ struct FunctionObject : Object, ConvertibleTo<const Function&>
     FunctionObject(std::shared_ptr<Function> func) : value(func) { }
     std::string toString(bool aesthetic) const override
     {
-        return value->closure ? value->closure->toString(aesthetic) : value->name;
+        if (!value->closure) {
+            return "#<subr " + value->name + ">";
+        }
+        return value->closure->toString(aesthetic);
     }
 
     std::unique_ptr<Object> clone() const override 
@@ -33,6 +36,11 @@ struct FunctionObject : Object, ConvertibleTo<const Function&>
     const Function& convertTo(ConvertibleTo<const Function&>::Tag) const override
     {
         return *value;
+    }
+
+    std::shared_ptr<Function> resolveFunction() const override
+    {
+        return value;
     }
 };
 

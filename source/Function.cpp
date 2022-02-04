@@ -110,13 +110,7 @@ void initFunctionFunctions(Machine& m)
             return sym.parent->makeNil();
         }
         if (!sym.function->closure) {
-            struct SubrObject : ValueObject<std::shared_ptr<Function>>  {
-                SubrObject(std::shared_ptr<Function> f) :
-                    ValueObject<std::shared_ptr<Function>>(f) {}
-                std::string toString(bool) const { return "#<subr "+value->name+">"; }
-                ObjectPtr clone() const { return std::make_unique<SubrObject>(value); }
-            };
-            return std::make_unique<SubrObject>(sym.function);
+            return std::make_unique<FunctionObject>(sym.function);
         }
         else {
             return m.makeConsCell(std::make_unique<SymbolObject>(&m,

@@ -723,6 +723,7 @@ void testFunctions()
     ASSERT_EXCEPTION(m, "(y 1 1)", exceptions::VoidFunction);
     ASSERT_EXCEPTION(m, "('y 1 1)", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(symbol-function '+)", "#<subr +>");
+    ASSERT_OUTPUT_EQ(m, "(funcall (symbol-function '+) 1 2)", "3");
     ASSERT_OUTPUT_EQ(m, "(functionp 5)", "nil");
     ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
     ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
