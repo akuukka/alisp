@@ -1000,7 +1000,8 @@ void testErrors()
   (condition-case err
       ;; Protected form.
       (/ dividend divisor)
-    ;; The handler.
+    ;; The handler(s).
+    (some-strange-error nil)            ; This shouldn't cause problems here.
     (arith-error                        ; Condition.
      ;; Display the usual message for this error.
      (princ (error-message-string err) debugstream)
