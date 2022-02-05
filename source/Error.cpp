@@ -67,14 +67,13 @@ void Machine::initErrorFunctions()
         return err.car->toString() + ":" + err.cdr->toString();
     });
     makeFunc("condition-case", 2, std::numeric_limits<int>::max(), [&](FArgs& args) {
-        auto arg = args.cc->car.get();
-        args.skip();
+        auto arg = args.pop(false);
         if (!arg->isSymbol() && !arg->isNil()) {
             throw exceptions::WrongTypeArgument(arg->toString());
         }
         const std::string symName = arg->isNil() ? NilName : arg->asSymbol()->getSymbolName();
-        auto protectedForm = args.pop(false);
         try {
+            auto protectedForm = args.pop(false);
             return protectedForm->eval();
         }
         catch (exceptions::Error& error) {
