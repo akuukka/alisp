@@ -15,13 +15,16 @@ struct ConsCellObject :
         Sequence,
         ConvertibleTo<const Symbol&>,
         ConvertibleTo<const ConsCell&>,
+        ConvertibleTo<std::shared_ptr<ConsCell>>,
         ConvertibleTo<ConsCell&>
 {
     std::shared_ptr<ConsCell> cc;
     Machine* parent = nullptr;
 
     ConsCellObject(Machine* parent) : parent(parent) { cc = std::make_shared<ConsCell>(); }
-
+    ConsCellObject(std::shared_ptr<ConsCell> value, Machine* machine) :
+        cc(value),
+        parent(machine) {}
     ConsCellObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr, Machine* p) :
         ConsCellObject(p)
     {
@@ -117,6 +120,11 @@ struct ConsCellObject :
     const ConsCell& convertTo(ConvertibleTo<const ConsCell&>::Tag) const override;
     ConsCell& convertTo(ConvertibleTo<ConsCell&>::Tag) const override;
     bool canConvertTo(ConvertibleTo<const Symbol&>::Tag) const override;
+    std::shared_ptr<ConsCell>
+    convertTo(ConvertibleTo<std::shared_ptr<ConsCell>>::Tag) const override
+    {
+        return cc;
+    }
 };
 
 inline std::unique_ptr<Object> makeNil(Machine* parent)
