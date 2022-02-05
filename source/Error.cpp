@@ -84,7 +84,9 @@ void Machine::initErrorFunctions()
                 assert(next->isList());
                 auto nextCar = next->asList()->car();
                 assert(nextCar);
-                assert(nextCar->isSymbol()); // Could also be a list!!!! Do this later
+                if (!nextCar->isSymbol()) {
+                    throw exceptions::Error("Invalid condition handler: " + next->asList()->toString());
+                }
                 auto errSym = nextCar->asSymbol();
                 if (errSym->equals(*error.sym)) {
                     pushLocalVariable(symName,

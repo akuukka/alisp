@@ -1,3 +1,4 @@
+#include <exception>
 #define ENABLE_DEBUG_REFCOUNTING
 #include "Error.hpp"
 #include "StreamObject.hpp"
@@ -1045,6 +1046,15 @@ void testErrors()
       (progn (error "test") nil)))
 )code", "error-test-case-4");
     ASSERT_EXCEPTION(m, "(error-test-case-4)", exceptions::Error);
+    
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun error-test-case-5 ()
+  (condition-case nil
+      (progn (error "test") nil)
+    (1 t)))
+(error-test-case-5)
+)code", "error-test-case-5");
+    ASSERT_EXCEPTION(m, "(error-test-case-5)", std::bad_exception);
 }
 
 void test()
