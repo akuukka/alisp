@@ -25,12 +25,15 @@ ALISP_INLINE FuncParams getFuncParams(const ConsCellObject& closure)
             throw exceptions::Error(*closure.parent,
                                     "Malformed arglist: " + closure.cc->car->toString());
         }
-        if (sym->name == closure.parent->parsedSymbolName("&optional")) {
-            assert(!opt && "&optional should be present just once");
+        if (sym->name == OptionalName) {
+            if (opt) {
+                throw exceptions::Error(*closure.parent,
+                                        "Malformed arglist: " + closure.cc->car->toString());
+            }
             opt = true;
             continue;
         }
-        else if (sym->name == closure.parent->parsedSymbolName("&rest")) {
+        else if (sym->name == RestName) {
             fp.rest = true;
             fp.max = std::numeric_limits<int>::max();
             continue;
@@ -98,7 +101,7 @@ void Machine::initFunctionFunctions()
     });
     defun("functionp", [](const Object& obj) {
         auto func = obj.resolveFunction();
-        return func != nullptr && !func->isMacro;
+        return func && !func->isMacro;
     });
     defun("func-arity", [&](const Object& obj) {
         auto func = obj.resolveFunction();
