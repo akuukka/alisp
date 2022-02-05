@@ -1052,9 +1052,24 @@ void testErrors()
   (condition-case nil
       (progn (error "test") nil)
     (1 t)))
-(error-test-case-5)
 )code", "error-test-case-5");
-    ASSERT_EXCEPTION(m, "(error-test-case-5)", std::bad_exception);
+    ASSERT_EXCEPTION(m, "(error-test-case-5)", exceptions::Error);
+    
+    ASSERT_EXCEPTION(m, R"code(
+(defun error-test-case-6 ()
+  (condition-case nil
+      (progn (error "test") nil)
+    ()))
+(error-test-case-6)
+)code", exceptions::Error);
+
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun error-test-case-7 ()
+  (condition-case nil
+      (progn (error "nil handlers should be fine!") nil)
+    ()()()()(error 123)))
+(error-test-case-7)
+)code", "123");
 }
 
 void test()

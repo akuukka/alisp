@@ -83,7 +83,9 @@ void Machine::initErrorFunctions()
                 auto next = args.pop(false);
                 assert(next->isList());
                 auto nextCar = next->asList()->car();
-                assert(nextCar);
+                if (!nextCar) {
+                    continue;
+                }
                 if (!nextCar->isSymbol()) {
                     throw exceptions::Error("Invalid condition handler: " + next->asList()->toString());
                 }
