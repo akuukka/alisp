@@ -71,6 +71,7 @@ namespace alisp { inline const char* getInitCode() { return R"code(
       (indirect-function (symbol-function function))
     function))
 
-
+(defun error (&rest args)
+  (signal 'error (list (apply 'format args))))
 
 )code"; }}

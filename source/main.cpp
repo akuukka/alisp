@@ -989,8 +989,15 @@ void testConverter()
     assert(strObj->isConvertibleTo<std::string&>());
 }
 
+void testErrors()
+{
+    Machine m;
+    ASSERT_EXCEPTION(m, "(error \"test: %d\" 1500)", exceptions::Error);
+}
+
 void test()
 {
+    testErrors();
     testFunctions();
     testListBasics();
     testNullFunction();

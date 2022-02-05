@@ -5,6 +5,7 @@
 namespace alisp {
 
 class Machine;
+struct Object;
 struct ConsCellObject;
 struct SymbolObject;
 
@@ -55,11 +56,11 @@ struct WrongTypeArgument : Exception
 struct Error : Exception
 {
     std::unique_ptr<SymbolObject> sym;
-    std::unique_ptr<ConsCellObject> data;
+    std::unique_ptr<Object> data;
     
     Error(Machine& machine, std::string msg);
     Error(std::unique_ptr<SymbolObject> sym,
-          std::unique_ptr<ConsCellObject> data);
+          std::unique_ptr<Object> data);
     ~Error();
 };
 
