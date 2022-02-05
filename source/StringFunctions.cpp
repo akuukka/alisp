@@ -1,7 +1,7 @@
 #include "ConsCell.hpp"
 #include "MultiValueObject.hpp"
 #include "ConsCellObject.hpp"
-#include "Exception.hpp"
+#include "Error.hpp"
 #include "Machine.hpp"
 #include "Object.hpp"
 #include "StringObject.hpp"
@@ -78,7 +78,7 @@ void initStringFunctions(Machine& m)
         }
         return ret;
     });
-    m.defun("store-substring", [](String sobj,
+    m.defun("store-substring", [&m](String sobj,
                                   std::int64_t idx,
                                   std::variant<std::string, std::uint32_t> obj)
     {
@@ -92,7 +92,7 @@ void initStringFunctions(Machine& m)
             s = std::get<std::string>(obj);
         }
         if (idx < 0 || idx + s.size() > str.size()) {
-            throw exceptions::Error("Index out bounds. Can't grow string");
+            throw exceptions::Error(m, "Index out bounds. Can't grow string");
         }
         for (size_t i = 0; i < s.length(); i++) {
             str[idx+i] = s[i];

@@ -3,7 +3,7 @@
 #include "Object.hpp"
 #include "SharedDataObject.hpp"
 #include "Sequence.hpp"
-#include "Exception.hpp"
+#include "Error.hpp"
 
 namespace alisp {
 

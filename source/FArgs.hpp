@@ -1,5 +1,5 @@
 #pragma once
-#include "Exception.hpp"
+#include "Error.hpp"
 #include "Object.hpp"
 #include "ConsCell.hpp"
 #include "Template.hpp"

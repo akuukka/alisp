@@ -2,7 +2,7 @@
 #include "StringObject.hpp"
 #include "ValueObject.hpp"
 #include <stdexcept>
-#include "Exception.hpp"
+#include "Error.hpp"
 #include "UTF8.hpp"
 
 namespace alisp {
@@ -20,7 +20,7 @@ ALISP_INLINE std::unique_ptr<Object> StringObject::elt(std::int64_t index) const
     const char* start = value->c_str();
     for (std::int64_t i = 0; i <= index; i++) {
         if (offset >= value->size()) {
-            throw alisp::exceptions::Error("Index out of range");
+            throw std::runtime_error("Index out of range");
         }
         const size_t proceed = utf8::next(start + offset, &encoded);
         offset += proceed;

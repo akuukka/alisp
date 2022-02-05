@@ -1,5 +1,5 @@
 #include "ConsCellObject.hpp"
-#include "Exception.hpp"
+#include "Error.hpp"
 #include "Machine.hpp"
 #include "ValueObject.hpp"
 #include "alisp.hpp"

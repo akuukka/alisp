@@ -1,4 +1,4 @@
-#include "Exception.hpp"
+#include "Error.hpp"
 #include <variant>
 #include "UTF8.hpp"
 #include "alisp.hpp"
@@ -718,6 +718,11 @@ void testFunctions()
         "foo", "abc"
     };
     m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    ASSERT_EXCEPTION(m, "(func-arity +)", exceptions::VoidVariable);
+    ASSERT_EXCEPTION(m, "(func-arity 1)", exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, "(func-arity '%)", "(2 . 2)");
+    ASSERT_OUTPUT_EQ(m, "(func-arity (lambda (x y &optional z) (* x y z)))", "(2 . 3)");
+    ASSERT_OUTPUT_EQ(m, "(func-arity (symbol-function '%))", "(2 . 2)");
     ASSERT_OUTPUT_EQ(m, "(progn (setq plus '+)(setq plus2 plus)(setq plus3 plus)"
                      "(indirect-function plus2))", "#<subr +>");
     ASSERT_EXCEPTION(m, "(y 1 1)", exceptions::VoidFunction);

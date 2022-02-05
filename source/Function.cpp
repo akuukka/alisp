@@ -1,5 +1,5 @@
 #include "ConsCellObject.hpp"
-#include "Exception.hpp"
+#include "Error.hpp"
 #include "FunctionObject.hpp"
 #include "Template.hpp"
 #include "ValueObject.hpp"
@@ -22,7 +22,8 @@ ALISP_INLINE FuncParams getFuncParams(const ConsCellObject& closure)
     for (auto& arg : *closure.cc->car->asList()) {
         const auto sym = dynamic_cast<const SymbolObject*>(&arg);
         if (!sym) {
-            throw exceptions::Error("Malformed arglist: " + closure.cc->car->toString());
+            throw exceptions::Error(*closure.parent,
+                                    "Malformed arglist: " + closure.cc->car->toString());
         }
         if (sym->name == closure.parent->parsedSymbolName("&optional")) {
             assert(!opt && "&optional should be present just once");
@@ -76,7 +77,7 @@ void Machine::initFunctionFunctions()
     defun("funcall", [](const Object& obj, FArgs& args) {
         auto func = obj.resolveFunction();
         if (!func) {
-            throw exceptions::Error("Invalid function " + obj.toString());
+            throw exceptions::Error(args.m, "Invalid function " + obj.toString());
         }
         return func->func(args);
     });
@@ -99,11 +100,16 @@ void Machine::initFunctionFunctions()
         auto func = obj.resolveFunction();
         return func != nullptr && !func->isMacro;
     });
-    defun("func-arity", [&](const Symbol& sym) {
-        if (!sym.function) {
-            throw exceptions::VoidFunction("void-function " + sym.name);
+    defun("func-arity", [&](const Object& obj) {
+        auto func = obj.resolveFunction();
+        if (!func) {
+            if (!obj.isSymbol()) {
+                throw exceptions::Error(*this, "invalid function " + obj.toString());
+            }
+            throw exceptions::Error(*this, "void-function " + obj.toString());
+            
         }
-        return makeConsCell(makeInt(sym.function->minArgs), makeInt(sym.function->maxArgs));
+        return makeConsCell(makeInt(func->minArgs), makeInt(func->maxArgs));
     });
     defun("symbol-function", [&](const Symbol& sym) -> ObjectPtr {
         if (!sym.function) {

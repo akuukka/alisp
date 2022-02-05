@@ -4,7 +4,7 @@
 #include <ostream>
 #include <sstream>
 #include "FunctionObject.hpp"
-#include "Exception.hpp"
+#include "Error.hpp"
 #include "Object.hpp"
 #include "Sequence.hpp"
 #include "alisp.hpp"
@@ -262,6 +262,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     setVariable(parsedSymbolName("*query-io*"),
                 std::make_unique<IOStreamObject>(&std::cin, &std::cout));
     initFunctionFunctions();
+    initErrorFunctions();
     initMathFunctions(*this);
     initMacroFunctions(*this);
     initSequenceFunctions(*this);
@@ -406,7 +407,8 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                         stringVal = nextSym->value<std::string>();
                     }
                     else {
-                        throw exceptions::Error("Format specifier doesn’t match argument type");
+                        throw exceptions::Error(args.m,
+                                                "Format specifier doesn’t match argument type");
                     }
                     str = str.substr(0, i) + stringVal + str.substr(i+2);
                 }
@@ -420,12 +422,12 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                         intVal = static_cast<std::int64_t>(nextSym->value<double>());
                     }
                     else {
-                        throw exceptions::Error("Format specifier doesn’t match argument type");
+                        throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
                     }
                     str = str.substr(0, i) + std::to_string(intVal) + str.substr(i+2);
                 }
                 else {
-                    throw exceptions::Error("Invalid format string");
+                    throw exceptions::Error(args.m, "Invalid format string");
                 }
             }
         }
@@ -496,7 +498,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         auto sym = name->getSymbol();
         assert(sym);
         if (sym->constant) {
-            throw exceptions::Error("setting-constant " + name->toString());
+            throw exceptions::Error(*this, "setting-constant " + name->toString());
         }
         sym->variable = args.pop()->clone();
         return sym->variable->clone();
@@ -616,7 +618,8 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("boundp", [](const Symbol& sym) { return sym.variable ? true : false; });
     defun("makunbound", [](std::shared_ptr<Symbol> sym) {
         if (!sym || sym->constant) {
-            throw exceptions::Error("setting-constant" + (sym ? sym->name : std::string("nil")));
+            throw exceptions::Error(*sym->parent,
+                                    "setting-constant" + (sym ? sym->name : std::string("nil")));
         }
         sym->variable = nullptr;
         return sym;
@@ -770,7 +773,7 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
             str += 1 + nchar.second;
             return std::make_unique<IntObject>(codepoint);
         }
-        throw exceptions::Error("Invalid read syntax");
+        throw exceptions::Error(*this, "Invalid read syntax");
     }
     std::string next = parseNextName(str);
     auto num = getNumericConstant(next);

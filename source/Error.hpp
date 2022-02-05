@@ -3,6 +3,11 @@
 #include <string>
 
 namespace alisp {
+
+class Machine;
+struct ConsCellObject;
+struct SymbolObject;
+
 namespace exceptions {
 
 struct Exception : std::runtime_error
@@ -16,7 +21,6 @@ struct Exception : std::runtime_error
     };                                                          \
 
 DEFINE_EXCEPTION(UnableToEvaluate)
-DEFINE_EXCEPTION(Error)
 DEFINE_EXCEPTION(SyntaxError)
 DEFINE_EXCEPTION(ArithError)
 
@@ -46,6 +50,17 @@ struct WrongTypeArgument : Exception
     {
 
     }
+};
+
+struct Error : Exception
+{
+    std::unique_ptr<SymbolObject> sym;
+    std::unique_ptr<ConsCellObject> data;
+    
+    Error(Machine& machine, std::string msg);
+    Error(std::unique_ptr<SymbolObject> sym,
+          std::unique_ptr<ConsCellObject> data);
+    ~Error();
 };
 
 } // namespace exceptions

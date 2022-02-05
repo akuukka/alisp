@@ -82,6 +82,7 @@ class Machine
     std::unique_ptr<Object> parseNext(const char *&expr);
     std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
 
+    void initErrorFunctions();
     void initFunctionFunctions();
 public:
     std::unique_ptr<Object> makeNil();
