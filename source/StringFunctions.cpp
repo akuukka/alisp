@@ -30,7 +30,12 @@ ALISP_STATIC String format(const String str, FArgs& args)
             assert(it != str.end());
             std::uint32_t n = *it;
 
+            bool leadingZeros = false;
             int intWidth = 0;
+            while (n == '0') {
+                leadingZeros = true;
+                n = *++it;
+            }
             if (n >= '1' && n <= '9') {
                 std::string s;
                 s += n;
@@ -58,7 +63,7 @@ ALISP_STATIC String format(const String str, FArgs& args)
                     throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
                 }
                 while (intWidth && val.size() < intWidth) {
-                    val = " " + val;
+                    val = (leadingZeros ? "0" : " ") + val;
                 }
                 ret += val;
             }

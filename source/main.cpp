@@ -305,6 +305,8 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((format "a%%b"))code", R"code("a%b")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "%d" 15))code", R"code("15")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "%5d" 15))code", R"code("   15")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format "%015d" 30))code", R"code("000000000000030")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format "%0000015d" 30))code", R"code("000000000000030")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "%s" "cabra"))code", R"code("cabra")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "%S" "cabra"))code", R"code(""cabra"")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "num: %d.%%" 50))code", R"code("num: 50.%")code");
