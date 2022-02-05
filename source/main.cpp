@@ -1019,6 +1019,24 @@ void testErrors()
      4)))
 )code", "error-test-case-1");
     ASSERT_OUTPUT_EQ(m, "(error-test-case-1)", "4");
+    
+    ASSERT_OUTPUT_EQ(m, R"code(
+; Here the error handler code is nil which should be allowed
+(defun error-test-case-2 ()
+  (condition-case nil
+      (progn (error "test") nil)
+    (error)))
+)code", "error-test-case-2");
+    ASSERT_OUTPUT_EQ(m, "(error-test-case-2)", "nil");
+    
+    ASSERT_OUTPUT_EQ(m, R"code(
+; Here we have a handler for arith-error only. Should result in an uncatched error.
+(defun error-test-case-3 ()
+  (condition-case nil
+      (progn (error "test") nil)
+    (arith-error)))
+)code", "error-test-case-3");
+    ASSERT_EXCEPTION(m, "(error-test-case-3)", exceptions::Error);
 }
 
 void test()
