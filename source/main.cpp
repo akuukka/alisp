@@ -1037,6 +1037,14 @@ void testErrors()
     (arith-error)))
 )code", "error-test-case-3");
     ASSERT_EXCEPTION(m, "(error-test-case-3)", exceptions::Error);
+    
+    ASSERT_OUTPUT_EQ(m, R"code(
+; Here we have no handlers at all. Not very useful, but shouldn't crash nevertheless!
+(defun error-test-case-4 ()
+  (condition-case nil
+      (progn (error "test") nil)))
+)code", "error-test-case-4");
+    ASSERT_EXCEPTION(m, "(error-test-case-4)", exceptions::Error);
 }
 
 void test()

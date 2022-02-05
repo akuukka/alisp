@@ -66,7 +66,7 @@ void Machine::initErrorFunctions()
     defun("error-message-string", [](const ConsCell& err) {
         return err.car->toString() + ":" + err.cdr->toString();
     });
-    makeFunc("condition-case", 3, std::numeric_limits<int>::max(), [&](FArgs& args) {
+    makeFunc("condition-case", 2, std::numeric_limits<int>::max(), [&](FArgs& args) {
         auto arg = args.cc->car.get();
         args.skip();
         if (!arg->isSymbol() && !arg->isNil()) {
