@@ -40,6 +40,9 @@ public:
     const char* c_str() const { return m_str->c_str(); }
     size_t size() const { return utf8::strlen(c_str()); }
     size_t length() const { return size(); }
+    String copy() const { return String(*m_str); }
+    void operator+=(std::uint32_t codepoint) { *m_str += utf8::encode(codepoint); }
+    void operator+=(std::string str) { *m_str += str; }
 
     String substr(size_t from, size_t n = npos) const
     {

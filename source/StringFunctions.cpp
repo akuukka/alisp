@@ -20,36 +20,41 @@
 namespace alisp
 {
 
-ALISP_STATIC std::string format(std::string str, FArgs& args)
+ALISP_STATIC String format(String str, FArgs& args)
 {
-    for (size_t i = 0; i < str.size(); i++) {
-        if (str[i] == '%') {
-            if (str[i+1] == '%') {
-                str.erase(i, 1);
+    String ret("");
+    for (auto it = str.begin(); it != str.end(); ++it) {
+        const std::uint32_t c = *it;
+        if (c == '%') {
+            ++it;
+            assert(it != str.end());
+            const std::uint32_t n = *it;
+            if (n == '%') {
+                ret += c;
             }
-            else if (str[i+1] == 's') {
-                str = str.substr(0, i) + args.pop()->toString(true) + str.substr(i+2);
-            }
-            else if (str[i+1] == 'd') {
+            else if (n == 'd') {
                 const auto nextSym = args.pop();
-                std::int64_t intVal;
                 if (nextSym->isInt()) {
-                    intVal = nextSym->value<std::int64_t>();
+                    ret += std::to_string(nextSym->value<std::int64_t>());
                 }
                 else if (nextSym->isFloat()) {
-                    intVal = static_cast<std::int64_t>(nextSym->value<double>());
+                    ret += std::to_string(static_cast<std::int64_t>(nextSym->value<double>()));
                 }
                 else {
                     throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
                 }
-                str = str.substr(0, i) + std::to_string(intVal) + str.substr(i+2);
             }
+            else if (n == 'S') { ret += args.pop()->toString(false); }
+            else if (n == 's') { ret += args.pop()->toString(true); }
             else {
-                throw exceptions::Error(args.m, "Invalid format string");
+                throw exceptions::Error(args.m, "Invalid format operation");
             }
         }
+        else {
+            ret += c;
+        }
     }
-    return str;
+    return ret;
 }
 
 void Machine::initStringFunctions()
@@ -232,12 +237,12 @@ void Machine::initStringFunctions()
         std::getline(*stream, str);
         return str;
     });
-    defun("message", [this](std::string str, Rest& args) {
+    defun("message", [this](String str, Rest& args) {
         str = format(str, args);
         std::cout << str << std::endl;
         return str;
     });
-    defun("format", [](std::string formatString, Rest& args) {
+    defun("format", [](String formatString, Rest& args) {
         return format(formatString, args);
     });
 
