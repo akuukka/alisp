@@ -28,16 +28,7 @@ ALISP_STATIC std::string format(std::string str, FArgs& args)
                 str.erase(i, 1);
             }
             else if (str[i+1] == 's') {
-                const auto nextSym = args.pop();
-                std::string stringVal;
-                if (nextSym->isString()) {
-                    stringVal = nextSym->value<std::string>();
-                }
-                else {
-                    throw exceptions::Error(args.m,
-                                            "Format specifier doesn’t match argument type");
-                }
-                str = str.substr(0, i) + stringVal + str.substr(i+2);
+                str = str.substr(0, i) + args.pop()->toString(true) + str.substr(i+2);
             }
             else if (str[i+1] == 'd') {
                 const auto nextSym = args.pop();
