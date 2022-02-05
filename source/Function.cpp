@@ -52,6 +52,7 @@ ALISP_INLINE FuncParams getFuncParams(const ConsCellObject& closure)
 
 ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
 {
+    ListBuilder builder(*this);
     const auto fp = getFuncParams(closure);
     const auto& argList = fp.names;
     size_t i = 0;
@@ -60,7 +61,15 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
             pushLocalVariable(argList[i], a.m.makeNil());
         }
         else {
-            pushLocalVariable(argList[i], a.pop()->clone());
+            if (fp.rest && i + 1 == argList.size()) {
+                while (a.hasNext()) {
+                    builder.append(a.pop()->clone());
+                }
+                pushLocalVariable(argList[i], builder.get());
+            }
+            else {
+                pushLocalVariable(argList[i], a.pop()->clone());
+            }
         }
     }
     AtScopeExit onExit([this, argList, &closure]() {
