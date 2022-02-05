@@ -81,7 +81,9 @@ void Machine::initErrorFunctions()
             error.onHandle(args.m);
             while (args.hasNext()) {
                 auto next = args.pop(false);
-                assert(next->isList());
+                if (!next->isList()) {
+                    throw exceptions::Error("Invalid condition handler: " + next->toString());
+                }
                 auto nextCar = next->asList()->car();
                 if (!nextCar) {
                     continue;

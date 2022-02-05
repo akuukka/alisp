@@ -44,15 +44,6 @@ struct WrongNumberOfArguments : Exception
     }
 };
 
-struct WrongTypeArgument : Exception
-{
-    WrongTypeArgument(std::string arg) :
-        Exception("wrong-type-argument: " + arg)
-    {
-
-    }
-};
-
 struct Error : Exception
 {
     std::unique_ptr<SymbolObject> sym;
@@ -73,6 +64,13 @@ struct ArithError : Error
     ArithError(std::string msg) :
         Error(msg, ConvertParsedNamesToUpperCase ? "ARITH-ERROR" : "arith-error") {}
 };
+
+struct WrongTypeArgument : Error
+{
+    WrongTypeArgument(std::string msg) :
+        Error(msg, ConvertParsedNamesToUpperCase ? "WRONG-TYPE-ARGUMENT" : "wrong-type-argument") {}
+};
+
 
 } // namespace exceptions
 }

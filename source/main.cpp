@@ -1,4 +1,5 @@
 #include <exception>
+#include <typeinfo>
 #define ENABLE_DEBUG_REFCOUNTING
 #include "Error.hpp"
 #include "StreamObject.hpp"
@@ -1070,6 +1071,22 @@ void testErrors()
     ()()()()(error 123)))
 (error-test-case-7)
 )code", "123");
+    
+    ASSERT_EXCEPTION(m, R"code(
+(defun error-test-case-8 ()
+  (condition-case nil
+      (progn (error "integers as handlers") nil)
+    1 2 3 (error t)))
+(error-test-case-8)
+)code", exceptions::Error);
+    
+    ASSERT_EXCEPTION(m, R"code(
+(defun error-test-case-9 ()
+  (condition-case 123
+      (progn (error "wrong type argument - symbol was expected") nil)
+    1 2 3 (error t)))
+(error-test-case-9)
+)code", exceptions::WrongTypeArgument);
 }
 
 void test()
