@@ -134,6 +134,11 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::int64_t i)
     return makeInt(i);
 }
 
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(std::uint32_t i)
+{
+    return makeInt(i);
+}
+
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(int i)
 {
     return makeInt(i);

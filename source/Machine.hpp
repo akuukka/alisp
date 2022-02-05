@@ -31,6 +31,7 @@ class Machine
     std::unique_ptr<Object> makeObject(std::shared_ptr<Symbol> sym);
     std::unique_ptr<Object> makeObject(std::unique_ptr<Object>);
     std::unique_ptr<Object> makeObject(std::int64_t i);
+    std::unique_ptr<Object> makeObject(std::uint32_t i);
     std::unique_ptr<Object> makeObject(int i);
     std::unique_ptr<Object> makeObject(size_t i);
     std::unique_ptr<Object> makeObject(bool);
