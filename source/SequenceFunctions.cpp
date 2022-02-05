@@ -15,7 +15,7 @@ void initSequenceFunctions(Machine& m)
             return ptr.elt(index);
         }
         catch (std::runtime_error& ex) {
-            throw exceptions::Error(m, "Index out of range.");
+            throw exceptions::Error("Index out of range.");
         }
     });
     m.defun("sequencep", [](ObjectPtr obj) {

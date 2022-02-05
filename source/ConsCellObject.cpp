@@ -39,7 +39,7 @@ ALISP_INLINE ObjectPtr ConsCellObject::eval()
     depth++;
     const AtScopeExit onExit([]{ depth--; });
     if (depth >= 500) {
-        throw exceptions::Error(*parent, "Max recursion depth limit exceeded.");
+        throw exceptions::Error("Max recursion depth limit exceeded.");
     }
     
     auto &c = *cc;
@@ -60,7 +60,7 @@ ALISP_INLINE ObjectPtr ConsCellObject::eval()
         throw exceptions::VoidFunction(c.car->toString());
     }
     else {
-        throw exceptions::Error(*parent, "Invalid function " + c.car->toString());
+        throw exceptions::Error("Invalid function " + c.car->toString());
     }
 }
 
@@ -171,7 +171,7 @@ ALISP_INLINE size_t ConsCellObject::length() const
     visited.insert(p);
     while ((p = p->next())) {
         if (visited.count(p)) {
-            throw exceptions::Error(*parent, "Cyclical list length");
+            throw exceptions::Error("Cyclical list length");
         }
         visited.insert(p);
         l++;

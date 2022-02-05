@@ -1,3 +1,4 @@
+#include "AtScopeExit.hpp"
 #include "alisp.hpp"
 #include "Error.hpp"
 #include "ConsCell.hpp"
@@ -6,6 +7,7 @@
 #include "ConsCellObject.hpp"
 #include "StringObject.hpp"
 #include "Machine.hpp"
+#include <limits>
 
 namespace alisp {
 namespace exceptions {
@@ -18,16 +20,10 @@ ALISP_STATIC std::string getErrorMessageFrom(const std::unique_ptr<Object>& data
     return "";
 }
 
-Error::Error(Machine& machine, std::string msg) :
-    Exception(msg)
+Error::Error(std::string msg, std::string symbolName) :
+    Exception(msg), symbolName(symbolName), message(msg)
 {
-    ListBuilder builder(machine);
-    builder.append(std::make_unique<StringObject>(msg));
-
-    data = builder.get();
-    sym = std::make_unique<SymbolObject>(&machine,
-                                         machine.getSymbol(machine.parsedSymbolName("error")),
-                                         "");
+    
 }
 
 Error::Error(std::unique_ptr<SymbolObject> sym,
@@ -38,8 +34,17 @@ Error::Error(std::unique_ptr<SymbolObject> sym,
     
 }
 
-
 Error::~Error() {}
+
+
+void Error::createObjects(Machine& machine)
+{
+    ListBuilder builder(machine);
+    builder.append(std::make_unique<StringObject>(message));
+
+    data = builder.get();
+    sym = std::make_unique<SymbolObject>(&machine, machine.getSymbol(symbolName), "");
+}
 
 }
 
@@ -50,6 +55,49 @@ void Machine::initErrorFunctions()
                                                                sym,
                                                                ""),
                                 data->clone());
+    });
+    defun("error-message-string", [](const ConsCell& err) {
+        return err.car->toString() + ":" + err.cdr->toString();
+    });
+    makeFunc("condition-case", 3, std::numeric_limits<int>::max(), [&](FArgs& args) {
+        auto arg = args.cc->car.get();
+        args.skip();
+        if (!arg->isSymbol() && !arg->isNil()) {
+            throw exceptions::WrongTypeArgument(arg->toString());
+        }
+        const std::string symName = arg->isNil() ? NilName : arg->asSymbol()->getSymbolName();
+        ObjectPtr ret = makeNil();
+        auto protectedForm = args.pop(false);
+        try {
+            ret = protectedForm->eval();
+        }
+        catch (exceptions::Error& error) {
+            error.createObjects(args.m);
+            while (args.hasNext()) {
+                auto next = args.pop(false);
+                assert(next->isList());
+                auto nextCar = next->asList()->car();
+                assert(nextCar);
+                assert(nextCar->isSymbol()); // Could also be a list!!!! Do this later
+                auto errSym = nextCar->asSymbol();
+                if (errSym->equals(*error.sym)) {
+                    pushLocalVariable(symName,
+                                      args.m.makeConsCell(error.sym->clone(), error.data->clone()));
+                    auto& m = args.m;
+                    AtScopeExit onExit([&m, symName](){
+                        m.popLocalVariable(symName);
+                    });
+                    auto cc = next->asList()->cc.get();
+                    cc = cc->next();
+                    while (cc) {
+                        ret = cc->car->eval();
+                        cc = cc->next();
+                    }
+                    break;
+                }
+            }
+        }
+        return ret;
     });
 }
 

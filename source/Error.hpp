@@ -1,4 +1,5 @@
 #pragma once
+#include "alisp.hpp"
 #include <stdexcept>
 #include <string>
 
@@ -23,7 +24,6 @@ struct Exception : std::runtime_error
 
 DEFINE_EXCEPTION(UnableToEvaluate)
 DEFINE_EXCEPTION(SyntaxError)
-DEFINE_EXCEPTION(ArithError)
 
 struct VoidFunction : Exception
 {
@@ -58,10 +58,20 @@ struct Error : Exception
     std::unique_ptr<SymbolObject> sym;
     std::unique_ptr<Object> data;
     
-    Error(Machine& machine, std::string msg);
     Error(std::unique_ptr<SymbolObject> sym,
           std::unique_ptr<Object> data);
     ~Error();
+    
+    Error(std::string msg,
+          std::string symbolName = ConvertParsedNamesToUpperCase ? "ERROR" : "error");
+    std::string symbolName, message;
+    void createObjects(Machine& m);
+};
+
+struct ArithError : Error
+{
+    ArithError(std::string msg) :
+        Error(msg, ConvertParsedNamesToUpperCase ? "ARITH-ERROR" : "arith-error") {}
 };
 
 } // namespace exceptions

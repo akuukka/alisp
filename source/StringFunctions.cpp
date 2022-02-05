@@ -60,7 +60,7 @@ ALISP_STATIC String format(const String str, FArgs& args)
                     val = std::to_string(static_cast<std::int64_t>(nextSym->value<double>()));
                 }
                 else {
-                    throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
+                    throw exceptions::Error("Format specifier doesn’t match argument type");
                 }
                 if (intWidth && val.size() < intWidth) {
                     const char filler = (leadingZeros ? '0' : ' ');
@@ -76,7 +76,7 @@ ALISP_STATIC String format(const String str, FArgs& args)
             else if (n == 'S') { ret += args.pop()->toString(false); }
             else if (n == 's') { ret += args.pop()->toString(true); }
             else {
-                throw exceptions::Error(args.m, "Invalid format operation");
+                throw exceptions::Error("Invalid format operation");
             }
         }
         else {
@@ -176,7 +176,7 @@ void Machine::initStringFunctions()
             s = std::get<std::string>(obj);
         }
         if (idx < 0 || idx + s.size() > str.size()) {
-            throw exceptions::Error(*this, "Index out bounds. Can't grow string");
+            throw exceptions::Error("Index out bounds. Can't grow string");
         }
         for (size_t i = 0; i < s.length(); i++) {
             str[idx+i] = s[i];

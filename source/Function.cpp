@@ -22,13 +22,11 @@ ALISP_INLINE FuncParams getFuncParams(const ConsCellObject& closure)
     for (auto& arg : *closure.cc->car->asList()) {
         const auto sym = dynamic_cast<const SymbolObject*>(&arg);
         if (!sym) {
-            throw exceptions::Error(*closure.parent,
-                                    "Malformed arglist: " + closure.cc->car->toString());
+            throw exceptions::Error("Malformed arglist: " + closure.cc->car->toString());
         }
         if (sym->name == OptionalName) {
             if (opt) {
-                throw exceptions::Error(*closure.parent,
-                                        "Malformed arglist: " + closure.cc->car->toString());
+                throw exceptions::Error("Malformed arglist: " + closure.cc->car->toString());
             }
             opt = true;
             continue;
@@ -89,11 +87,11 @@ void Machine::initFunctionFunctions()
     defun("apply", [](const Object& obj, FArgs& args) {
         auto func = obj.resolveFunction();
         if (!func) {
-            throw exceptions::Error(args.m, "Invalid function " + obj.toString());
+            throw exceptions::Error("Invalid function " + obj.toString());
         }
         auto arg = args.pop();
         if (!arg || (!args.hasNext() && !arg->isList())) {
-            throw exceptions::Error(args.m, "wrong type argument");
+            throw exceptions::Error("wrong type argument");
         }
         if (!args.hasNext() && arg->isList()) {
             if (arg->isNil()) {
@@ -108,7 +106,7 @@ void Machine::initFunctionFunctions()
             arg = args.pop();
             if (!args.hasNext()) {
                 if (!arg->isList()) {
-                    throw exceptions::Error(args.m, "wrong type argument");
+                    throw exceptions::Error("wrong type argument");
                 }
                 for (auto& obj : *arg->asList()) {
                     builder.append(obj.clone());
@@ -125,7 +123,7 @@ void Machine::initFunctionFunctions()
     defun("funcall", [](const Object& obj, FArgs& args) {
         auto func = obj.resolveFunction();
         if (!func) {
-            throw exceptions::Error(args.m, "Invalid function " + obj.toString());
+            throw exceptions::Error("Invalid function " + obj.toString());
         }
         return func->func(args);
     });
@@ -152,9 +150,9 @@ void Machine::initFunctionFunctions()
         auto func = obj.resolveFunction();
         if (!func) {
             if (!obj.isSymbol()) {
-                throw exceptions::Error(*this, "invalid function " + obj.toString());
+                throw exceptions::Error("invalid function " + obj.toString());
             }
-            throw exceptions::Error(*this, "void-function " + obj.toString());
+            throw exceptions::Error("void-function " + obj.toString());
             
         }
         return makeConsCell(makeInt(func->minArgs), makeInt(func->maxArgs));

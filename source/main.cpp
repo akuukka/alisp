@@ -992,7 +992,22 @@ void testConverter()
 void testErrors()
 {
     Machine m;
+    std::stringstream ss;
+    m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
     ASSERT_EXCEPTION(m, "(error \"test: %d\" 1500)", exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun safe-divide (dividend divisor)
+  (condition-case err
+      ;; Protected form.
+      (/ dividend divisor)
+    ;; The handler.
+    (arith-error                        ; Condition.
+     ;; Display the usual message for this error.
+     (princ (error-message-string err) debugstream)
+     1000000)))
+)code", "safe-divide");
+    ASSERT_OUTPUT_EQ(m, "(safe-divide 5 0)", "1000000");
+    ASSERT_EQ(ss.str(), "arith-error:(\"Division by zero\")");
 }
 
 void test()

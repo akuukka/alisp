@@ -6,6 +6,7 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <stdexcept>
 
 namespace alisp
 {
@@ -60,15 +61,14 @@ ALISP_INLINE double toDouble(std::variant<double, std::int64_t> var)
     }
 }
 
-ALISP_INLINE
-std::int64_t truncate(std::variant<double, std::int64_t> obj,
-                      std::optional<std::variant<double, std::int64_t>> divisor)
+ALISP_INLINE std::int64_t truncate(std::variant<double, std::int64_t> obj,
+                                   std::optional<std::variant<double, std::int64_t>> divisor)
 {
     std::optional<double> div;
     if (divisor) {
         div = toDouble(*divisor);
         if (*div == 0) {
-            throw alisp::exceptions::ArithError("Division by zero");
+            throw exceptions::ArithError("Division by zero");
         }
     }
     try {
