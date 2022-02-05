@@ -301,17 +301,10 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, "(stringp \"abc\")", "t");
     ASSERT_OUTPUT_EQ(m, "(stringp 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(stringp ())", "nil");
-    std::set<std::string> expectedMsgs = {
-        "test", "a%b", "num: 50.%", "15"
-    };
-    m.setMessageHandler([&](std::string msg) {
-        expectedMsgs.erase(msg);
-    });
-    m.evaluate("(message \"test\")");
-    m.evaluate("(message \"a%%b\")");
-    m.evaluate("(message \"%d\" 15)");
-    m.evaluate("(message \"num: %d.%%\" 50)");
-    assert(expectedMsgs.empty());
+    ASSERT_OUTPUT_EQ(m, R"code((format "test"))code", R"code("test")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format "a%%b"))code", R"code("a%b")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format "%d" 15))code", R"code("15")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format "num: %d.%%" 50))code", R"code("num: 50.%")code");
     ASSERT_OUTPUT_EQ(m,
                      R"code(
 (progn
@@ -387,21 +380,6 @@ void testCdrFunction()
     ASSERT_OUTPUT_EQ(m, "(nthcdr 0 (cons 1 2))", "(1 . 2)");
     ASSERT_OUTPUT_EQ(m, "(nthcdr 1 (cons 1 2))", "2");
     ASSERT_EXCEPTION(m, "(nthcdr 2 (cons 1 2))", exceptions::WrongTypeArgument);
-}
-
-void testPrognFunction()
-{
-    alisp::Machine m;
-    std::set<std::string> expectedMsgs = {
-        "A", "B", "C", "D"
-    };
-    m.setMessageHandler([&](std::string msg) {
-        expectedMsgs.erase(msg);
-    });
-    ASSERT_OUTPUT_EQ(m, "(progn (message \"A\") (message \"B\") 2)", "2");
-    ASSERT_OUTPUT_EQ(m, "(progn)", "nil");
-    ASSERT_OUTPUT_EQ(m, "(prog1 5 (message \"C\") (message \"D\") 2)", "5");
-    assert(expectedMsgs.empty());
 }
 
 void testVariables()
@@ -526,7 +504,6 @@ void testEqFunction()
 void testInternFunction()
 {
     alisp::Machine m;
-    m.setMessageHandler([](std::string msg){});
     ASSERT_OUTPUT_EQ(m, "(intern \"\")", "##");
     ASSERT_OUTPUT_EQ(m, "(eq (intern \"TT\") 'TT)", "t");
     ASSERT_OUTPUT_EQ(m, "(setq sym (intern \"FOO\"))", "FOO");
@@ -547,7 +524,7 @@ void testInternFunction()
     ASSERT_OUTPUT_EQ(m, "(setq ABRA 500)", "500");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'ABRA)", "ABRA's value is 500");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "ABRA's value is 500");
-    ASSERT_OUTPUT_EQ(m, "(message \"%d\" ABRA)", "\"500\"");
+    ASSERT_OUTPUT_EQ(m, "(format \"%d\" ABRA)", "\"500\"");
     ASSERT_EXCEPTION(m, "(message \"%d\" sym)", alisp::exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(unintern sym)", "t"); // this removes abra from objarray
     ASSERT_EXCEPTION(m, "(message \"%d\" ABRA)", alisp::exceptions::VoidVariable);
@@ -715,10 +692,8 @@ void testDeepCopy()
 void testFunctions()
 {
     Machine m;
-    std::set<std::string> expectedMsgs = {
-        "foo", "abc"
-    };
-    m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    std::stringstream ss;
+    m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
     ASSERT_OUTPUT_EQ(m, "(apply '+ '(3 4))", "7");
     ASSERT_EXCEPTION(m, "(apply '+)", exceptions::Error);
     ASSERT_EXCEPTION(m, "(apply '+ 7)", exceptions::Error);
@@ -751,11 +726,11 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(car (car nil))", "nil");
     ASSERT_OUTPUT_EQ(m, "(car (car 'nil))", "nil");
     ASSERT_OUTPUT_EQ(m, "(caar 'nil)", "nil");
-    ASSERT_OUTPUT_EQ(m, "(defun foo () (message \"foo\") 5)", "foo");
-    ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (message msg) msg)", "foo2");
+    ASSERT_OUTPUT_EQ(m, "(defun foo () (princ \"foo\" debugstream) 5)", "foo");
+    ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (princ msg debugstream) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(symbol-function nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-function 'foo2))", "t");
-    ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(lambda (msg) (message msg) msg)");
+    ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(lambda (msg) (princ msg debugstream) msg)");
     ASSERT_EXCEPTION(m, "((symbol-function 'foo2) \"fsda\")", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(foo)", "5");
     ASSERT_EXCEPTION(m, "(foo2)", exceptions::WrongNumberOfArguments);
@@ -771,7 +746,7 @@ void testFunctions()
     ASSERT_EXCEPTION(m, "(cdar '(1 2 3))", exceptions::WrongTypeArgument);    
     ASSERT_OUTPUT_EQ(m, "(caar '((8) 2 3))", "8");
     ASSERT_OUTPUT_EQ(m, "(progn (defun xx () t) (functionp 'xx))", "t");
-    assert(expectedMsgs.empty());
+    ASSERT_EQ(ss.str(), "fooabc");
     ASSERT_OUTPUT_CONTAINS(m, R"code(
 (lambda (x)
   "Return the hyperbolic cosine of X."
@@ -789,9 +764,8 @@ void testFunctions()
 void testLet()
 {
     alisp::Machine m;
-    m.setMessageHandler([&](std::string msg) {});
     ASSERT_EXCEPTION(m, "(let (1) nil)", alisp::exceptions::WrongTypeArgument);
-    ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (message \"%d\" x) (+ x y))", "4");
+    ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (format \"%d\" x) (+ x y))", "4");
     ASSERT_OUTPUT_EQ(m, "(let* ((x 1) (y x)) y)", "1");
     ASSERT_EXCEPTION(m, "(let ((x 1) (y x)) y)", alisp::exceptions::VoidVariable);
     ASSERT_OUTPUT_EQ(m, R"code(
@@ -827,8 +801,7 @@ void testLet()
 
 void testIf()
 {
-    alisp::Machine m;
-    m.setMessageHandler([&](std::string msg) { assert(msg != "problem"); });
+    Machine m;
     ASSERT_OUTPUT_EQ(m, "(if t 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(if (eq 1 1) 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(if nil 1)", "nil");
@@ -838,7 +811,7 @@ void testIf()
 
 void testCyclicals()
 {
-    alisp::Machine m;
+    Machine m;
     assert(!alisp::makeList(&m)->cc->isCyclical());
     ASSERT_OUTPUT_EQ(m,
                      "(progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z)",
@@ -1039,7 +1012,6 @@ void test()
     testEqFunction();
     testDivision();
     testSyntaxErrorDetection();
-    testPrognFunction();
     //std::cout << "Remaining objects:\n";
     //Object::printAllObjects();
     assert(alisp::Object::getDebugRefCount() == 0);

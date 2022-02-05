@@ -234,13 +234,11 @@ void Machine::initStringFunctions()
     });
     defun("message", [this](std::string str, Rest& args) {
         str = format(str, args);
-        if (m_msgHandler) {
-            m_msgHandler(str);
-        }
-        else {
-            std::cout << str << std::endl;
-        }
+        std::cout << str << std::endl;
         return str;
+    });
+    defun("format", [](std::string formatString, Rest& args) {
+        return format(formatString, args);
     });
 
     // Common lisp format prototype...
