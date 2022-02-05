@@ -55,11 +55,24 @@ ALISP_STATIC std::string format(std::string str, FArgs& args)
 void Machine::initStringFunctions()
 {
     defun("print", [](const Object& obj, std::optional<std::ostream*> stream){
-        if (!stream) {
-            *stream = &std::cout;
-        }
+        if (!stream) { *stream = &std::cout; }
         (**stream) << "\n" << obj.toString() << "\n";
         return obj.clone();
+    });
+    defun("prin1", [](const Object& obj, std::optional<std::ostream*> stream){
+        if (!stream) { *stream = &std::cout; }
+        (**stream) << obj.toString();
+        return obj.clone();
+    });
+    defun("princ", [](const Object& obj, std::optional<std::ostream*> stream){
+        if (!stream) { *stream = &std::cout; }
+        (**stream) << obj.toString(true);
+        return obj.clone();
+    });
+    defun("write-char", [](std::uint32_t codepoint, std::optional<std::ostream*> stream) {
+        if (!stream) { *stream = &std::cout; }
+        (**stream) << utf8::encode(codepoint);
+        return codepoint;
     });
     defun("char-or-string-p", [](ObjectPtr obj) {
         return obj->isString() || obj->isCharacter();
