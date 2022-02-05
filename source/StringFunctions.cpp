@@ -20,12 +20,12 @@
 namespace alisp
 {
 
-void initStringFunctions(Machine& m)
+void Machine::initStringFunctions()
 {
-    m.defun("char-or-string-p", [](ObjectPtr obj) {
+    defun("char-or-string-p", [](ObjectPtr obj) {
         return obj->isString() || obj->isCharacter();
     });
-    m.defun("make-string", [](std::int64_t num, std::uint32_t c) {
+    defun("make-string", [](std::int64_t num, std::uint32_t c) {
         if (c < 128) {
             return std::string(num, c);
         }
@@ -48,15 +48,13 @@ void initStringFunctions(Machine& m)
         }
         return str;
     });
-    m.defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
-    m.defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
-    m.defun("string-bytes", [](const std::string& s) {
-        return static_cast<std::int64_t>(s.size());
-    });
-    m.defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });
-    m.defun("substring", [](String str,
-                            std::optional<std::int64_t> start,
-                            std::optional<std::int64_t> end) {
+    defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
+    defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
+    defun("string-bytes", [](const std::string& s) { return static_cast<std::int64_t>(s.size()); });
+    defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });
+    defun("substring", [](String str,
+                          std::optional<std::int64_t> start,
+                          std::optional<std::int64_t> end) {
         if (start && *start < 0) {
             *start = static_cast<std::int64_t>(str.size()) + *start;
         }
@@ -65,7 +63,7 @@ void initStringFunctions(Machine& m)
         }
         return !start ? str : (!end ? str.substr(*start) : str.substr(*start, *end - *start));
     });
-    m.defun("string", [](Rest& rest) {
+    defun("string", [](Rest& rest) {
         std::string ret;
         while (rest.hasNext()) {
             auto arg = rest.pop();
@@ -78,9 +76,9 @@ void initStringFunctions(Machine& m)
         }
         return ret;
     });
-    m.defun("store-substring", [&m](String sobj,
-                                  std::int64_t idx,
-                                  std::variant<std::string, std::uint32_t> obj)
+    defun("store-substring", [this](String sobj,
+                                    std::int64_t idx,
+                                    std::variant<std::string, std::uint32_t> obj)
     {
         auto& str = *sobj.sharedPointer();
         std::string s;
@@ -92,18 +90,18 @@ void initStringFunctions(Machine& m)
             s = std::get<std::string>(obj);
         }
         if (idx < 0 || idx + s.size() > str.size()) {
-            throw exceptions::Error(m, "Index out bounds. Can't grow string");
+            throw exceptions::Error(*this, "Index out bounds. Can't grow string");
         }
         for (size_t i = 0; i < s.length(); i++) {
             str[idx+i] = s[i];
         }
         return StringObject(sobj);
     });
-    m.defun("clear-string", [](std::string& str) { for (auto& c : str) { c = 0; } });
-    m.defun("split-string", [&m](std::string s,
-                               std::optional<std::string> sep,
-                               std::optional<bool> omitNulls) -> ObjectPtr {
-        ListBuilder builder(m);
+    defun("clear-string", [](std::string& str) { for (auto& c : str) { c = 0; } });
+    defun("split-string", [this](std::string s,
+                                 std::optional<std::string> sep,
+                                 std::optional<bool> omitNulls) -> ObjectPtr {
+        ListBuilder builder(*this);
         std::smatch m;
         std::regex e(sep ? *sep : "[ \\n\\t\\r\\v]+");
 
@@ -135,14 +133,13 @@ void initStringFunctions(Machine& m)
         }
         return builder.get();
     });
-    m.defun("char-equal", [](std::uint32_t c1, std::uint32_t c2) { return c1 == c2; });
-    m.defun("string=", [](const std::string& a, const std::string& b) { return a == b; });
-    m.defun("string-equal", [](const std::string& a, const std::string& b) { return a == b; });
-    m.defun("string<", [](const std::string& a, const std::string& b) { return a < b; });
-    m.defun("string-lessp", [](const std::string& a, const std::string& b) { return a < b; });
-    m.defun("string-greaterp", [](const std::string& a, const std::string& b) { return a > b; });
-    m.defun("number-to-string", [](std::variant<std::int64_t, std::uint32_t, double> num)
-    {
+    defun("char-equal", [](std::uint32_t c1, std::uint32_t c2) { return c1 == c2; });
+    defun("string=", [](const std::string& a, const std::string& b) { return a == b; });
+    defun("string-equal", [](const std::string& a, const std::string& b) { return a == b; });
+    defun("string<", [](const std::string& a, const std::string& b) { return a < b; });
+    defun("string-lessp", [](const std::string& a, const std::string& b) { return a < b; });
+    defun("string-greaterp", [](const std::string& a, const std::string& b) { return a > b; });
+    defun("number-to-string", [](std::variant<std::int64_t, std::uint32_t, double> num) {
         try {
             const std::uint32_t val = std::get<std::uint32_t>(num);
             return std::to_string(val);
@@ -156,8 +153,8 @@ void initStringFunctions(Machine& m)
         const double val = std::get<double>(num);
         return std::to_string(val);
     });
-    m.defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
-    m.defun("string-to-number", [](std::string str) -> ObjectPtr {
+    defun("char-to-string", [](std::uint32_t c1) { return utf8::encode(c1); });
+    defun("string-to-number", [](std::string str) -> ObjectPtr {
         std::stringstream ss(str);
         if (str.find("e") == std::string::npos && str.find(".") == std::string::npos) {
             std::int64_t i;
@@ -168,21 +165,73 @@ void initStringFunctions(Machine& m)
         ss >> f;
         return makeFloat(f);
     });
-    m.defun("parse-integer", [](std::string str) -> ObjectPtr {
+    defun("parse-integer", [](std::string str) -> ObjectPtr {
         std::int64_t i = std::atoi(str.c_str());
         auto vals = std::make_unique<MultiValueObject<IntObject>>(i);
         vals->additionalValues.push_back(makeInt(str.size()));
         return vals;
     });
-    m.defun("force-output", [](std::ostream* stream) {
+    defun("force-output", [](std::ostream* stream) {
         assert(stream);
         return (*stream) << std::flush, false;
     });
-    m.defun("read-line", [](std::istream* stream) {
+    defun("read-line", [](std::istream* stream) {
         std::string str;
         std::getline(*stream, str);
         return str;
     });
+    makeFunc("message", 1, std::numeric_limits<int>::max(), [this](FArgs& args) {
+        auto arg = args.pop();
+        if (!arg->isString()) {
+            throw exceptions::WrongTypeArgument(arg->toString());
+        }
+        auto strSym = dynamic_cast<StringObject*>(arg);
+        std::string str = *strSym->value;
+        for (size_t i = 0; i < str.size(); i++) {
+            if (str[i] == '%') {
+                if (str[i+1] == '%') {
+                    str.erase(i, 1);
+                }
+                else if (str[i+1] == 's') {
+                    const auto nextSym = args.pop();
+                    std::string stringVal;
+                    if (nextSym->isString()) {
+                        stringVal = nextSym->value<std::string>();
+                    }
+                    else {
+                        throw exceptions::Error(args.m,
+                                                "Format specifier doesn’t match argument type");
+                    }
+                    str = str.substr(0, i) + stringVal + str.substr(i+2);
+                }
+                else if (str[i+1] == 'd') {
+                    const auto nextSym = args.pop();
+                    std::int64_t intVal;
+                    if (nextSym->isInt()) {
+                        intVal = nextSym->value<std::int64_t>();
+                    }
+                    else if (nextSym->isFloat()) {
+                        intVal = static_cast<std::int64_t>(nextSym->value<double>());
+                    }
+                    else {
+                        throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
+                    }
+                    str = str.substr(0, i) + std::to_string(intVal) + str.substr(i+2);
+                }
+                else {
+                    throw exceptions::Error(args.m, "Invalid format string");
+                }
+            }
+        }
+        if (m_msgHandler) {
+            m_msgHandler(str);
+        }
+        else {
+            std::cout << str << std::endl;
+        }
+        return std::make_unique<StringObject>(str);
+    });
+
     // Common lisp format prototype...
     /*
     m.defun("format", [](Stream stream, String formatString, Rest& args) -> ObjectPtr {

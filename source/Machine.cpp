@@ -23,7 +23,6 @@ namespace alisp {
 void initMacroFunctions(Machine& m);
 void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
-void initStringFunctions(Machine& m);
 void initSymbolFunctions(Machine& m);
 
 ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxArgs,
@@ -266,7 +265,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     initMathFunctions(*this);
     initMacroFunctions(*this);
     initSequenceFunctions(*this);
-    initStringFunctions(*this);
+    initStringFunctions();
     initSymbolFunctions(*this);
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
     defun("null", [](bool isNil) { return !isNil; });
@@ -388,57 +387,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return std::make_unique<StringObject>(sym->getSymbolName());
     });
     makeFunc("eval", 1, 1, [](FArgs& args) { return args.pop()->eval(); });
-    makeFunc("message", 1, 0xffff, [this](FArgs& args) {
-        auto arg = args.pop();
-        if (!arg->isString()) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
-        auto strSym = dynamic_cast<StringObject*>(arg);
-        std::string str = *strSym->value;
-        for (size_t i = 0; i < str.size(); i++) {
-            if (str[i] == '%') {
-                if (str[i+1] == '%') {
-                    str.erase(i, 1);
-                }
-                else if (str[i+1] == 's') {
-                    const auto nextSym = args.pop();
-                    std::string stringVal;
-                    if (nextSym->isString()) {
-                        stringVal = nextSym->value<std::string>();
-                    }
-                    else {
-                        throw exceptions::Error(args.m,
-                                                "Format specifier doesn’t match argument type");
-                    }
-                    str = str.substr(0, i) + stringVal + str.substr(i+2);
-                }
-                else if (str[i+1] == 'd') {
-                    const auto nextSym = args.pop();
-                    std::int64_t intVal;
-                    if (nextSym->isInt()) {
-                        intVal = nextSym->value<std::int64_t>();
-                    }
-                    else if (nextSym->isFloat()) {
-                        intVal = static_cast<std::int64_t>(nextSym->value<double>());
-                    }
-                    else {
-                        throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
-                    }
-                    str = str.substr(0, i) + std::to_string(intVal) + str.substr(i+2);
-                }
-                else {
-                    throw exceptions::Error(args.m, "Invalid format string");
-                }
-            }
-        }
-        if (m_msgHandler) {
-            m_msgHandler(str);
-        }
-        else {
-            std::cout << str << std::endl;
-        }
-        return std::make_unique<StringObject>(str);
-    });
     makeFunc("progn", 0, 0xfffff, [&](FArgs& args) {
         std::unique_ptr<Object> ret = makeNil();
         for (auto obj : args) {
