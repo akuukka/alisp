@@ -37,8 +37,15 @@ Error::Error(std::unique_ptr<SymbolObject> sym,
 Error::~Error() {}
 
 
-void Error::createObjects(Machine& machine)
+void Error::onHandle(Machine& machine)
 {
+    if (sym && data) {
+        symbolName = sym->getSymbolName();
+        if (data->isList() && data->asList()->car()) {
+            message = data->asList()->car()->toString(true);
+        }
+        return;
+    }
     ListBuilder builder(machine);
     builder.append(std::make_unique<StringObject>(message));
 
@@ -66,13 +73,12 @@ void Machine::initErrorFunctions()
             throw exceptions::WrongTypeArgument(arg->toString());
         }
         const std::string symName = arg->isNil() ? NilName : arg->asSymbol()->getSymbolName();
-        ObjectPtr ret = makeNil();
         auto protectedForm = args.pop(false);
         try {
-            ret = protectedForm->eval();
+            return protectedForm->eval();
         }
         catch (exceptions::Error& error) {
-            error.createObjects(args.m);
+            error.onHandle(args.m);
             while (args.hasNext()) {
                 auto next = args.pop(false);
                 assert(next->isList());
@@ -89,15 +95,16 @@ void Machine::initErrorFunctions()
                     });
                     auto cc = next->asList()->cc.get();
                     cc = cc->next();
+                    ObjectPtr ret = makeNil();
                     while (cc) {
                         ret = cc->car->eval();
                         cc = cc->next();
                     }
-                    break;
+                    return ret;
                 }
             }
+            throw;
         }
-        return ret;
     });
 }
 

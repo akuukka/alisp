@@ -995,6 +995,7 @@ void testErrors()
     std::stringstream ss;
     m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
     ASSERT_EXCEPTION(m, "(error \"test: %d\" 1500)", exceptions::Error);
+    
     ASSERT_OUTPUT_EQ(m, R"code(
 (defun safe-divide (dividend divisor)
   (condition-case err
@@ -1009,6 +1010,15 @@ void testErrors()
 )code", "safe-divide");
     ASSERT_OUTPUT_EQ(m, "(safe-divide 5 0)", "1000000");
     ASSERT_EQ(ss.str(), "arith-error:(\"Division by zero\")");
+
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun error-test-case-1 ()
+  (condition-case nil
+      (progn (error "test") nil)
+    (error 1 2 3
+     4)))
+)code", "error-test-case-1");
+    ASSERT_OUTPUT_EQ(m, "(error-test-case-1)", "4");
 }
 
 void test()
