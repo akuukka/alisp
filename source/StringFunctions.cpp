@@ -180,13 +180,7 @@ void Machine::initStringFunctions()
         std::getline(*stream, str);
         return str;
     });
-    makeFunc("message", 1, std::numeric_limits<int>::max(), [this](FArgs& args) {
-        auto arg = args.pop();
-        if (!arg->isString()) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
-        auto strSym = dynamic_cast<StringObject*>(arg);
-        std::string str = *strSym->value;
+    defun("message", [this](std::string str, Rest& args) {
         for (size_t i = 0; i < str.size(); i++) {
             if (str[i] == '%') {
                 if (str[i+1] == '%') {
@@ -229,7 +223,7 @@ void Machine::initStringFunctions()
         else {
             std::cout << str << std::endl;
         }
-        return std::make_unique<StringObject>(str);
+        return str;
     });
 
     // Common lisp format prototype...
