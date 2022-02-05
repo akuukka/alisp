@@ -96,6 +96,7 @@ void initMathFunctions(Machine& m)
     m.defun("truncate", truncate);
     m.defun("floor", floor);
     m.defun("ceiling", ceiling);
+    m.defun("evenp", [](std::int64_t i) { return i % 2 == 0; });
     m.defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
     m.makeFunc("=", 1, 0xffff, [&m](FArgs& args) {
         std::int64_t i = 0;
