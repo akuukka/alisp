@@ -20,6 +20,47 @@
 namespace alisp
 {
 
+ALISP_STATIC std::string format(std::string str, FArgs& args)
+{
+    for (size_t i = 0; i < str.size(); i++) {
+        if (str[i] == '%') {
+            if (str[i+1] == '%') {
+                str.erase(i, 1);
+            }
+            else if (str[i+1] == 's') {
+                const auto nextSym = args.pop();
+                std::string stringVal;
+                if (nextSym->isString()) {
+                    stringVal = nextSym->value<std::string>();
+                }
+                else {
+                    throw exceptions::Error(args.m,
+                                            "Format specifier doesn’t match argument type");
+                }
+                str = str.substr(0, i) + stringVal + str.substr(i+2);
+            }
+            else if (str[i+1] == 'd') {
+                const auto nextSym = args.pop();
+                std::int64_t intVal;
+                if (nextSym->isInt()) {
+                    intVal = nextSym->value<std::int64_t>();
+                }
+                else if (nextSym->isFloat()) {
+                    intVal = static_cast<std::int64_t>(nextSym->value<double>());
+                }
+                else {
+                    throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
+                }
+                str = str.substr(0, i) + std::to_string(intVal) + str.substr(i+2);
+            }
+            else {
+                throw exceptions::Error(args.m, "Invalid format string");
+            }
+        }
+    }
+    return str;
+}
+
 void Machine::initStringFunctions()
 {
     defun("char-or-string-p", [](ObjectPtr obj) {
@@ -181,42 +222,7 @@ void Machine::initStringFunctions()
         return str;
     });
     defun("message", [this](std::string str, Rest& args) {
-        for (size_t i = 0; i < str.size(); i++) {
-            if (str[i] == '%') {
-                if (str[i+1] == '%') {
-                    str.erase(i, 1);
-                }
-                else if (str[i+1] == 's') {
-                    const auto nextSym = args.pop();
-                    std::string stringVal;
-                    if (nextSym->isString()) {
-                        stringVal = nextSym->value<std::string>();
-                    }
-                    else {
-                        throw exceptions::Error(args.m,
-                                                "Format specifier doesn’t match argument type");
-                    }
-                    str = str.substr(0, i) + stringVal + str.substr(i+2);
-                }
-                else if (str[i+1] == 'd') {
-                    const auto nextSym = args.pop();
-                    std::int64_t intVal;
-                    if (nextSym->isInt()) {
-                        intVal = nextSym->value<std::int64_t>();
-                    }
-                    else if (nextSym->isFloat()) {
-                        intVal = static_cast<std::int64_t>(nextSym->value<double>());
-                    }
-                    else {
-                        throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
-                    }
-                    str = str.substr(0, i) + std::to_string(intVal) + str.substr(i+2);
-                }
-                else {
-                    throw exceptions::Error(args.m, "Invalid format string");
-                }
-            }
-        }
+        str = format(str, args);
         if (m_msgHandler) {
             m_msgHandler(str);
         }

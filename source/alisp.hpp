@@ -1,6 +1,9 @@
 #pragma once
 #ifndef ALISP_SINGLE_HEADER
 #define ALISP_INLINE  
+#define ALISP_STATIC static
+#else
+#define ALISP_STATIC inline
 #endif
 
 constexpr bool ConvertParsedNamesToUpperCase = false;
