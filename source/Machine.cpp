@@ -581,15 +581,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return sym->variable->clone();
     });
-    defun("print", [this](ObjectPtr obj) {
-        if (m_msgHandler) {
-            m_msgHandler(obj->toString());
-        }
-        else {
-            std::cout << obj->toString() << std::endl;
-        }
-        return obj;
-    });
     makeFunc("while", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         while (!args.cc->car->eval()->isNil()) { 
             args.evalAll(args.cc->next());

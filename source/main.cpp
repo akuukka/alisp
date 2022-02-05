@@ -1,11 +1,12 @@
+#define ENABLE_DEBUG_REFCOUNTING
 #include "Error.hpp"
+#include "StreamObject.hpp"
 #include <variant>
 #include "UTF8.hpp"
 #include "alisp.hpp"
 #include <sstream>
 #include <fstream>
 #include <ios>
-#define ENABLE_DEBUG_REFCOUNTING
 #ifdef ALISP_SINGLE_HEADER
 #include "ALisp_SingleHeader.hpp"
 #else
@@ -959,22 +960,18 @@ void testControlStructures()
     (setq str (concat str elem)))
   str)
 )code", "\"ABC\"");
-    std::set<std::string> expectedMsgs = {
-        m.parsedSymbolName("gazelle"), m.parsedSymbolName("giraffe"),
-        m.parsedSymbolName("lion"), m.parsedSymbolName("tiger")
-    };
-    m.setMessageHandler([&](std::string msg) {
-        expectedMsgs.erase(msg);
-    });
+    std::stringstream ss;
+    m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
     ASSERT_OUTPUT_EQ(m, R"code(
 (setq animals '(gazelle giraffe lion tiger))
 (defun print-elements-of-list (list)
   "Print each element of LIST on a line of its own."
   (while list
-    (print (car list))
+    (print (car list) debugstream)
     (setq list (cdr list))))
 (print-elements-of-list animals)
 )code", "nil");
+    ASSERT_EQ(ss.str(), "\ngazelle\n\ngiraffe\n\nlion\n\ntiger\n");
     ASSERT_OUTPUT_EQ(m, R"code(
 
 (defun triangle (number-of-rows)  ; Version with incrementing counter.
@@ -990,7 +987,6 @@ void testControlStructures()
     total))
 (triangle 7)
 )code", "28");
-    assert(expectedMsgs.empty());
 }
 
 void testConverter()

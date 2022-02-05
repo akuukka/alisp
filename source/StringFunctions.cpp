@@ -54,6 +54,13 @@ ALISP_STATIC std::string format(std::string str, FArgs& args)
 
 void Machine::initStringFunctions()
 {
+    defun("print", [](const Object& obj, std::optional<std::ostream*> stream){
+        if (!stream) {
+            *stream = &std::cout;
+        }
+        (**stream) << "\n" << obj.toString() << "\n";
+        return obj.clone();
+    });
     defun("char-or-string-p", [](ObjectPtr obj) {
         return obj->isString() || obj->isCharacter();
     });
