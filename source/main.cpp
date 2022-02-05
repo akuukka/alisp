@@ -718,6 +718,11 @@ void testFunctions()
         "foo", "abc"
     };
     m.setMessageHandler([&](std::string msg) { expectedMsgs.erase(msg); });
+    ASSERT_OUTPUT_EQ(m, "(apply '+ '(3 4))", "7");
+    ASSERT_EXCEPTION(m, "(apply '+)", exceptions::Error);
+    ASSERT_EXCEPTION(m, "(apply '+ 7)", exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, "(apply '+ 1 2 '(3 4))", "10");
+    ASSERT_OUTPUT_EQ(m, "(apply '* ())", "1");
     ASSERT_EXCEPTION(m, "(func-arity +)", exceptions::VoidVariable);
     ASSERT_EXCEPTION(m, "(func-arity 1)", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(func-arity '%)", "(2 . 2)");

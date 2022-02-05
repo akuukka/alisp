@@ -77,6 +77,42 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
 
 void Machine::initFunctionFunctions()
 {
+    defun("apply", [](const Object& obj, FArgs& args) {
+        auto func = obj.resolveFunction();
+        if (!func) {
+            throw exceptions::Error(args.m, "Invalid function " + obj.toString());
+        }
+        auto arg = args.pop();
+        if (!arg || (!args.hasNext() && !arg->isList())) {
+            throw exceptions::Error(args.m, "wrong type argument");
+        }
+        if (!args.hasNext() && arg->isList()) {
+            if (arg->isNil()) {
+                return func->func(args);
+            }
+            args.cc = arg->asList()->cc.get();
+            return func->func(args);
+        }
+        ListBuilder builder(args.m);
+        builder.append(arg->clone());
+        while (args.hasNext()) {
+            arg = args.pop();
+            if (!args.hasNext()) {
+                if (!arg->isList()) {
+                    throw exceptions::Error(args.m, "wrong type argument");
+                }
+                for (auto& obj : *arg->asList()) {
+                    builder.append(obj.clone());
+                }
+            }
+            else {
+                builder.append(arg->clone());
+            }
+        }
+        auto li = builder.get();
+        args.cc = li->cc.get();
+        return func->func(args);
+    });
     defun("funcall", [](const Object& obj, FArgs& args) {
         auto func = obj.resolveFunction();
         if (!func) {
