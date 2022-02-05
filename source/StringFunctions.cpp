@@ -20,7 +20,7 @@
 namespace alisp
 {
 
-ALISP_STATIC String format(String str, FArgs& args)
+ALISP_STATIC String format(const String str, FArgs& args)
 {
     String ret("");
     for (auto it = str.begin(); it != str.end(); ++it) {
@@ -28,21 +28,39 @@ ALISP_STATIC String format(String str, FArgs& args)
         if (c == '%') {
             ++it;
             assert(it != str.end());
-            const std::uint32_t n = *it;
+            std::uint32_t n = *it;
+
+            int intWidth = 0;
+            if (n >= '1' && n <= '9') {
+                std::string s;
+                s += n;
+                n = *++it;
+                while (n >= '1' && n <= '9') {
+                    s += n;
+                    n = *++it;
+                }
+                intWidth = std::atoi(s.c_str());
+            }
+            
             if (n == '%') {
                 ret += c;
             }
             else if (n == 'd') {
                 const auto nextSym = args.pop();
+                std::string val;
                 if (nextSym->isInt()) {
-                    ret += std::to_string(nextSym->value<std::int64_t>());
+                    val = std::to_string(nextSym->value<std::int64_t>());
                 }
                 else if (nextSym->isFloat()) {
-                    ret += std::to_string(static_cast<std::int64_t>(nextSym->value<double>()));
+                    val = std::to_string(static_cast<std::int64_t>(nextSym->value<double>()));
                 }
                 else {
                     throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
                 }
+                while (intWidth && val.size() < intWidth) {
+                    val = " " + val;
+                }
+                ret += val;
             }
             else if (n == 'S') { ret += args.pop()->toString(false); }
             else if (n == 's') { ret += args.pop()->toString(true); }
