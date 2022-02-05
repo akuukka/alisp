@@ -62,8 +62,14 @@ ALISP_STATIC String format(const String str, FArgs& args)
                 else {
                     throw exceptions::Error(args.m, "Format specifier doesn’t match argument type");
                 }
-                while (intWidth && val.size() < intWidth) {
-                    val = (leadingZeros ? "0" : " ") + val;
+                if (intWidth && val.size() < intWidth) {
+                    const char filler = (leadingZeros ? '0' : ' ');
+                    if (val[0] == '-' && filler == '0') {
+                        val = "-" + std::string(intWidth - val.size(), filler) + val.substr(1);
+                    }
+                    else {
+                        val = std::string(intWidth - val.size(), filler) + val;
+                    }
                 }
                 ret += val;
             }
