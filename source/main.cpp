@@ -1112,6 +1112,16 @@ void testErrors()
     ((some-other-error error) 123)))
 (error-test-case-10)
 )code", "123");
+
+    ASSERT_OUTPUT_EQ(m, R"code(
+; Although here an arith-error is signaled, we only have a generic error handler.
+(defun safe-divide2 (dividend divisor)
+  (condition-case err
+      (/ dividend divisor)
+    (error 1000000)))
+(safe-divide2 5000 0)
+)code", "1000000");
+    
 }
 
 void test()
