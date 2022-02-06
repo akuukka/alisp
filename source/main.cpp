@@ -465,6 +465,10 @@ void testSymbols()
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-plist nil))", "t");
     ASSERT_OUTPUT_EQ(m, "(symbol-plist :akeyword)", "nil");
     ASSERT_OUTPUT_EQ(m, "(get 'some-symbol 'some-nonexisting-property)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(put 'object :id 345)", "345");
+    ASSERT_OUTPUT_EQ(m, "(symbol-plist 'object)", "(:id 345)");
+    
+
     ASSERT_OUTPUT_EQ(m, "'('a 'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "'('a'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "(symbolp 'abc)", "t");

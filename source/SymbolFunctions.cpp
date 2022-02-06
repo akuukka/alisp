@@ -1,3 +1,4 @@
+#include "ConsCellObject.hpp"
 #include "Object.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
@@ -23,6 +24,33 @@ void Machine::initSymbolFunctions()
     });
     defun("symbol-plist", [&](Symbol& symbol) {
         return getPlist(symbol)->clone();
+    });
+    defun("put", [&](Symbol& symbol, const Object& property, const Object& value) {
+        auto plist = getPlist(symbol);
+        if (plist->isNil()) {
+            plist->setCar(property.clone());
+            plist->setCdr(makeConsCell(value.clone(), nullptr));
+        }
+        else {
+            
+        }
+        /*
+        for (auto cc = plist->cc.get(); cc != nullptr; cc = cc->next()) {
+            const Object& keyword = ;
+            if (keyword.equals(property)) {
+                ++it;
+                if (it == plist->end()) {
+                    
+                }
+            }
+        */
+            /*
+            if (obj.equals(property)) {
+                found = true;
+            }
+            */
+        //}
+        return value.clone();
     });
 }
 
