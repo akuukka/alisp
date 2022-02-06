@@ -18,6 +18,9 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 (defun cddr (cons-cell)
   (cdr (cdr cons-cell)))
 
+(defun cdddr (cons-cell)
+  (cdr (cdr (cdr cons-cell))))
+
 (defun cdr-safe (object)
   (let ((x object))
     (if (consp x)
