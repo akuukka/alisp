@@ -279,6 +279,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     });
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
     defun("null", [](bool isNil) { return !isNil; });
+    defun("not", [](bool value) { return !value; });
     defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {
         return cc.car = newcar->clone(), std::move(newcar);
     });
