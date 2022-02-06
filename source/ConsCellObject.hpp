@@ -150,6 +150,7 @@ class ListBuilder
 public:
     ListBuilder(Machine& parent) : m_parent(parent) {}
     void append(std::unique_ptr<Object> obj);
+    void append(const Object& obj);
     std::unique_ptr<ConsCellObject> get();
 };
 
