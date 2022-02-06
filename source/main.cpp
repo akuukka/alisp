@@ -463,6 +463,7 @@ void testSymbols()
     Machine m;
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-plist 'cbdc))", "t");
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-plist nil))", "t");
+    ASSERT_OUTPUT_EQ(m, "(get 'some-symbol 'some-nonexisting-property)", "nil");
     ASSERT_OUTPUT_EQ(m, "'('a 'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "'('a'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "(symbolp 'abc)", "t");
