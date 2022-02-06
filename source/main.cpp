@@ -474,6 +474,7 @@ void testSymbols()
     ASSERT_OUTPUT_EQ(m, "(symbol-plist 'object)", "(:id 346 :guid 532512542)");
     ASSERT_OUTPUT_EQ(m, "(setcdr (cdddr (symbol-plist 'object)) (cons 'odd nil))", "(odd)");
     ASSERT_OUTPUT_EQ(m, "(symbol-plist 'object)", "(:id 346 :guid 532512542 odd)");
+    ASSERT_OUTPUT_EQ(m, "(get 'object 'odd)", "nil");
     
 
     ASSERT_OUTPUT_EQ(m, "'('a 'b)", "('a 'b)");
