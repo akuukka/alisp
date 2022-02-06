@@ -100,11 +100,12 @@ void Machine::initErrorFunctions()
                     });
                     auto cc = next->asList()->cc.get();
                     cc = cc->next();
-                    ObjectPtr ret = makeNil();
+                    ObjectPtr ret;
                     while (cc) {
                         ret = cc->car->eval();
                         cc = cc->next();
                     }
+                    if (!ret) ret = makeNil();
                     return ret;
                 }
             }
