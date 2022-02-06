@@ -4,6 +4,30 @@
 
 namespace alisp {
 
+ALISP_INLINE void SymbolObject::traverse(const std::function<bool(const Object&)>& f) const
+{
+    if (!f(*this) || !sym) {
+        return;
+    }
+    if (sym->variable) {
+        sym->variable->traverse(f);
+    }
+    if (sym->plist) {
+        sym->plist->traverse(f);
+    }
+}
+
+ALISP_INLINE bool SymbolObject::equals(const Object& o) const
+{
+    const SymbolObject* op = dynamic_cast<const SymbolObject*>(&o);
+    if (!op) {
+        return false;
+    }
+    const Symbol* lhs = getSymbolOrNull();
+    const Symbol* rhs = op->getSymbolOrNull();
+    return lhs == rhs;
+}
+
 ALISP_INLINE std::unique_ptr<Object> SymbolObject::eval() 
 {
     const auto var = sym ? sym->variable.get() : parent->getSymbol(name)->variable.get();

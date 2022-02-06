@@ -52,34 +52,14 @@ struct SymbolObject :
 
     std::unique_ptr<Object> eval() override;
 
-    bool equals(const Object& o) const override
-    {
-        const SymbolObject* op = dynamic_cast<const SymbolObject*>(&o);
-        if (!op) {
-            return false;
-        }
-        const Symbol* lhs = getSymbolOrNull();
-        const Symbol* rhs = op->getSymbolOrNull();
-        return lhs == rhs;
-    }
+    bool equals(const Object& o) const override;
 
     SymbolObject* asSymbol() override { return this; }
     const SymbolObject* asSymbol() const override { return this; }
 
     const void* sharedDataPointer() const override { return sym.get(); }
     size_t sharedDataRefCount() const override { return sym.use_count(); }
-    void traverse(const std::function<bool(const Object&)>& f) const override
-    {
-        if (!f(*this) || !sym) {
-            return;
-        }
-        if (sym->variable) {
-            sym->variable->traverse(f);
-        }
-        if (sym->plist) {
-            sym->plist->traverse(f);
-        }
-    }
+    void traverse(const std::function<bool(const Object&)>& f) const override;
 
     const Symbol& convertTo(ConvertibleTo<const Symbol&>::Tag) const override
     {
