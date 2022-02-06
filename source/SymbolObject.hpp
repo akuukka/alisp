@@ -9,6 +9,7 @@ namespace alisp
 struct SymbolObject :
         SharedDataObject,
         ConvertibleTo<const Symbol&>,
+        ConvertibleTo<Symbol&>,
         ConvertibleTo<std::shared_ptr<Symbol>>
 {
     std::shared_ptr<Symbol> sym;
@@ -69,8 +70,14 @@ struct SymbolObject :
     size_t sharedDataRefCount() const override { return sym.use_count(); }
     void traverse(const std::function<bool(const Object&)>& f) const override
     {
-        if (f(*this) && sym && sym->variable) {
+        if (!f(*this) || !sym) {
+            return;
+        }
+        if (sym->variable) {
             sym->variable->traverse(f);
+        }
+        if (sym->plist) {
+            sym->plist->traverse(f);
         }
     }
 
@@ -78,6 +85,8 @@ struct SymbolObject :
     {
         return *getSymbol();
     }
+
+    Symbol& convertTo(ConvertibleTo<Symbol&>::Tag) const override { return *getSymbol(); }
 
     std::shared_ptr<Symbol> convertTo(ConvertibleTo<std::shared_ptr<Symbol>>::Tag) const override
     {

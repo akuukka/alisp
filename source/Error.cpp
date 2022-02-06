@@ -53,6 +53,26 @@ void Error::onHandle(Machine& machine)
     sym = std::make_unique<SymbolObject>(&machine, machine.getSymbol(symbolName), "");
 }
 
+std::string Error::getMessageString()
+{
+    if (!data || !sym) {
+        return symbolName + ": " + message;
+    }
+    std::string msg = sym->toString() + ": ";
+    if (data->isList()) {
+        bool first = true;
+        for (auto& obj : *data->asList()) {
+            if (!first) msg += "\n\n";
+            first = false;
+            msg += obj.toString(true);
+        }
+    }
+    else {
+        msg += data->toString(true);
+    }
+    return msg;
+}
+
 }
 
 void Machine::initErrorFunctions()

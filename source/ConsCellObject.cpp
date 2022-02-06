@@ -229,6 +229,12 @@ const Symbol& ConsCellObject::convertTo(ConvertibleTo<const Symbol&>::Tag) const
     return *parent->getSymbol(NilName);
 }
 
+Symbol& ConsCellObject::convertTo(ConvertibleTo<Symbol&>::Tag) const
+{
+    assert(isNil());
+    return *parent->getSymbol(NilName);
+}
+
 const ConsCell& ConsCellObject::convertTo(ConvertibleTo<const ConsCell&>::Tag) const
 {
     return *cc;
@@ -240,6 +246,11 @@ ConsCell& ConsCellObject::convertTo(ConvertibleTo<ConsCell&>::Tag) const
 }
 
 bool ConsCellObject::canConvertTo(ConvertibleTo<const Symbol&>::Tag) const
+{
+    return isNil();
+}
+
+bool ConsCellObject::canConvertTo(ConvertibleTo<Symbol&>::Tag) const
 {
     return isNil();
 }

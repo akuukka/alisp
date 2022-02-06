@@ -14,6 +14,7 @@ struct ConsCellObject :
         SharedDataObject,
         Sequence,
         ConvertibleTo<const Symbol&>,
+        ConvertibleTo<Symbol&>,
         ConvertibleTo<const ConsCell&>,
         ConvertibleTo<std::shared_ptr<ConsCell>>,
         ConvertibleTo<ConsCell&>
@@ -116,9 +117,11 @@ struct ConsCellObject :
     const void* sharedDataPointer() const override { return cc.get(); }
     size_t sharedDataRefCount() const override { return cc.use_count(); }
 
+    Symbol& convertTo(ConvertibleTo<Symbol&>::Tag) const override;
     const Symbol& convertTo(ConvertibleTo<const Symbol&>::Tag) const override;
     const ConsCell& convertTo(ConvertibleTo<const ConsCell&>::Tag) const override;
     ConsCell& convertTo(ConvertibleTo<ConsCell&>::Tag) const override;
+    bool canConvertTo(ConvertibleTo<Symbol&>::Tag) const override;
     bool canConvertTo(ConvertibleTo<const Symbol&>::Tag) const override;
     std::shared_ptr<ConsCell>
     convertTo(ConvertibleTo<std::shared_ptr<ConsCell>>::Tag) const override

@@ -23,7 +23,6 @@ namespace alisp {
 void initMacroFunctions(Machine& m);
 void initMathFunctions(Machine& m);
 void initSequenceFunctions(Machine& m);
-void initSymbolFunctions(Machine& m);
 
 ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxArgs,
                                          const std::function<std::unique_ptr<Object>(FArgs &)>& f)
@@ -271,7 +270,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     initMacroFunctions(*this);
     initSequenceFunctions(*this);
     initStringFunctions();
-    initSymbolFunctions(*this);
+    initSymbolFunctions();
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
     defun("null", [](bool isNil) { return !isNil; });
     defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {

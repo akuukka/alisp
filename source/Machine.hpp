@@ -86,6 +86,7 @@ class Machine
     void initErrorFunctions();
     void initFunctionFunctions();
     void initStringFunctions();
+    void initSymbolFunctions();
 public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr);

@@ -57,6 +57,7 @@ struct Error : Exception
           std::string symbolName = ConvertParsedNamesToUpperCase ? "ERROR" : "error");
     std::string symbolName, message;
     void onHandle(Machine& m);
+    std::string getMessageString();
 };
 
 struct ArithError : Error

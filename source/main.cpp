@@ -461,6 +461,8 @@ void testVariables()
 void testSymbols()
 {
     Machine m;
+    ASSERT_OUTPUT_EQ(m, "(listp (symbol-plist 'cbdc))", "t");
+    ASSERT_OUTPUT_EQ(m, "(listp (symbol-plist nil))", "t");
     ASSERT_OUTPUT_EQ(m, "'('a 'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "'('a'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "(symbolp 'abc)", "t");
@@ -1155,7 +1157,12 @@ void eval(Machine& m, const std::string& expr, bool interactive)
         }
         std::cout << " => " << res->toString() << std::endl;
     }
+    catch (exceptions::Error& ex) {
+        ex.onHandle(m);
+        std::cerr << ex.getMessageString() << std::endl;
+    }
     catch (alisp::exceptions::Exception& ex) {
+        
         std::cerr << "An error was encountered:\n";
         std::cerr << ex.what() << std::endl;
     }
