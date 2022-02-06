@@ -32,24 +32,18 @@ void Machine::initSymbolFunctions()
             plist->setCdr(makeConsCell(value.clone(), nullptr));
         }
         else {
-            
-        }
-        /*
-        for (auto cc = plist->cc.get(); cc != nullptr; cc = cc->next()) {
-            const Object& keyword = ;
-            if (keyword.equals(property)) {
-                ++it;
-                if (it == plist->end()) {
-                    
+            bool found = false;
+            for (auto cc = plist->cc.get(); cc != nullptr; cc = cc->next()) {
+                const Object& keyword = *cc->car;
+                if (keyword.equals(property)) {
+                    cc = cc->next();
+                    assert(cc);
+                    cc->car = value.clone();
+                    found = true;
+                    break;
                 }
             }
-        */
-            /*
-            if (obj.equals(property)) {
-                found = true;
-            }
-            */
-        //}
+        }
         return value.clone();
     });
 }
