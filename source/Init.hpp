@@ -81,12 +81,14 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 (defun error (&rest args)
   (signal 'error (list (apply 'format args))))
 
-(defun deferror (name message &optional parent)
+(defun define-error (name message &optional parent)
   (if (not parent)
       (setq parent 'error))
   (put name 'error-conditions (append (list name) (get parent 'error-conditions)))
-  (put name 'error-message message))
+  (put name 'error-message message)
+  message)
 
+(put 'error 'error-conditions '(error))
 (define-error 'arith-error "Arithmetic error")
 (define-error 'wrong-type-argument "Wrong type argument")
 

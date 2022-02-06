@@ -1115,6 +1115,14 @@ void testErrors()
 )code", "123");
 
     ASSERT_OUTPUT_EQ(m, R"code(
+; This shows that error hierarchy inheritance works properly.
+(define-error 'my-error1 "My special arithmetic error" 'arith-error)
+(define-error 'my-error2 "My special arithmetic error" 'my-error1)
+(define-error 'my-error3 "My special arithmetic error" 'my-error2)
+(symbol-plist 'my-error3)
+)code", "(error-conditions (my-error3 my-error2 my-error1 arith-error error) error-message \"My special arithmetic error\")");
+    
+    ASSERT_OUTPUT_EQ(m, R"code(
 ; Although here an arith-error is signaled, we only have a generic error handler.
 (defun safe-divide2 (dividend divisor)
   (condition-case err
@@ -1122,6 +1130,8 @@ void testErrors()
     (error 1000000)))
 (safe-divide2 5000 0)
 )code", "1000000");
+
+    
     
 }
 
