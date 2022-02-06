@@ -32,15 +32,20 @@ void Machine::initSymbolFunctions()
             plist->setCdr(makeConsCell(value.clone(), nullptr));
         }
         else {
-            bool found = false;
             for (auto cc = plist->cc.get(); cc != nullptr; cc = cc->next()) {
                 const Object& keyword = *cc->car;
                 if (keyword.equals(property)) {
                     cc = cc->next();
                     assert(cc);
                     cc->car = value.clone();
-                    found = true;
                     break;
+                }
+                if (!cc->next()) {
+                    assert(false && "Last keyword has no value. Has been added by user?");
+                }
+                cc = cc->next();
+                if (!cc->next()) {
+                    cc->cdr = makeConsCell(property.clone(), makeConsCell(value.clone()));
                 }
             }
         }
