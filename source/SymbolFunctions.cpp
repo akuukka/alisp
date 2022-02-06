@@ -1,4 +1,5 @@
 #include "ConsCellObject.hpp"
+#include "Error.hpp"
 #include "Object.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
@@ -41,7 +42,7 @@ void Machine::initSymbolFunctions()
                     break;
                 }
                 if (!cc->next()) {
-                    assert(false && "Last keyword has no value. Has been added by user?");
+                    throw exceptions::WrongTypeArgument("Not a proper plist.");
                 }
                 cc = cc->next();
                 if (!cc->next()) {

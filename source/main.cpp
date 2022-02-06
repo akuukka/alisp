@@ -475,7 +475,8 @@ void testSymbols()
     ASSERT_OUTPUT_EQ(m, "(setcdr (cdddr (symbol-plist 'object)) (cons 'odd nil))", "(odd)");
     ASSERT_OUTPUT_EQ(m, "(symbol-plist 'object)", "(:id 346 :guid 532512542 odd)");
     ASSERT_OUTPUT_EQ(m, "(get 'object 'odd)", "nil");
-    
+    ASSERT_EXCEPTION(m, "(put 'object :rating 8)", exceptions::Error); // Can't put to improper plists
+    ASSERT_OUTPUT_EQ(m, "(put 'object :id 347)", "347"); // But can modify existing values
 
     ASSERT_OUTPUT_EQ(m, "'('a 'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "'('a'b)", "('a 'b)");
