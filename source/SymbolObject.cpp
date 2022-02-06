@@ -23,8 +23,8 @@ ALISP_INLINE bool SymbolObject::equals(const Object& o) const
     if (!op) {
         return false;
     }
-    const Symbol* lhs = getSymbolOrNull();
-    const Symbol* rhs = op->getSymbolOrNull();
+    const Symbol* lhs = getSymbol().get();
+    const Symbol* rhs = op->getSymbol().get();
     return lhs == rhs;
 }
 

@@ -154,7 +154,7 @@ inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& 
         }
     }
     if (conversionFailed) {
-        throw exceptions::WrongTypeArgument(arg->toString() + "abba1");
+        throw exceptions::WrongTypeArgument(arg->toString());
     }
     return opt;
 }
