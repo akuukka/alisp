@@ -1087,6 +1087,14 @@ void testErrors()
     1 2 3 (error t)))
 (error-test-case-9)
 )code", exceptions::WrongTypeArgument);
+
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun error-test-case-10 ()
+  (condition-case nil
+      (progn (error "first variable of handler may be a list") nil)
+    ((some-other-error error) 123)))
+(error-test-case-10)
+)code", "123");
 }
 
 void test()

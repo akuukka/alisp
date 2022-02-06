@@ -87,11 +87,27 @@ void Machine::initErrorFunctions()
                 if (!nextCar) {
                     continue;
                 }
-                if (!nextCar->isSymbol()) {
-                    throw exceptions::Error("Invalid condition handler: " + next->asList()->toString());
+                bool match = false;
+                if (nextCar->isSymbol()) {
+                    auto errSym = nextCar->asSymbol();
+                    match = errSym->equals(*error.sym);
                 }
-                auto errSym = nextCar->asSymbol();
-                if (errSym->equals(*error.sym)) {
+                else if (nextCar->isList()) {
+                    for (auto& obj : *nextCar->asList()) {
+                        if (obj.isSymbol()) {
+                            match = obj.asSymbol()->equals(*error.sym);
+                            if (match) break;
+                        }
+                        else {
+                            throw exceptions::Error("Invalid condition handler: " +
+                                                    next->toString());
+                        }
+                    }
+                }
+                else {
+                    throw exceptions::Error("Invalid condition handler: " + next->toString());
+                }
+                if (match) {
                     pushLocalVariable(symName,
                                       args.m.makeConsCell(error.sym->clone(), error.data->clone()));
                     auto& m = args.m;
