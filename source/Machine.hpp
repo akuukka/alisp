@@ -18,8 +18,7 @@ class Machine
     friend void initFunctionFunctions(Machine& m);
     
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
-    std::function<void(std::string)> m_msgHandler;
-
+ 
     std::map<std::string, std::vector<std::shared_ptr<Symbol>>> m_locals;
 
     void pushLocalVariable(std::string name, std::unique_ptr<Object> obj);
@@ -118,11 +117,6 @@ public:
         s->constant = constant;
     }
 
-    void setMessageHandler(std::function<void(std::string)> handler)
-    {
-        m_msgHandler = handler;
-    }
-    
     std::shared_ptr<Symbol> getSymbolOrNull(std::string name);
     std::shared_ptr<Symbol> getSymbol(std::string name);
     std::unique_ptr<Object> makeTrue();
