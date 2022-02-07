@@ -543,15 +543,12 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return p->clone();
     });
-    defun("mapatoms", [this](const Symbol& sym) {
-        if (!sym.function) {
-            throw exceptions::VoidFunction(sym.name);
-        }
+    defun("mapatoms", [this](const Function& func) {
         auto list = makeList(this);
         for (const auto& p : m_syms) {
             list->cc->car = quote(std::make_unique<SymbolObject>(this, p.second, ""));
             FArgs args(*list->cc, *this);
-            (sym.function->func)(args);
+            func.func(args);
         }
         return makeNil();
     });

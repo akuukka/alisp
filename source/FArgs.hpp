@@ -42,6 +42,7 @@ struct FArgs
     Machine& m;
     std::string funcName = ""; // For debugging until proper stack traces will be available
     std::vector<std::unique_ptr<Object>> argStorage;
+    std::vector<std::shared_ptr<Function>> funcStorage;
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
@@ -116,11 +117,24 @@ inline typename std::enable_if<std::is_reference_v<T> && !std::is_same_v<T, FArg
 getFuncParam(FArgs& args)
 {
     Object* arg = args.pop();
-    try {
-        return arg->value<T>();
+    if constexpr (std::is_same_v<T, const Function&>) {
+        auto func = arg->resolveFunction();
+        if (func) {
+            args.funcStorage.push_back(func);
+            return *func;
+        }
+        if (arg->isSymbol() || arg->isList()) {
+            throw exceptions::VoidFunction("Void function");
+        }
+        throw exceptions::Error("Not a function");
     }
-    catch (std::runtime_error& ex) {
-        throw exceptions::WrongTypeArgument(arg->toString());
+    else {
+        try {
+            return arg->value<T>();
+        }
+        catch (std::runtime_error& ex) {
+            throw exceptions::WrongTypeArgument(arg->toString());
+        }
     }
 }
 
