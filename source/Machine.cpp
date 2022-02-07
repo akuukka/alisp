@@ -282,6 +282,8 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return builder.get();
     });
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
+    defun("most-positive-fixnum", []() { return std::numeric_limits<std::int64_t>::max(); });
+    defun("most-negative-fixnum", []() { return std::numeric_limits<std::int64_t>::min(); });
     defun("null", [](bool isNil) { return !isNil; });
     defun("not", [](bool value) { return !value; });
     defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {
