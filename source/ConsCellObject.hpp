@@ -17,7 +17,9 @@ struct ConsCellObject :
         ConvertibleTo<Symbol&>,
         ConvertibleTo<const ConsCell&>,
         ConvertibleTo<std::shared_ptr<ConsCell>>,
-        ConvertibleTo<ConsCell&>
+        ConvertibleTo<ConsCell&>,
+        ConvertibleTo<ConsCell*>,
+        ConvertibleTo<const ConsCell*>
 {
     std::shared_ptr<ConsCell> cc;
     Machine* parent = nullptr;
@@ -126,9 +128,10 @@ struct ConsCellObject :
     bool canConvertTo(ConvertibleTo<Symbol&>::Tag) const override;
     bool canConvertTo(ConvertibleTo<const Symbol&>::Tag) const override;
     std::shared_ptr<ConsCell>
-    convertTo(ConvertibleTo<std::shared_ptr<ConsCell>>::Tag) const override
-    {
-        return cc;
+    convertTo(ConvertibleTo<std::shared_ptr<ConsCell>>::Tag) const override { return cc; }
+    ConsCell* convertTo(ConvertibleTo<ConsCell*>::Tag) const override { return cc.get(); }
+    const ConsCell* convertTo(ConvertibleTo<const ConsCell*>::Tag) const override {
+        return cc.get();
     }
 };
 

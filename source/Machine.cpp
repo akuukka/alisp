@@ -299,24 +299,22 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("consp", [](const Object& obj) { return obj.isList() && !obj.isNil(); });
     defun("listp", [](const Object& obj) { return obj.isList(); });
     defun("nlistp", [](const Object& obj) { return !obj.isList(); });
-    defun("proper-list-p", [this](ObjectPtr obj) {
-        if (!obj->isList()) return makeNil();
-        std::shared_ptr<ConsCell> cc = obj->asList()->cc;
-        std::unique_ptr<Object> r;
-        auto p = cc.get();
+    defun("proper-list-p", [this](const Object& obj) -> ObjectPtr {
+        if (!obj.isList()) return makeNil();
+        ConsCell* cc = obj.value<ConsCell*>();
         if (cc->isCyclical()) {
             return makeNil();
         }
+        auto p = cc;
         std::int64_t count = p->car ? 1 : 0;
         while (p->cdr && p->cdr->isList()) {
             count++;
-            p = dynamic_cast<ConsCellObject*>(p->cdr.get())->cc.get();
+            p = p->cdr->value<ConsCell*>();
             if (p->cdr && !p->cdr->isList()) {
                 return makeNil();
             }
         }
-        r = makeInt(count);
-        return r;
+        return makeInt(count);
     });
     makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         if (!!*args.pop()) {
