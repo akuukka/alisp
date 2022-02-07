@@ -795,6 +795,12 @@ std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) cons
     if (str == "-0.0e+NaN") {
         return makeFloat(-::nan(""));
     }
+    if (str == "1.0e+INF") {
+        return makeFloat(std::numeric_limits<double>::infinity());
+    }
+    if (str == "-1.0e+INF") {
+        return makeFloat(-std::numeric_limits<double>::infinity());
+    }
     size_t dotCount = 0;
     size_t digits = 0;
     size_t exps = 0;
