@@ -1156,6 +1156,10 @@ void testSequences()
     ASSERT_OUTPUT_EQ(m, "(progn (set 'z (list 1 2 3))"
                      "(setcdr (cdr (cdr z)) (cdr z)) z)", "(1 2 3 2 . #2)");
     ASSERT_EXCEPTION(m, "(reverse z)", exceptions::CircularList);
+    ASSERT_OUTPUT_EQ(m, "(copy-sequence '())", "nil");
+    ASSERT_OUTPUT_EQ(m, "(copy-sequence '(1 2 3))", "(1 2 3)");
+    ASSERT_EXCEPTION(m, "(copy-sequence z)", exceptions::CircularList);
+    ASSERT_OUTPUT_EQ(m, "(copy-sequence \"abc\")", "\"abc\"");
 }
 
 void test()

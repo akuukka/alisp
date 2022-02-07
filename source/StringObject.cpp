@@ -13,6 +13,11 @@ size_t StringObject::length() const
     return value ? utf8::strlen(value->c_str()) : 0;
 }
 
+ALISP_INLINE ObjectPtr StringObject::copy() const
+{
+    return std::make_unique<StringObject>(*value);
+}
+
 ALISP_INLINE ObjectPtr StringObject::reverse() const
 {
     std::string reversed;

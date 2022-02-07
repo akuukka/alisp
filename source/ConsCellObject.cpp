@@ -13,30 +13,40 @@
 namespace alisp
 {
 
+ALISP_INLINE ObjectPtr ConsCellObject::copy() const
+{
+    ListBuilder builder(*parent);
+    cc->iterateList([&](Object* obj, bool circular, bool dotted) {
+        if (circular) {
+            throw exceptions::CircularList(toString());
+        }
+        else if (dotted) {
+            throw exceptions::WrongTypeArgument(toString());
+        }
+        builder.append(obj->clone());
+        return true;
+    });
+    return builder.get();
+}
+    
 ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
 {
     std::unique_ptr<ConsCellObject> reversed = std::make_unique<ConsCellObject>(parent);
-    if (isNil()) {
-        return reversed;
-    }
-    auto p = cc.get();
-    std::set<ConsCell*> traversed;
-    while (p) {
-        if (traversed.count(p)) {
+    cc->iterateList([&](Object* obj, bool circular, bool dotted) {
+        if (circular) {
             throw exceptions::CircularList(toString());
         }
-        traversed.insert(p);
-        if (p->cdr && !p->cdr->isList()) {
+        else if (dotted) {
             throw exceptions::WrongTypeArgument(toString());
         }
         auto prev = reversed->cc;
         auto newcc = std::make_shared<ConsCell>();
-        newcc->car = p->car->clone();
+        newcc->car = obj->clone();
         newcc->cdr =
             prev->car || prev->cdr ? std::make_unique<ConsCellObject>(prev, parent) : nullptr;
         reversed->cc = newcc;
-        p = p->next();
-    }
+        return true;
+    });
     return reversed;
 }
 

@@ -4,6 +4,29 @@
 namespace alisp
 {
 
+ALISP_INLINE void ConsCell::iterateList(std::function<bool(Object* car,
+                                                 bool isCircular,
+                                                 bool dotted)> f) const
+{
+    auto p = this;
+    std::set<const ConsCell*> traversed;
+    bool circular = false;
+    bool dotted = false;
+    while (p && p->car) {
+        if (traversed.count(p)) {
+            circular = true;
+        }
+        if (p->cdr && !p->cdr->isList()) {
+            dotted = true;
+        }
+        if (!f(p->car.get(), circular, dotted)) {
+            return;
+        }
+        traversed.insert(p);
+        p = p->next();
+    }
+}
+
 ALISP_INLINE const ConsCell* ConsCell::next() const
 {
     auto cc = dynamic_cast<ConsCellObject*>(this->cdr.get());

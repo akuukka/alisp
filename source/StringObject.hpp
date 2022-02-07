@@ -32,6 +32,7 @@ struct StringObject :
         return std::make_unique<StringObject>(*this);
     }
 
+    ObjectPtr copy() const override;
     ObjectPtr reverse() const override;
 
     bool equals(const Object& o) const override

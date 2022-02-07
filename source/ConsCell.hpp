@@ -16,6 +16,8 @@ struct ConsCell
     ConsCell* next();
     bool operator!() const { return !car; }
 
+    void iterateList(std::function<bool(Object* car, bool isCircular, bool dotted)> f) const;
+
     struct Iterator
     {
         ConsCell* ptr;

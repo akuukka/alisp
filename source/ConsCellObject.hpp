@@ -63,6 +63,7 @@ struct ConsCellObject :
         return std::make_unique<ConsCellObject>(*this);
     }
 
+    ObjectPtr copy() const override;
     ObjectPtr reverse() const override;
 
     bool equals(const Object &o) const override
