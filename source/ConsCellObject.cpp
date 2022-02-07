@@ -15,17 +15,21 @@ namespace alisp
 ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
 {
     std::unique_ptr<ConsCellObject> reversed = std::make_unique<ConsCellObject>(parent);
-    for (const auto& obj : *this) {
-        if (!reversed->car()) {
-            reversed->setCar(obj.clone());
+    if (isNil()) {
+        return reversed;
+    }
+    auto p = cc.get();
+    while (p) {
+        if (p->cdr && !p->cdr->isList()) {
+            throw std::runtime_error("Not a proper list.");
         }
-        else {
-            auto prev = reversed->cc;
-            auto newcc = std::make_shared<ConsCell>();
-            newcc->car = obj.clone();
-            newcc->cdr = std::make_unique<ConsCellObject>(prev, parent);
-            reversed->cc = newcc;
-        }
+        auto prev = reversed->cc;
+        auto newcc = std::make_shared<ConsCell>();
+        newcc->car = p->car->clone();
+        newcc->cdr =
+            prev->car || prev->cdr ? std::make_unique<ConsCellObject>(prev, parent) : nullptr;
+        reversed->cc = newcc;
+        p = p->next();
     }
     return reversed;
 }

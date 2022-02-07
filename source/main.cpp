@@ -125,6 +125,7 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(listp (quote nil))", "t");
     ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
     ASSERT_OUTPUT_EQ(m, "(listp 'nil)", "t");
+    ASSERT_EXCEPTION(m, "(reverse '(1 . 2))", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(reverse '(1 2 3))", "(3 2 1)");
     ASSERT_OUTPUT_EQ(m, "(reverse ())", "nil");
     ASSERT_OUTPUT_EQ(m, "(reverse '(1))", "(1)");
