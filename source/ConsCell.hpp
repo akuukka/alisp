@@ -35,10 +35,18 @@ struct ConsCell
     {
         const ConsCell* ptr;
         bool operator!=(const ConstIterator& rhs) const { return ptr != rhs.ptr; }
+        bool operator==(const ConstIterator& rhs) const { return ptr == rhs.ptr; }
         ConstIterator& operator++()
         {
             ptr = ptr->next();
             return *this;
+        }
+
+        ConstIterator operator+(int i) const
+        {
+            ConstIterator copy = *this;
+            copy.ptr = copy.ptr->next();
+            return copy;
         }
 
         Object& operator*() {
