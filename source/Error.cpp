@@ -58,7 +58,9 @@ std::string Error::getMessageString()
     if (!data || !sym) {
         return symbolName + ": " + message;
     }
-    std::string msg = sym->toString() + ": ";
+    auto errorMessage = get(sym->getSymbol()->plist,
+                            *sym->parent->makeSymbol("error-message", true));
+    std::string msg = (errorMessage ? errorMessage->toString(true) : sym->toString() ) + ": ";
     if (data->isList()) {
         bool first = true;
         for (auto& obj : *data->asList()) {
