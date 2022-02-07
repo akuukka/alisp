@@ -352,8 +352,8 @@ void testStrings()
     */
     ASSERT_OUTPUT_EQ(m, R"code((force-output *standard-output*))code", "nil");
     ASSERT_OUTPUT_EQ(m, R"code((force-output *query-io*))code", "nil");
-    ASSERT_OUTPUT_EQ(m, R"code((parse-integer "1"))code", "1\n1");
-    ASSERT_OUTPUT_EQ(m, R"code((parse-integer "123"))code", "123\n3");
+    ASSERT_OUTPUT_EQ(m, R"code((parse-integer "1"))code", "1");
+    ASSERT_OUTPUT_EQ(m, R"code((parse-integer "123"))code", "123");
     ASSERT_OUTPUT_EQ(m, R"code((string-to-number "3"))code", "3");
     ASSERT_OUTPUT_CONTAINS(m, R"code((string-to-number "3.5"))code", "3.5");
     ASSERT_OUTPUT_EQ(m, R"code((string-to-number "X256"))code", "0");

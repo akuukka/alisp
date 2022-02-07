@@ -75,6 +75,23 @@ std::string Error::getMessageString()
 
 }
 
+ALISP_STATIC bool handlerMatches(const SymbolObject& error, const SymbolObject& handler)
+{
+    if (error.equals(handler)) {
+        return true;
+    }
+    const auto prop = error.parent->makeSymbol("error-conditions", true);
+    const auto matchesHandlers = get(error.getSymbol()->plist, *prop);
+    if (matchesHandlers->isList()) {
+        for (const auto& obj : *matchesHandlers->asList()) {
+            if (handler.equals(obj)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Machine::initErrorFunctions()
 {
     defun("signal", [&](std::shared_ptr<Symbol> sym, const Object& data) {
@@ -110,12 +127,12 @@ void Machine::initErrorFunctions()
                 bool match = false;
                 if (nextCar->isSymbol()) {
                     auto errSym = nextCar->asSymbol();
-                    match = errSym->equals(*error.sym);
+                    match = handlerMatches(*error.sym, *errSym);
                 }
                 else if (nextCar->isList()) {
                     for (auto& obj : *nextCar->asList()) {
                         if (obj.isSymbol()) {
-                            match = obj.asSymbol()->equals(*error.sym);
+                            match = handlerMatches(*error.sym, *obj.asSymbol());
                             if (match) break;
                         }
                         else {

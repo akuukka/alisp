@@ -1,5 +1,4 @@
 #pragma once
-#include "ConsCellObject.hpp"
 #include <memory>
 #include <string>
 
@@ -8,6 +7,7 @@ namespace alisp
 
 struct Function;
 struct Object;
+struct ConsCell;
 struct ConsCellObject;
 class Machine;
 
@@ -25,5 +25,6 @@ struct Symbol
 
 Object* get(const ConsCell& plist, const Object& property);
 Object* get(const ConsCellObject& plist, const Object& property);
+Object* get(std::unique_ptr<ConsCellObject>& plist, const Object& property);
 
 }

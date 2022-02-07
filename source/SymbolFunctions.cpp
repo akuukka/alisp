@@ -4,6 +4,7 @@
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "SymbolObject.hpp"
+#include <memory>
 
 namespace alisp
 {
@@ -36,6 +37,11 @@ ALISP_INLINE Object* get(const ConsCell& plist, const Object& property)
 ALISP_INLINE Object* get(const ConsCellObject& plist, const Object& property)
 {
     return plist.cc ? get(*plist.cc, property) : nullptr;
+}
+
+ALISP_INLINE Object* get(std::unique_ptr<ConsCellObject>& plist, const Object& property)
+{
+    return plist ? get(*plist, property) : nullptr;
 }
 
 ALISP_INLINE void Machine::initSymbolFunctions()
