@@ -268,6 +268,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                 std::make_unique<IStreamObject>(&std::cin));
     setVariable(parsedSymbolName("*query-io*"),
                 std::make_unique<IOStreamObject>(&std::cin, &std::cout));
+    setVariable(parsedSymbolName("most-positive-fixnum"),
+                makeInt(std::numeric_limits<std::int64_t>::max()));
+    setVariable(parsedSymbolName("most-negative-fixnum"),
+                makeInt(std::numeric_limits<std::int64_t>::min()));
     initFunctionFunctions();
     initErrorFunctions();
     initMathFunctions(*this);
@@ -282,8 +286,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return builder.get();
     });
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
-    defun("most-positive-fixnum", []() { return std::numeric_limits<std::int64_t>::max(); });
-    defun("most-negative-fixnum", []() { return std::numeric_limits<std::int64_t>::min(); });
     defun("null", [](bool isNil) { return !isNil; });
     defun("not", [](bool value) { return !value; });
     defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {

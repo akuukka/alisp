@@ -362,17 +362,12 @@ void testStrings()
 
 void testDivision()
 {
-    alisp::Machine m;
+    Machine m;
     assert(m.evaluate("(/ 10 2)")->toString() == "5");
     // Same as emacs: one float arg means that also preceding integer divisions
     // are handled as floating point operations.
     assert(std::abs(m.evaluate("(/ 10 3 3.0)")->value<double>() - 1.11111111) < 0.001);
-    assert(expect<alisp::exceptions::ArithError>([&]() {
-        m.evaluate("(/ 1 0)");
-    }));
-    assert(expect<alisp::exceptions::ArithError>([&]() {
-        m.evaluate("(/ 1 0.0)");
-    }));
+    ASSERT_EXCEPTION(m, "(/ 1 0)", exceptions::Error);
 }
 
 void testCdrFunction()
@@ -396,7 +391,7 @@ void testCdrFunction()
 void testVariables()
 {
     Machine m;
-    ASSERT_OUTPUT_EQ(m, "(eq (+ (most-positive-fixnum) 1) (most-negative-fixnum))", "t");
+    ASSERT_OUTPUT_EQ(m, "(eq (+ most-positive-fixnum 1) most-negative-fixnum)", "t");
     ASSERT_OUTPUT_EQ(m, "'(;comment\n1)", "(1)");
     ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "nil");
     ASSERT_OUTPUT_EQ(m, "(let ((abracadabra 5))(boundp 'abracadabra))", "t");
@@ -576,6 +571,10 @@ void testBasicArithmetic()
 {
     alisp::Machine m;
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
+    ASSERT_EXCEPTION(m, "(isnan (/ 0 0))", exceptions::Error);
+    ASSERT_OUTPUT_EQ(m, "(isnan (/ 0.0 0.0))", "t");
+    ASSERT_OUTPUT_EQ(m, "(isnan (/ 0 0.0))", "t");
+    ASSERT_OUTPUT_EQ(m, "(isnan (/ 0.0 0))", "t");
     ASSERT_OUTPUT_EQ(m, "(<= 2.1 2)", "nil");
     ASSERT_OUTPUT_EQ(m, "(<= 1 2)", "t");
     ASSERT_OUTPUT_EQ(m, "(<= 2 2)", "t");
@@ -584,7 +583,7 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(<= 1 2 3 4.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(<= 1 2 3 4.0 3)", "nil");
     ASSERT_OUTPUT_EQ(m, "(% 5 2)", "1");
-    ASSERT_EXCEPTION(m, "(% 5 2.0)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(% 5 2.0)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(+ 1 1)", "2");
     ASSERT_OUTPUT_EQ(m, "(+)", "0");
     ASSERT_OUTPUT_EQ(m, "(* 3 4)", "12");

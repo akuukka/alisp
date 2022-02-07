@@ -96,6 +96,7 @@ void initMathFunctions(Machine& m)
     m.defun("truncate", truncate);
     m.defun("floor", floor);
     m.defun("ceiling", ceiling);
+    m.defun("isnan", [](double num) { return std::isnan(num); });
     m.defun("evenp", [](std::int64_t i) { return i % 2 == 0; });
     m.defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
     m.makeFunc("=", 1, 0xffff, [&m](FArgs& args) {
@@ -195,9 +196,6 @@ void initMathFunctions(Machine& m)
         for (auto sym : args) {
             if (sym->isFloat()) {
                 const double v = sym->value<double>();
-                if (v == 0) {
-                    throw exceptions::ArithError("Division by zero");
-                }
                 fp = true;
                 if (first) {
                     i = v;
@@ -210,7 +208,7 @@ void initMathFunctions(Machine& m)
             }
             else if (sym->isInt()) {
                 const std::int64_t v = sym->value<std::int64_t>();
-                if (v == 0) {
+                if (v == 0 && !first && !fp) {
                     throw exceptions::ArithError("Division by zero");
                 }
                 if (first) {
@@ -218,7 +216,7 @@ void initMathFunctions(Machine& m)
                     f = v;
                 }
                 else {
-                    i /= v;
+                    if (!fp) i /= v;
                     f /= v;
                 }
             }
