@@ -125,6 +125,9 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(listp (quote nil))", "t");
     ASSERT_OUTPUT_EQ(m, "(listp nil)", "t");
     ASSERT_OUTPUT_EQ(m, "(listp 'nil)", "t");
+    ASSERT_OUTPUT_EQ(m, "(reverse '(1 2 3))", "(3 2 1)");
+    ASSERT_OUTPUT_EQ(m, "(reverse ())", "nil");
+    ASSERT_OUTPUT_EQ(m, "(reverse '(1))", "(1)");
     ASSERT_OUTPUT_EQ(m, "'(1 2 . 3)", "(1 2 . 3)");
     ASSERT_OUTPUT_EQ(m, "()", "nil");
     ASSERT_OUTPUT_EQ(m, "'(1)", "(1)"); 
@@ -339,9 +342,10 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((length "aジb"))code", R"code(3)code");
     ASSERT_OUTPUT_EQ(m, R"code((string-bytes "aジb"))code", R"code(5)code");
     ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 2))code", R"code(98)code");
+    ASSERT_OUTPUT_EQ(m, R"code((reverse "ABCDジEFG"))code", R"code("GFEジDCBA")code");
     ASSERT_OUTPUT_EQ(m, R"code((elt "aジb" 1))code", R"code(12472)code");
-    ASSERT_EXCEPTION(m, R"code((elt "aジb" 3))code", alisp::exceptions::Error);
-    ASSERT_EXCEPTION(m, R"code((elt "" 0))code", alisp::exceptions::Error);
+    ASSERT_EXCEPTION(m, R"code((elt "aジb" 3))code", exceptions::Error);
+    ASSERT_EXCEPTION(m, R"code((elt "" 0))code", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, R"code((make-string 5 (elt "aジb" 1)))code", R"code("ジジジジジ")code");
     ASSERT_OUTPUT_EQ(m, R"code((make-string 2 ?\n))code", "\"\n\n\"");
     ASSERT_OUTPUT_EQ(m, R"code((make-string 4 ?\s))code", R"code("    ")code");
@@ -377,7 +381,7 @@ void testCdrFunction()
     ASSERT_OUTPUT_EQ(m, "(cdr '(a))", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr '())", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr (cdr '(a b c)))", "(c)");
-    ASSERT_EXCEPTION(m, "(cdr 1)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(cdr 1)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(cdr-safe '(a b c))", "(b c)");
     ASSERT_OUTPUT_EQ(m, "(nthcdr 2 '(pine fir oak maple))", "(oak maple)");
     ASSERT_OUTPUT_EQ(m, "(nthcdr 20 '(pine fir oak maple))", "nil");
@@ -408,7 +412,7 @@ void testVariables()
     ASSERT_OUTPUT_EQ(m, "(progn (setq x 1) (let (x z) (setq x 2) "
                      "(setq z 3) (setq y x)) (list x y))", "(1 2)");
     ASSERT_OUTPUT_EQ(m, "(setq x 1) ; Put a value in the global binding.", "1");
-    ASSERT_EXCEPTION(m, "(let ((x 2)) (makunbound 'x) x)", alisp::exceptions::VoidVariable);
+    ASSERT_EXCEPTION(m, "(let ((x 2)) (makunbound 'x) x)", exceptions::VoidVariable);
     ASSERT_OUTPUT_EQ(m, "x ; The global binding is unchanged.", "1");
     
     ASSERT_EXCEPTION(m, R"code(
@@ -416,7 +420,7 @@ void testVariables()
   (let ((x 3))           ; And again.
     (makunbound 'x)      ; Void the innermost-local binding.
     x))                  ; And refer: it’s void.
-)code", alisp::exceptions::VoidVariable);
+)code", exceptions::VoidVariable);
 
     ASSERT_OUTPUT_EQ(m, R"code(
 (let ((x 2))
@@ -481,7 +485,7 @@ void testSymbols()
     ASSERT_OUTPUT_EQ(m, "'('a'b)", "('a 'b)");
     ASSERT_OUTPUT_EQ(m, "(symbolp 'abc)", "t");
     ASSERT_OUTPUT_EQ(m, "(symbol-name 'abc)", "\"abc\"");
-    assert(expect<alisp::exceptions::VoidVariable>([&]() {
+    assert(expect<exceptions::VoidVariable>([&]() {
         m.evaluate("(symbolp abc)");
     }));
     assert(expect<exceptions::WrongTypeArgument>([&]() {
@@ -550,9 +554,9 @@ void testInternFunction()
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'ABRA)", "ABRA's value is 500");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "ABRA's value is 500");
     ASSERT_OUTPUT_EQ(m, "(format \"%d\" ABRA)", "\"500\"");
-    ASSERT_EXCEPTION(m, "(message \"%d\" sym)", alisp::exceptions::Error);
+    ASSERT_EXCEPTION(m, "(message \"%d\" sym)", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(unintern sym)", "t"); // this removes abra from objarray
-    ASSERT_EXCEPTION(m, "(message \"%d\" ABRA)", alisp::exceptions::VoidVariable);
+    ASSERT_EXCEPTION(m, "(message \"%d\" ABRA)", exceptions::VoidVariable);
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable sym)", "ABRA's value is 500");
 }
 
@@ -597,7 +601,7 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(+ 1 -1)", "0");
     ASSERT_OUTPUT_EQ(m, "(1+ 0)", "1");
     ASSERT_OUTPUT_CONTAINS(m, "(1+ 0.0)", "1.0");
-    ASSERT_EXCEPTION(m, "(1+ \"a\")", alisp::exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(1+ \"a\")", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_CONTAINS(m, "(+ +.1 -0.1)", "0.0");
     ASSERT_OUTPUT_EQ(m, "(= 1 1)", "t");
     ASSERT_OUTPUT_EQ(m, "(= 1.0 1)", "t");
@@ -605,7 +609,7 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(= 1 1.0 1.0 1.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(= 1 2)", "nil");
-    ASSERT_EXCEPTION(m, "(truncate 1 0)", alisp::exceptions::ArithError);
+    ASSERT_EXCEPTION(m, "(truncate 1 0)", exceptions::ArithError);
     ASSERT_OUTPUT_EQ(m, "(truncate 1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate 1.1)", "1");
     ASSERT_OUTPUT_EQ(m, "(truncate -1.2)", "-1");
@@ -799,10 +803,10 @@ void testFunctions()
 void testLet()
 {
     alisp::Machine m;
-    ASSERT_EXCEPTION(m, "(let (1) nil)", alisp::exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(let (1) nil)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(let ((x 1) (y (+ 1 2))) (format \"%d\" x) (+ x y))", "4");
     ASSERT_OUTPUT_EQ(m, "(let* ((x 1) (y x)) y)", "1");
-    ASSERT_EXCEPTION(m, "(let ((x 1) (y x)) y)", alisp::exceptions::VoidVariable);
+    ASSERT_EXCEPTION(m, "(let ((x 1) (y x)) y)", exceptions::VoidVariable);
     ASSERT_OUTPUT_EQ(m, R"code(
 (setq y 2)
 (let ((y 1)
@@ -851,7 +855,7 @@ void testCyclicals()
     ASSERT_OUTPUT_EQ(m,
                      "(progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z)",
                      "(1 2 3 2 . #2)");
-    ASSERT_EXCEPTION(m, "(length z)", alisp::exceptions::Error);
+    ASSERT_EXCEPTION(m, "(length z)", exceptions::Error);
     ASSERT_OUTPUT_EQ(m,
                      "(progn (set 'z (list 1 2 3 4 5 6 7))"
                      "(setcdr (cdr (cdr (cdr (cdr (cdr (cdr z)))))) (cdr z))"
@@ -901,7 +905,7 @@ void testMemoryLeaks()
     std::unique_ptr<Machine> m = std::make_unique<Machine>();
     assert(Object::getDebugRefCount() > 0);
     const int baseCount = Object::getDebugRefCount();
-    ASSERT_EXCEPTION(*m, "(pop nil)", alisp::exceptions::Error);
+    ASSERT_EXCEPTION(*m, "(pop nil)", exceptions::Error);
     assert(Object::getDebugRefCount() == baseCount && "Macro call");
 
     // A quite simple circular test case:
@@ -1205,7 +1209,7 @@ void eval(Machine& m, const std::string& expr, bool interactive)
         ex.onHandle(m);
         std::cerr << ex.getMessageString() << std::endl;
     }
-    catch (alisp::exceptions::Exception& ex) {
+    catch (exceptions::Exception& ex) {
         
         std::cerr << "An error was encountered:\n";
         std::cerr << ex.what() << std::endl;

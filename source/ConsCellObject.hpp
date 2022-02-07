@@ -63,6 +63,8 @@ struct ConsCellObject :
         return std::make_unique<ConsCellObject>(*this);
     }
 
+    ObjectPtr reverse() const override;
+
     bool equals(const Object &o) const override
     {
         const ConsCellObject *op = dynamic_cast<const ConsCellObject *>(&o);

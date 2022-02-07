@@ -22,6 +22,9 @@ void Machine::initSequenceFunctions()
     defun("sequencep", [](ObjectPtr obj) {
         return dynamic_cast<Sequence*>(obj.get()) != nullptr;
     });
+    defun("reverse", [](const Sequence& ptr) {
+        return ptr.reverse();
+    });
 }
 
 }

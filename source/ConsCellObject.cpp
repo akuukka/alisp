@@ -12,6 +12,24 @@
 namespace alisp
 {
 
+ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
+{
+    std::unique_ptr<ConsCellObject> reversed = std::make_unique<ConsCellObject>(parent);
+    for (const auto& obj : *this) {
+        if (!reversed->car()) {
+            reversed->setCar(obj.clone());
+        }
+        else {
+            auto prev = reversed->cc;
+            auto newcc = std::make_shared<ConsCell>();
+            newcc->car = obj.clone();
+            newcc->cdr = std::make_unique<ConsCellObject>(prev, parent);
+            reversed->cc = newcc;
+        }
+    }
+    return reversed;
+}
+
 ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
 {
     if (isNil() || !car()->isSymbol()) {

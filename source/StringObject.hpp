@@ -32,6 +32,8 @@ struct StringObject :
         return std::make_unique<StringObject>(*this);
     }
 
+    ObjectPtr reverse() const override;
+
     bool equals(const Object& o) const override
     {
         const StringObject* str = dynamic_cast<const StringObject*>(&o);
