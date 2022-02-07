@@ -670,6 +670,16 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(bool value)
     return value ? makeTrue() : makeNil();
 }
 
+ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(Number num)
+{
+    if (num.isFloat) {
+        return makeFloat(num.f);
+    }
+    else {
+        return makeInt(num.i);
+    }
+}
+
 ALISP_INLINE std::unique_ptr<Object> Machine::makeObject(const Object& obj)
 {
     return obj.clone();

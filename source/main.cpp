@@ -620,6 +620,8 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(floor -1.5)", "-2");
     ASSERT_OUTPUT_EQ(m, "(floor 1.5)", "1");
     ASSERT_OUTPUT_EQ(m, "(ceiling 2)", "2");
+    ASSERT_OUTPUT_EQ(m, "(abs -1.5)", "1.500000");
+    ASSERT_OUTPUT_EQ(m, "(abs -4)", "4");
 }
 
 void testNthFunction()

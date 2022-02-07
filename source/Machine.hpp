@@ -12,6 +12,7 @@ namespace alisp {
 struct Closure;
 struct ConsCellObject;
 struct StringObject;
+struct Number;
 
 class Machine
 {
@@ -22,6 +23,7 @@ class Machine
     void pushLocalVariable(std::string name, std::unique_ptr<Object> obj);
     bool popLocalVariable(std::string name);
     
+    std::unique_ptr<Object> makeObject(Number num);
     std::unique_ptr<Object> makeObject(std::string str);
     std::unique_ptr<Object> makeObject(String str);
     std::unique_ptr<Object> makeObject(const char* value);

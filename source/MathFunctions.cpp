@@ -99,6 +99,11 @@ void initMathFunctions(Machine& m)
     m.defun("isnan", [](double num) { return std::isnan(num); });
     m.defun("evenp", [](std::int64_t i) { return i % 2 == 0; });
     m.defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
+    m.defun("abs", [](Number num) {
+        num.i = std::abs(num.i);
+        num.f = std::abs(num.f);
+        return num;
+    });
     m.makeFunc("=", 1, 0xffff, [&m](FArgs& args) {
         std::int64_t i = 0;
         double f = 0;
