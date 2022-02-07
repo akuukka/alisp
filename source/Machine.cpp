@@ -789,6 +789,12 @@ std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj, const char* 
 ALISP_INLINE
 std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) const
 {
+    if (str == "0.0e+NaN") {
+        return makeFloat(::nan(""));
+    }
+    if (str == "-0.0e+NaN") {
+        return makeFloat(-::nan(""));
+    }
     size_t dotCount = 0;
     size_t digits = 0;
     size_t exps = 0;

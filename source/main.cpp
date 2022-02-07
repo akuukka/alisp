@@ -558,8 +558,8 @@ void testInternFunction()
 
 void testDescribeVariableFunction()
 {
-    alisp::Machine m;
-    ASSERT_EXCEPTION(m, "(describe-variable a)", alisp::exceptions::VoidVariable);
+    Machine m;
+    ASSERT_EXCEPTION(m, "(describe-variable a)", exceptions::VoidVariable);
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'a)", "a is void as a variable");
     m.evaluate("(setq a 12345)");
     ASSERT_OUTPUT_CONTAINS(m, "(describe-variable 'a)", "12345");
@@ -570,12 +570,14 @@ void testDescribeVariableFunction()
 
 void testBasicArithmetic()
 {
-    alisp::Machine m;
+    Machine m;
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
     ASSERT_EXCEPTION(m, "(isnan (/ 0 0))", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(isnan (/ 0.0 0.0))", "t");
     ASSERT_OUTPUT_EQ(m, "(isnan (/ 0 0.0))", "t");
     ASSERT_OUTPUT_EQ(m, "(isnan (/ 0.0 0))", "t");
+    ASSERT_OUTPUT_EQ(m, "(isnan 0.0e+NaN)", "t");
+    ASSERT_OUTPUT_EQ(m, "(isnan -0.0e+NaN)", "t");
     ASSERT_OUTPUT_EQ(m, "(<= 2.1 2)", "nil");
     ASSERT_OUTPUT_EQ(m, "(<= 1 2)", "t");
     ASSERT_OUTPUT_EQ(m, "(<= 2 2)", "t");
