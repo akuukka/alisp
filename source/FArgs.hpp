@@ -99,15 +99,7 @@ struct FArgs
 };
 
 template<typename T>
-constexpr bool specialParamType()
-{
-    return std::is_reference_v<T> ||
-        OptCheck<T>::value ||
-        IsInstantiationOf<std::vector, T>::value;
-}
-
-template<typename T>
-inline typename std::enable_if<std::is_reference_v<T>, T>::type getFuncParam(FArgs& args)
+inline T getFuncParam(FArgs& args)
 {
     if constexpr (std::is_same_v<T, const Function&>) {
         Object* arg = args.pop();
@@ -124,6 +116,35 @@ inline typename std::enable_if<std::is_reference_v<T>, T>::type getFuncParam(FAr
     else if constexpr (std::is_same_v<T, FArgs&>) {
         return args;
     }
+    else if constexpr (IsInstantiationOf<std::vector, T>::value) {
+        T v;
+        using ValueType = typename T::value_type;
+        while (args.hasNext()) {
+            v.push_back(getFuncParam<ValueType>(args));
+        }
+        return v;
+    }
+    else if constexpr (OptCheck<T>::value) {
+        std::optional<typename OptCheck<T>::BaseType> opt;
+        Object* arg;
+        bool conversionFailed = false;
+        if (args.hasNext()) {
+            arg = args.pop();
+            opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
+            if (!opt) {
+                if (arg->isNil()) {
+                    // nil => std::nullopt makes sense
+                }
+                else {
+                    conversionFailed = true;
+                }
+            }
+        }
+        if (conversionFailed) {
+            throw exceptions::WrongTypeArgument(arg->toString());
+        }
+        return opt;
+    }
     else {
         Object* arg = args.pop();
         try {
@@ -133,54 +154,6 @@ inline typename std::enable_if<std::is_reference_v<T>, T>::type getFuncParam(FAr
             throw exceptions::WrongTypeArgument(arg->toString());
         }
     }
-}
-
-template<typename T>
-inline typename std::enable_if<IsInstantiationOf<std::vector, T>::value, T>::type getFuncParam(FArgs& args)
-{
-    T v;
-    using ValueType = typename T::value_type;
-    while (args.hasNext()) {
-        v.push_back(getFuncParam<ValueType>(args));
-    }
-    return v;
-}
-
-template<typename T>
-inline typename std::enable_if<OptCheck<T>::value, T>::type getFuncParam(FArgs& args)
-{
-    std::optional<typename OptCheck<T>::BaseType> opt;
-    Object* arg;
-    bool conversionFailed = false;
-    if (args.hasNext()) {
-        arg = args.pop();
-        opt = arg->valueOrNull<typename OptCheck<T>::BaseType>();
-        if (!opt) {
-            if (arg->isNil()) {
-                // nil => std::nullopt makes sense
-            }
-            else {
-                conversionFailed = true;
-            }
-        }
-    }
-    if (conversionFailed) {
-        throw exceptions::WrongTypeArgument(arg->toString());
-    }
-    return opt;
-}
-
-template<typename T>
-inline typename std::enable_if<!specialParamType<T>(), T>::type getFuncParam(FArgs& args)
-{
-    Object* arg = args.pop();
-    std::optional<typename OptCheck<T>::BaseType> opt = arg->valueOrNull<T>();
-    if (!opt) {
-        throw exceptions::WrongTypeArgument(arg->toString() +
-                                            " passed as parameter to " +
-                                            args.funcName);
-    }
-    return std::move(*opt);
 }
     
 inline Object* FArgs::pop(bool eval)
