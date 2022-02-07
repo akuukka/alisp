@@ -23,4 +23,7 @@ struct Symbol
     std::shared_ptr<Function> function;
 };
 
+Object* get(const ConsCell& plist, const Object& property);
+Object* get(const ConsCellObject& plist, const Object& property);
+
 }

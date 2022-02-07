@@ -16,7 +16,29 @@ ALISP_STATIC ConsCellObject* getPlist(Symbol& symbol)
     return symbol.plist.get();
 }
 
-void Machine::initSymbolFunctions()
+ALISP_INLINE Object* get(const ConsCell& plist, const Object& property)
+{
+    for (auto it = plist.begin(); it != plist.end();) {
+        if ((*it).equals(property)) {
+            if ((it + 1) == plist.end()) {
+                return nullptr;
+            }
+            ++it;
+            return &(*it);
+        }
+        ++it;
+        if (it == plist.end()) break;
+        ++it;
+    }
+    return nullptr;
+}
+
+ALISP_INLINE Object* get(const ConsCellObject& plist, const Object& property)
+{
+    return plist.cc ? get(*plist.cc, property) : nullptr;
+}
+
+ALISP_INLINE void Machine::initSymbolFunctions()
 {
     defun("make-symbol", [&](const std::string& name) -> ObjectPtr {
         std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
