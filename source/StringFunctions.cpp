@@ -1,5 +1,4 @@
 #include "ConsCell.hpp"
-#include "MultiValueObject.hpp"
 #include "ConsCellObject.hpp"
 #include "Error.hpp"
 #include "Machine.hpp"
@@ -251,11 +250,11 @@ void Machine::initStringFunctions()
         ss >> f;
         return makeFloat(f);
     });
-    defun("parse-integer", [](std::string str) -> ObjectPtr {
-        std::int64_t i = std::atoi(str.c_str());
-        auto vals = std::make_unique<MultiValueObject<IntObject>>(i);
-        vals->additionalValues.push_back(makeInt(str.size()));
-        return vals;
+    defun("parse-integer", [](std::string str) {
+        std::stringstream ss(str);
+        std::int64_t i;
+        ss >> i;
+        return i;
     });
     defun("force-output", [](std::ostream* stream) {
         assert(stream);
