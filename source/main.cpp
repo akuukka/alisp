@@ -393,6 +393,7 @@ void testVariables()
     Machine m;
     ASSERT_OUTPUT_EQ(m, "(eq (+ most-positive-fixnum 1) most-negative-fixnum)", "t");
     ASSERT_OUTPUT_EQ(m, "'(;comment\n1)", "(1)");
+    ASSERT_OUTPUT_CONTAINS(m, "1e5", "100000.0");
     ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "nil");
     ASSERT_OUTPUT_EQ(m, "(let ((abracadabra 5))(boundp 'abracadabra))", "t");
     ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "nil");

@@ -791,11 +791,21 @@ std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) cons
 {
     size_t dotCount = 0;
     size_t digits = 0;
+    size_t exps = 0;
     for (size_t i = 0;i < str.size(); i++) {
         const char c = str[i];
         if (c == '.') {
             dotCount++;
             if (dotCount == 2) {
+                return nullptr;
+            }
+        }
+        else if (c == 'e') {
+            if (i == 0) {
+                return nullptr;
+            }
+            exps++;
+            if (exps == 2) {
                 return nullptr;
             }
         }
@@ -820,7 +830,7 @@ std::unique_ptr<Object> Machine::getNumericConstant(const std::string& str) cons
         return nullptr;
     }
     std::stringstream ss(str);
-    if (dotCount) {
+    if (dotCount || exps) {
         double value;
         ss >> value;
         return makeFloat(value);
