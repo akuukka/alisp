@@ -25,11 +25,6 @@ struct Exception : std::runtime_error
 DEFINE_EXCEPTION(UnableToEvaluate)
 DEFINE_EXCEPTION(SyntaxError)
 
-struct VoidFunction : Exception
-{
-    VoidFunction(std::string fname) : Exception("void-function: " + fname) {}
-};
-
 struct VoidVariable : Exception
 {
     VoidVariable(std::string vname) : Exception("void-variable: " + vname) {}
@@ -70,6 +65,18 @@ struct WrongTypeArgument : Error
 {
     WrongTypeArgument(std::string msg) :
         Error(msg, ConvertParsedNamesToUpperCase ? "WRONG-TYPE-ARGUMENT" : "wrong-type-argument") {}
+};
+
+struct VoidFunction : Error
+{
+    VoidFunction(std::string msg) :
+        Error(msg, ConvertParsedNamesToUpperCase ? "VOID-FUNCTION" : "void-function") {}
+};
+
+struct InvalidFunction : Error
+{
+    InvalidFunction(std::string msg) :
+        Error(msg, ConvertParsedNamesToUpperCase ? "INVALID-FUNCTION" : "invalid-function") {}
 };
 
 

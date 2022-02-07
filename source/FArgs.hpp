@@ -109,9 +109,9 @@ inline T getFuncParam(FArgs& args)
             return *func;
         }
         if (arg->isSymbol() || arg->isList()) {
-            throw exceptions::VoidFunction("Void function");
+            throw exceptions::VoidFunction(arg->toString());
         }
-        throw exceptions::Error("Not a function");
+        throw exceptions::InvalidFunction(arg->toString());
     }
     else if constexpr (std::is_same_v<T, FArgs&>) {
         return args;
