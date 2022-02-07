@@ -1,3 +1,4 @@
+#include "Error.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "SymbolObject.hpp"
@@ -60,7 +61,7 @@ ALISP_INLINE ObjectPtr ConsCellObject::eval()
         throw exceptions::VoidFunction(c.car->toString());
     }
     else {
-        throw exceptions::Error("Invalid function " + c.car->toString());
+        throw exceptions::InvalidFunction(c.car->toString());
     }
 }
 
