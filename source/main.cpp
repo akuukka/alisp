@@ -1150,8 +1150,17 @@ void testErrors()
     
 }
 
+void testSequences()
+{
+    Machine m;
+    ASSERT_OUTPUT_EQ(m, "(progn (set 'z (list 1 2 3))"
+                     "(setcdr (cdr (cdr z)) (cdr z)) z)", "(1 2 3 2 . #2)");
+    ASSERT_EXCEPTION(m, "(reverse z)", exceptions::CircularList);
+}
+
 void test()
 {
+    testSequences();
     testListBasics();
     testErrors();
     testFunctions();

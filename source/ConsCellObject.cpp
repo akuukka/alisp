@@ -1,3 +1,4 @@
+#include "ConsCell.hpp"
 #include "Error.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
@@ -19,9 +20,14 @@ ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
         return reversed;
     }
     auto p = cc.get();
+    std::set<ConsCell*> traversed;
     while (p) {
+        if (traversed.count(p)) {
+            throw exceptions::CircularList(toString());
+        }
+        traversed.insert(p);
         if (p->cdr && !p->cdr->isList()) {
-            throw std::runtime_error("Not a proper list.");
+            throw exceptions::WrongTypeArgument(toString());
         }
         auto prev = reversed->cc;
         auto newcc = std::make_shared<ConsCell>();

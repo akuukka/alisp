@@ -79,6 +79,12 @@ struct InvalidFunction : Error
         Error(msg, ConvertParsedNamesToUpperCase ? "INVALID-FUNCTION" : "invalid-function") {}
 };
 
+struct CircularList : Error
+{
+    CircularList(std::string msg) :
+        Error(msg, ConvertParsedNamesToUpperCase ? "CIRCULAR-LIST" : "circular-list") {}
+};
+
 
 } // namespace exceptions
 }

@@ -24,23 +24,7 @@ void Machine::initSequenceFunctions()
     defun("sequencep", [](ObjectPtr obj) {
         return dynamic_cast<Sequence*>(obj.get()) != nullptr;
     });
-    defun("reverse", [](const Object& obj) {
-        if (auto seq = dynamic_cast<const Sequence*>(&obj)) {
-            if (obj.isList()) {
-                if (obj.asList()->cc->isCyclical()) {
-                    throw exceptions::Error("Cyclical list");
-                }
-                try {
-                    return seq->reverse();
-                }
-                catch (std::runtime_error&) {
-                    throw exceptions::WrongTypeArgument(obj.toString());
-                }
-            }
-            return seq->reverse();
-        }
-        throw exceptions::WrongTypeArgument(obj.toString());
-    });
+    defun("reverse", [](const Sequence& seq) { return seq.reverse(); });
 }
 
 }
