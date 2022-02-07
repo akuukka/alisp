@@ -15,8 +15,6 @@ struct StringObject;
 
 class Machine
 {
-    friend void initFunctionFunctions(Machine& m);
-    
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
  
     std::map<std::string, std::vector<std::shared_ptr<Symbol>>> m_locals;
