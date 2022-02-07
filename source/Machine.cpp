@@ -190,13 +190,17 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
         if (c == '\"') {
             return parseString(++expr);
         }
-        else if (isPartOfSymName(c))
-        {
-            return parseNamedObject(expr);
-        }
         else if (c == '\'') {
             expr++;
             return quote(parseNext(expr));
+        }
+        else if (c == '#' && n == '\'') {
+            expr+=2;
+            return quote(parseNext(expr), "function");
+        }
+        else if (isPartOfSymName(c))
+        {
+            return parseNamedObject(expr);
         }
         else if (c == '(') {
             auto l = makeList(this);
@@ -771,10 +775,10 @@ std::unique_ptr<SymbolObject> Machine::makeSymbol(std::string name, bool parsedN
 }
 
 ALISP_INLINE
-std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj)
+std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj, const char* quoteFunc)
 {
     std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>(this);
-    list->cc->car = std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName("quote"));
+    list->cc->car = std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName(quoteFunc));
     std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>(this);
     cdr->cc->car = std::move(obj);
     list->cc->cdr = std::move(cdr);

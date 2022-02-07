@@ -721,6 +721,7 @@ void testFunctions()
     Machine m;
     std::stringstream ss;
     m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
+    ASSERT_OUTPUT_EQ(m, "#'test", "test");
     ASSERT_OUTPUT_EQ(m, "(apply '+ '(3 4))", "7");
     ASSERT_EXCEPTION(m, "(apply '+)", exceptions::Error);
     ASSERT_EXCEPTION(m, "(apply '+ 7)", exceptions::Error);

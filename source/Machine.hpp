@@ -90,7 +90,7 @@ public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr = nullptr);
     std::unique_ptr<SymbolObject> makeSymbol(std::string name, bool parsedName);
-    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj);
+    std::unique_ptr<Object> quote(std::unique_ptr<Object> obj, const char* quoteFunc = "quote");
     std::string parsedSymbolName(std::string name);
     
     std::unique_ptr<Object> parse(const char *expr);
