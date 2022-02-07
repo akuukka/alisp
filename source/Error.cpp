@@ -77,11 +77,11 @@ std::string Error::getMessageString()
 
 void Machine::initErrorFunctions()
 {
-    defun("signal", [&](std::shared_ptr<Symbol> sym, ObjectPtr data) {
+    defun("signal", [&](std::shared_ptr<Symbol> sym, const Object& data) {
         throw exceptions::Error(std::make_unique<SymbolObject>(this,
                                                                sym,
                                                                ""),
-                                data->clone());
+                                data.clone());
     });
     defun("error-message-string", [](const ConsCell& err) {
         return err.car->toString() + ":" + err.cdr->toString();
