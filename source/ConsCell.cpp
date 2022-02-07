@@ -38,7 +38,7 @@ ALISP_INLINE const ConsCell* ConsCell::next() const
 
 ALISP_INLINE ConsCell* ConsCell::next()
 {
-    auto cc = dynamic_cast<ConsCellObject *>(this->cdr.get());
+    auto cc = dynamic_cast<ConsCellObject*>(this->cdr.get());
     if (cc) {
         return cc->cc.get();
     }

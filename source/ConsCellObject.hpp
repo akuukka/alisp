@@ -66,15 +66,7 @@ struct ConsCellObject :
     ObjectPtr copy() const override;
     ObjectPtr reverse() const override;
 
-    bool equals(const Object &o) const override
-    {
-        const ConsCellObject *op = dynamic_cast<const ConsCellObject *>(&o);
-        if (op && !(*this) && !(*op)) {
-            return true;
-        }
-        return this->cc == op->cc;
-    }
-
+    bool equals(const Object &o) const override;
     size_t length() const override;
     std::unique_ptr<Object> eval() override;
     std::unique_ptr<Object> elt(std::int64_t index) const override;
@@ -89,36 +81,7 @@ struct ConsCellObject :
         return cc->end();
     }
 
-    std::unique_ptr<ConsCellObject> deepCopy() const
-    {
-        std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>(parent);
-        ConsCell *origPtr = cc.get();
-        ConsCell *copyPtr = copy->cc.get();
-        assert(origPtr && copyPtr);
-        while (origPtr) {
-            if (origPtr->car) {
-                if (origPtr->car->isList()) {
-                    const auto list = dynamic_cast<ConsCellObject*>(origPtr->car.get());
-                    copyPtr->car = list->deepCopy();
-                }
-                else {
-                    copyPtr->car = origPtr->car->clone();
-                }
-            }
-            auto cdr = origPtr->cdr.get();
-            origPtr = origPtr->next();
-            if (origPtr) {
-                copyPtr->cdr = std::make_unique<ConsCellObject>(parent);
-                copyPtr = copyPtr->next();
-            }
-            else if (cdr) {
-                assert(!cdr->isList());
-                copyPtr->cdr = cdr->clone(); 
-            }
-        }
-        return copy;
-    }
-
+    std::unique_ptr<ConsCellObject> deepCopy() const;
     void traverse(const std::function<bool(const Object&)>& f) const override;
 
     const void* sharedDataPointer() const override { return cc.get(); }

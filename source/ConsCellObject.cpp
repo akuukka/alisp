@@ -50,6 +50,36 @@ ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
     return reversed;
 }
 
+ALISP_INLINE std::unique_ptr<ConsCellObject> ConsCellObject::deepCopy() const
+{
+    std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>(parent);
+    ConsCell *origPtr = cc.get();
+    ConsCell *copyPtr = copy->cc.get();
+    assert(origPtr && copyPtr);
+    while (origPtr) {
+        if (origPtr->car) {
+            if (origPtr->car->isList()) {
+                const auto list = dynamic_cast<ConsCellObject*>(origPtr->car.get());
+                copyPtr->car = list->deepCopy();
+            }
+            else {
+                copyPtr->car = origPtr->car->clone();
+            }
+        }
+        auto cdr = origPtr->cdr.get();
+        origPtr = origPtr->next();
+        if (origPtr) {
+            copyPtr->cdr = std::make_unique<ConsCellObject>(parent);
+            copyPtr = copyPtr->next();
+        }
+        else if (cdr) {
+            assert(!cdr->isList());
+            copyPtr->cdr = cdr->clone(); 
+        }
+    }
+    return copy;
+}
+
 ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
 {
     if (isNil() || !car()->isSymbol()) {
@@ -70,6 +100,15 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
         return func;
     }
     return nullptr;
+}
+
+ALISP_INLINE bool ConsCellObject::equals(const Object &o) const
+{
+    const ConsCellObject *op = dynamic_cast<const ConsCellObject *>(&o);
+    if (op && !(*this) && !(*op)) {
+        return true;
+    }
+    return this->cc == op->cc;
 }
 
 ALISP_INLINE ObjectPtr ConsCellObject::eval()
