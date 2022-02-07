@@ -107,9 +107,7 @@ void Machine::initStringFunctions()
         (**stream) << utf8::encode(codepoint);
         return codepoint;
     });
-    defun("char-or-string-p", [](ObjectPtr obj) {
-        return obj->isString() || obj->isCharacter();
-    });
+    defun("char-or-string-p", [](const Object& obj) { return obj.isString() || obj.isCharacter(); });
     defun("make-string", [](std::int64_t num, std::uint32_t c) {
         if (c < 128) {
             return std::string(num, c);
@@ -133,8 +131,8 @@ void Machine::initStringFunctions()
         }
         return str;
     });
-    defun("stringp", [](ObjectPtr obj) { return obj->isString(); });
-    defun("string-or-null-p", [](ObjectPtr obj) { return obj->isString() || obj->isNil(); });
+    defun("stringp", [](const Object& obj) { return obj.isString(); });
+    defun("string-or-null-p", [](const Object& obj) { return obj.isString() || obj.isNil(); });
     defun("string-bytes", [](const std::string& s) { return static_cast<std::int64_t>(s.size()); });
     defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });
     defun("substring", [](String str,
