@@ -1,6 +1,7 @@
 #include "SymbolObject.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
+#include "ConsCellObject.hpp"
 
 namespace alisp {
 

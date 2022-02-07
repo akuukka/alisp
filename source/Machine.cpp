@@ -22,7 +22,6 @@ namespace alisp {
 
 void initMacroFunctions(Machine& m);
 void initMathFunctions(Machine& m);
-void initSequenceFunctions(Machine& m);
 
 ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxArgs,
                                          const std::function<std::unique_ptr<Object>(FArgs &)>& f)
@@ -276,7 +275,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     initErrorFunctions();
     initMathFunctions(*this);
     initMacroFunctions(*this);
-    initSequenceFunctions(*this);
+    initSequenceFunctions();
     initStringFunctions();
     initSymbolFunctions();
     defun("append", [this](const ConsCell& a, const ConsCell& b) {

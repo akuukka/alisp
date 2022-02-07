@@ -4,13 +4,13 @@
 #include "Object.hpp"
 #include "alisp.hpp"
 #include "Symbol.hpp"
-#include "ConsCellObject.hpp"
 #include "FArgs.hpp"
 #include "String.hpp"
 
 namespace alisp {
 
 struct Closure;
+struct ConsCellObject;
 struct StringObject;
 
 class Machine
@@ -80,6 +80,7 @@ class Machine
     void initFunctionFunctions();
     void initStringFunctions();
     void initSymbolFunctions();
+    void initSequenceFunctions();
 public:
     std::unique_ptr<Object> makeNil();
     std::unique_ptr<ConsCellObject> makeConsCell(ObjectPtr car, ObjectPtr cdr = nullptr);

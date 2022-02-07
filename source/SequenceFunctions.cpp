@@ -1,16 +1,17 @@
 #include "Machine.hpp"
 #include <cstdint>
 #include <stdexcept>
+#include "Sequence.hpp"
 
 namespace alisp
 {
 
-void initSequenceFunctions(Machine& m)
+void Machine::initSequenceFunctions()
 {
-    m.defun("length", [](const Sequence& ptr) {
+    defun("length", [](const Sequence& ptr) {
         return ptr.length();
     });
-    m.defun("elt", [&m](const Sequence& ptr, std::int64_t index) {
+    defun("elt", [](const Sequence& ptr, std::int64_t index) {
         try {
             return ptr.elt(index);
         }
@@ -18,7 +19,7 @@ void initSequenceFunctions(Machine& m)
             throw exceptions::Error("Index out of range.");
         }
     });
-    m.defun("sequencep", [](ObjectPtr obj) {
+    defun("sequencep", [](ObjectPtr obj) {
         return dynamic_cast<Sequence*>(obj.get()) != nullptr;
     });
 }
