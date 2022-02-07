@@ -434,17 +434,13 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         const bool uninterned = m_syms.erase(sym->getSymbolName());
         return uninterned ? makeTrue() : makeNil();
     });
-    makeFunc("intern-soft", 1, 1, [this](FArgs& args) {
-        const auto arg = args.pop();
-        if (!arg->isString()) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
+    defun("intern-soft", [this](const std::string& name) {
         std::unique_ptr<Object> r;
-        if (!m_syms.count(arg->value<std::string>())) {
+        if (!m_syms.count(name)) {
             r = makeNil();
         }
         else {
-            r = std::make_unique<SymbolObject>(this, getSymbol(arg->value<std::string>()));
+            r = std::make_unique<SymbolObject>(this, getSymbol(name));
         }
         return r;
     });
