@@ -49,24 +49,20 @@ class Machine
     }
 
     template<typename R, typename... Args, std::size_t... Is>
-    typename std::enable_if<!std::is_same_v<R, void>, std::function<ObjectPtr(FArgs&)> >::type
-    genCaller(std::function<R(Args...)> f,
-                   std::index_sequence<Is...>)
+    std::function<ObjectPtr(FArgs&)> genCaller(std::function<R(Args...)> f,
+                                               std::index_sequence<Is...>)
     {
-        return [=](FArgs& args) {
-            return makeObject(f((getFuncParam<typename std::tuple_element<Is, std::tuple<Args...>>::type>(args))...));
-        };
-    }
-
-    template<typename R, typename... Args, std::size_t... Is>
-    typename std::enable_if<std::is_same_v<R, void>, std::function<ObjectPtr(FArgs&)> >::type
-    genCaller(std::function<R(Args...)> f,
-              std::index_sequence<Is...>)
-    {
-        return [=](FArgs& args) {
-            f((getFuncParam<typename std::tuple_element<Is, std::tuple<Args...>>::type>(args))...);
-            return makeNil();
-        };
+        if constexpr (std::is_same_v<R, void>) {
+            return [=](FArgs& args) {
+                f((getFuncParam<typename std::tuple_element_t<Is, std::tuple<Args...>>>(args))...);
+                return makeNil();
+            };
+        }
+        else {
+            return [=](FArgs& args) {
+                return makeObject(f((getFuncParam<std::tuple_element_t<Is, std::tuple<Args...>>>(args))...));
+            };
+        }
     }
     
     template<typename R, typename ...Args>
