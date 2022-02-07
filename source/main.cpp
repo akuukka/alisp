@@ -244,7 +244,8 @@ void testStrings()
     String s1("abba");
     ASSERT_EQ(std::string("").substr(0), "");
     ASSERT_EQ(String("").substr(0, 0), "");
-
+    ASSERT_OUTPUT_EQ(m, "(characterp (max-char))", "t");
+    ASSERT_OUTPUT_EQ(m, "(characterp (1+ (max-char)))", "nil");
     ASSERT_EQ(s1.substr(2), "ba");
     ASSERT_EQ(String("AbbaBaba").substr(4), "Baba");
     ASSERT_EQ(String("アブラカダブラ").substr(0), "アブラカダブラ");

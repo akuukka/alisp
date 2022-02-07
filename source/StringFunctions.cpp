@@ -132,6 +132,8 @@ void Machine::initStringFunctions()
         return str;
     });
     defun("stringp", [](const Object& obj) { return obj.isString(); });
+    defun("characterp", [](const Object& obj) { return obj.isCharacter(); });
+    defun("max-char", []() { return utf8::MaxChar; });
     defun("string-or-null-p", [](const Object& obj) { return obj.isString() || obj.isNil(); });
     defun("string-bytes", [](const std::string& s) { return static_cast<std::int64_t>(s.size()); });
     defun("concat", [](const std::string& str1, const std::string& str2) { return str1 + str2; });

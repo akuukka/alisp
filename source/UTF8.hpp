@@ -9,6 +9,8 @@ namespace alisp
 
 namespace utf8 {
 
+constexpr std::uint32_t MaxChar = 0x10ffff;
+
 constexpr int u8length(const char* s)
 {
     constexpr std::uint8_t const u8_length[] = {

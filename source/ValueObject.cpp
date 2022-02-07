@@ -7,7 +7,7 @@ namespace alisp
 
 ALISP_INLINE bool IntObject::isCharacter() const
 {
-    return utf8::isValidCodepoint(value);
+    return value >= 0 && value <= utf8::MaxChar;
 }
 
 }
