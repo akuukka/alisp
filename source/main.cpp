@@ -572,6 +572,9 @@ void testBasicArithmetic()
 {
     Machine m;
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
+    ASSERT_OUTPUT_EQ(m, "(zerop 0.0)", "t");
+    ASSERT_OUTPUT_EQ(m, "(zerop 0)", "t");
+    ASSERT_OUTPUT_EQ(m, "(zerop 1)", "nil");
     ASSERT_EXCEPTION(m, "(isnan (/ 0 0))", exceptions::Error);
     ASSERT_OUTPUT_EQ(m, "(isnan (/ 0.0 0.0))", "t");
     ASSERT_OUTPUT_EQ(m, "(isnan (/ 0 0.0))", "t");

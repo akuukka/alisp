@@ -610,6 +610,9 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return makeNil();
     });
+    defun("integerp", [](const Object& obj) { return obj.isInt(); });
+    defun("floatp", [](const Object& obj) { return obj.isFloat(); });
+    defun("zerop", [](Number obj) { return obj.isFloat ? (obj.f == 0) : (obj.i == 0); });
     evaluate(getInitCode());
 }
 
