@@ -403,17 +403,12 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         if (!arg || arg->isNil()) {
             return makeNil();
         }
-        return arg->clone();
+        auto backquote = [](auto&& backquote, const Object* obj) {
+            return obj->clone();
+        };
+        return backquote(backquote, arg);
     });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
-    makeFunc("symbol-name", 1, 1, [](FArgs& args) {
-        const auto obj = args.pop();
-        const auto sym = dynamic_cast<SymbolObject*>(obj);
-        if (!sym) {
-            throw exceptions::WrongTypeArgument(obj->toString());
-        }
-        return std::make_unique<StringObject>(sym->getSymbolName());
-    });
     makeFunc("eval", 1, 1, [](FArgs& args) { return args.pop()->eval(); });
     makeFunc("progn", 0, 0xfffff, [&](FArgs& args) {
         std::unique_ptr<Object> ret = makeNil();

@@ -51,9 +51,8 @@ ALISP_INLINE void Machine::initSymbolFunctions()
         symbol->name = name;
         return std::make_unique<SymbolObject>(this, symbol, "");
     });
-    defun("symbol-plist", [&](Symbol& symbol) {
-        return getPlist(symbol)->clone();
-    });
+    defun("symbol-plist", [&](Symbol& symbol) { return getPlist(symbol)->clone(); });
+    defun("symbol-name", [](const Symbol& sym) { return sym.name; });
     defun("symbolp", [](const Object& obj) { return obj.isSymbol(); });
     defun("put", [&](Symbol& symbol, const Object& property, const Object& value) {
         auto plist = getPlist(symbol);
