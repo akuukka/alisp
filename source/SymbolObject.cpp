@@ -46,7 +46,7 @@ ALISP_INLINE std::unique_ptr<Object> SymbolObject::eval()
 ALISP_INLINE std::shared_ptr<Function> SymbolObject::resolveFunction() const
 {
     if (sym) {
-        return sym->function;
+        return sym->resolveFunction();
     }
     assert(name.size());
     return parent->resolveFunction(name);

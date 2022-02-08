@@ -161,13 +161,14 @@ void Machine::initFunctionFunctions()
         if (!sym.function) {
             return sym.parent->makeNil();
         }
-        if (!sym.function->closure) {
-            return std::make_unique<FunctionObject>(sym.function);
+        auto func = sym.resolveFunction();
+        if (func && func->closure) {
+            return makeConsCell(makeSymbol("lambda", true), func->closure->clone());
         }
-        else {
-            return makeConsCell(makeSymbol("lambda", true), sym.function->closure->clone());
-        }
-        return makeNil();
+        return sym.function->clone();
+    });
+    defun("fset", [](Symbol& sym, const Object& definition) {
+        return false;
     });
 }
 

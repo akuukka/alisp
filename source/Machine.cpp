@@ -29,14 +29,14 @@ ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxA
     if (ConvertParsedNamesToUpperCase) {
         name = utf8::toUpper(name);
     }
-    auto func = std::make_unique<Function>();
+    auto func = std::make_shared<Function>();
     func->name = name;
     func->minArgs = minArgs;
     func->maxArgs = maxArgs;
     func->func = std::move(f);
     auto sym = getSymbol(name);
-    sym->function = std::move(func);
-    return sym->function.get();
+    sym->function = std::make_unique<FunctionObject>(func);
+    return func.get();
 }
 
 ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)
@@ -561,7 +561,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
 ALISP_INLINE std::shared_ptr<Function> Machine::resolveFunction(const std::string& name)
 {
     if (m_syms.count(name)) {
-        return m_syms[name]->function;
+        return m_syms[name]->resolveFunction();
     }
     return nullptr;
 }

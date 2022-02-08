@@ -127,7 +127,7 @@ void initMacroFunctions(Machine& m)
             const auto& macro = storage->at(macroName);
             return expand(m, macro, [&a](){ return a.pop(false); })->eval();
         });
-        m.getSymbol(macroName)->function->isMacro = true;
+        m.getSymbol(macroName)->resolveFunction()->isMacro = true;
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(macroName));
     });
     m.defun("macroexpand", [storage](ObjectPtr obj) { 

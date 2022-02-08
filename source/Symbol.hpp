@@ -20,10 +20,12 @@ struct Symbol
     std::string description;
     std::unique_ptr<Object> variable;
     std::unique_ptr<ConsCellObject> plist;
-    std::shared_ptr<Function> function;
+    std::unique_ptr<Object> function;
 
     Symbol(Machine& parent);
     ~Symbol();
+
+    std::shared_ptr<Function> resolveFunction() const;
 };
 
 Object* get(const ConsCell& plist, const Object& property);

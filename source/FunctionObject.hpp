@@ -42,6 +42,8 @@ struct FunctionObject : Object, ConvertibleTo<const Function&>
     {
         return value;
     }
+
+    bool isFunction() const override { return true; }
 };
 
 }
