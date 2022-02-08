@@ -54,6 +54,7 @@ ALISP_INLINE void Machine::initSymbolFunctions()
     defun("symbol-plist", [&](Symbol& symbol) {
         return getPlist(symbol)->clone();
     });
+    defun("symbolp", [](const Object& obj) { return obj.isSymbol(); });
     defun("put", [&](Symbol& symbol, const Object& property, const Object& value) {
         auto plist = getPlist(symbol);
         if (plist->isNil()) {

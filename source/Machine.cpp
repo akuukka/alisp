@@ -399,17 +399,13 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
     makeFunc("backquote", 1, 1, [this](FArgs& args) {
-        if (args.cc->car && !args.cc->car->isNil()) {
-            return args.cc->car->clone();
-        }
-        else {
+        auto arg = args.current();
+        if (!arg || arg->isNil()) {
             return makeNil();
         }
+        return arg->clone();
     });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
-    makeFunc("symbolp", 1, 1, [this](FArgs& args) {
-        return dynamic_cast<SymbolObject*>(args.pop()) ? makeTrue() : makeNil();
-    });
     makeFunc("symbol-name", 1, 1, [](FArgs& args) {
         const auto obj = args.pop();
         const auto sym = dynamic_cast<SymbolObject*>(obj);
