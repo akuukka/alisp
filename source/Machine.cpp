@@ -193,6 +193,14 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
             expr++;
             return quote(parseNext(expr));
         }
+        else if (c == '`') {
+            expr++;
+            return quote(parseNext(expr), "backquote");
+        }
+        else if (c == ',') {
+            expr++;
+            return quote(parseNext(expr), ",");
+        }
         else if (c == '#' && n == '\'') {
             expr+=2;
             return quote(parseNext(expr), "function");
@@ -389,6 +397,14 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     });
     makeFunc("function", 1, 1, [this](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
+    });
+    makeFunc("backquote", 1, 1, [this](FArgs& args) {
+        if (args.cc->car && !args.cc->car->isNil()) {
+            return args.cc->car->clone();
+        }
+        else {
+            return makeNil();
+        }
     });
     defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
     makeFunc("symbolp", 1, 1, [this](FArgs& args) {

@@ -198,7 +198,7 @@ void testNullFunction()
 
 void testQuote()
 {
-    alisp::Machine m;
+    Machine m;
     ASSERT_OUTPUT_EQ(m, "'()", "nil");
     ASSERT_OUTPUT_EQ(m, "'(1 2 3)", "(1 2 3)");
     ASSERT_OUTPUT_EQ(m, "(quote (+ 1 2))", "(+ 1 2)");
@@ -206,6 +206,7 @@ void testQuote()
     ASSERT_OUTPUT_EQ(m, "'foo", "foo");
     ASSERT_OUTPUT_EQ(m, "''foo", "'foo");
     ASSERT_OUTPUT_EQ(m, "'(quote foo)", "'foo");
+    ASSERT_OUTPUT_EQ(m, "`(a b))", "(a b)");
 }
 
 void testCarFunction()
@@ -1164,6 +1165,7 @@ void testSequences()
 
 void test()
 {
+    testQuote();
     testSequences();
     testListBasics();
     testErrors();
@@ -1178,7 +1180,6 @@ void test()
     testCyclicals(); // Lot of work to do here still...
     testMacros();
     testLet();
-    testQuote();
     testSymbols();
     testIf();
     testDeepCopy();
