@@ -497,9 +497,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return obj->clone();
     });
     defun("nthcdr", [&](std::int64_t index, const Object& obj) {
-        if (!obj.isList()) {
-            throw exceptions::WrongTypeArgument(obj.toString());
-        }
+        requireType<ConsCellObject>(obj);
         const Object* p = obj.asList();
         for (size_t i = 0; i < index; i++) {
             if (!p || !p->asList()) {
@@ -531,23 +529,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return ret;
     });
-    makeFunc("cons", 2, 2, [](FArgs& args) {
-        return std::make_unique<ConsCellObject>(args.pop()->clone(), args.pop()->clone(), &args.m);
-    });
-    makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
-        auto newList = makeList(&args.m);
-        ConsCell *lastCc = newList->cc.get();
-        bool first = true;
-        for (auto obj : args) {
-            if (!first) {
-                lastCc->cdr = std::make_unique<ConsCellObject>(&args.m);
-                lastCc = lastCc->next();
-            }
-            lastCc->car = obj->clone();
-            first = false;
-        }
-        return newList;
-    });
     defun("boundp", [](const Symbol& sym) { return sym.variable ? true : false; });
     defun("makunbound", [](std::shared_ptr<Symbol> sym) {
         if (!sym || sym->constant) {
@@ -568,22 +549,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("while", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         while (!args.cc->car->eval()->isNil()) { 
             args.evalAll(args.cc->next());
-        }
-        return makeNil();
-    });
-    makeFunc("dolist", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
-        const auto p1 = args.pop(false)->asList();
-        const std::string varName = p1->car()->asSymbol()->name;
-        auto evaluated = p1->cdr()->asList()->car()->eval();
-        auto codestart = args.cc;
-        for (const auto& obj : *evaluated->asList()) {
-            pushLocalVariable(varName, obj.clone());
-            AtScopeExit onExit([this, varName](){ popLocalVariable(varName); });
-            auto code = codestart;
-            while (code) {
-                code->car->eval();
-                code = code->next();
-            }
         }
         return makeNil();
     });
