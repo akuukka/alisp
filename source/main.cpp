@@ -210,24 +210,22 @@ void testQuote()
     ASSERT_OUTPUT_EQ(m, "`(a b))", "(a b)");
     ASSERT_OUTPUT_EQ(m, "`(a ,(+ 1 2))", "(a 3)");
     ASSERT_OUTPUT_EQ(m, "`(1 2 (3 ,(+ 4 5)))", "(1 2 (3 9))");
+    ASSERT_OUTPUT_EQ(m, "(progn (setq some-list '(2 3)) `(1 ,@some-list 4 ,@some-list) )",
+                     "(1 2 3 4 2 3)");
 }
 
 void testCarFunction()
 {
     Machine m;
-    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
-        m.evaluate("(car 1)");
-    }));
-    assert(expect<alisp::exceptions::WrongTypeArgument>([&]() {
-        m.evaluate("(car (+ 1 1))");
-    }));
-    assert(m.evaluate("(car nil)")->toString() == NilName);
-    assert(m.evaluate("(car ())")->toString() == NilName);
-    assert(m.evaluate("(car '())")->toString() == NilName);
-    assert(m.evaluate("(car '(1 2))")->toString() == "1");
+    ASSERT_EXCEPTION(m, "(car 1)", exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(car (+ 1 1))", exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(car nil)", NilName);
+    ASSERT_OUTPUT_EQ(m, "(car ())",NilName);
+    ASSERT_OUTPUT_EQ(m, "(car '())",NilName);
+    ASSERT_OUTPUT_EQ(m, "(car '(1 2))","1");
     ASSERT_EXCEPTION(m, "(car (1 2))", exceptions::Error);
-    assert(m.evaluate("(car '(1 2))")->toString() == "1");
-    assert(m.evaluate("(car '((1 2)))")->toString() == "(1 2)");
+    ASSERT_OUTPUT_EQ(m, "(car '(1 2))","1");
+    ASSERT_OUTPUT_EQ(m, "(car '((1 2)))","(1 2)");
     ASSERT_OUTPUT_EQ(m, "(setq test (list 'a 'b' c))", "(a b c)");
     ASSERT_OUTPUT_EQ(m, "(setcar test 'd)", "d");
     ASSERT_OUTPUT_EQ(m, "test", "(d b c)");
@@ -368,7 +366,7 @@ void testStrings()
 void testDivision()
 {
     Machine m;
-    assert(m.evaluate("(/ 10 2)")->toString() == "5");
+    ASSERT_OUTPUT_EQ(m, "(/ 10 2)", "5");
     // Same as emacs: one float arg means that also preceding integer divisions
     // are handled as floating point operations.
     assert(std::abs(m.evaluate("(/ 10 3 3.0)")->value<double>() - 1.11111111) < 0.001);

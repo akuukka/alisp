@@ -197,8 +197,14 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
             return quote(parseNext(expr), "backquote");
         }
         else if (c == ',') {
-            expr++;
-            return quote(parseNext(expr), ",");
+            if (n == '@') {
+                expr+=2;
+                return quote(parseNext(expr), ",@");
+            }
+            else {
+                expr++;
+                return quote(parseNext(expr), ",");
+            }
         }
         else if (c == '#' && n == '\'') {
             expr+=2;
@@ -369,6 +375,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             return makeNil();
         }
         auto comma = getSymbol(",");
+        auto splice = getSymbol(",@");
         auto backquote = [&](auto&& backquote, const Object& obj) -> ObjectPtr {
             if (!obj.isList() || obj.isNil()) {
                 return obj.clone();
@@ -377,6 +384,17 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             for (const auto& obj : *obj.asList()) {
                 if (obj.isList() && !obj.isNil() && obj.asList()->car() == comma) {
                     builder.append(obj.asList()->cadr()->eval());
+                }
+                else if (obj.isList() && !obj.isNil() && obj.asList()->car() == splice) {
+                    auto li = obj.asList()->cadr()->eval();
+                    if (li->isList()) {
+                        for (const auto& obj : *li->asList()) {
+                            builder.append(obj.clone());
+                        }
+                    }
+                    else {
+                        builder.append(std::move(li));
+                    }
                 }
                 else if (obj.isList()) {
                     builder.append(backquote(backquote, obj));
