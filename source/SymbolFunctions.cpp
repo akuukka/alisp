@@ -47,7 +47,7 @@ ALISP_INLINE Object* get(std::unique_ptr<ConsCellObject>& plist, const Object& p
 ALISP_INLINE void Machine::initSymbolFunctions()
 {
     defun("make-symbol", [&](const std::string& name) -> ObjectPtr {
-        std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
+        std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>(*this);
         symbol->name = name;
         return std::make_unique<SymbolObject>(this, symbol, "");
     });

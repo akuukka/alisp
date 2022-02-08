@@ -13,7 +13,7 @@ class Machine;
 
 struct Symbol
 {
-    Machine* parent = nullptr;
+    Machine* parent;
     bool constant = false;
     bool local = false;
     std::string name;
@@ -21,6 +21,8 @@ struct Symbol
     std::unique_ptr<Object> variable;
     std::unique_ptr<ConsCellObject> plist;
     std::shared_ptr<Function> function;
+
+    Symbol(Machine& parent) : parent(&parent) {}
 };
 
 Object* get(const ConsCell& plist, const Object& property);

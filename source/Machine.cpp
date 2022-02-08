@@ -56,8 +56,7 @@ ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
         return m_locals[name].back();
     }
     if (!m_syms.count(name)) {
-        auto newSym = std::make_shared<Symbol>();
-        newSym->parent = this;
+        auto newSym = std::make_shared<Symbol>(*this);
         if (name.size() && name[0] == ':') {
             newSym->constant = true;
             newSym->variable = std::make_unique<SymbolObject>(this, nullptr, name);
@@ -872,7 +871,7 @@ ALISP_INLINE std::unique_ptr<Object> Machine::makeTrue()
 
 ALISP_INLINE void Machine::pushLocalVariable(std::string name, ObjectPtr obj)
 {
-    auto sym = std::make_shared<Symbol>();
+    auto sym = std::make_shared<Symbol>(*this);
     m_locals[name].push_back(sym);
     sym->variable = std::move(obj);
     sym->local = true;
