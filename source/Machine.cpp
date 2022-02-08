@@ -368,15 +368,18 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         if (!arg) {
             return makeNil();
         }
+        auto comma = getSymbol(",");
         auto backquote = [&](auto&& backquote, const Object& obj) -> ObjectPtr {
             if (!obj.isList() || obj.isNil()) {
                 return obj.clone();
             }
             ListBuilder builder(*this);
             for (const auto& obj : *obj.asList()) {
-                if (obj.isList() && !obj.isNil() && obj.asList()->car() == getSymbol(",")) {
-                    std::cout << "found comma: eval " << obj.asList()->cadr()->toString() << std::endl;
+                if (obj.isList() && !obj.isNil() && obj.asList()->car() == comma) {
                     builder.append(obj.asList()->cadr()->eval());
+                }
+                else if (obj.isList()) {
+                    builder.append(backquote(backquote, obj));
                 }
                 else {
                     builder.append(obj);                    

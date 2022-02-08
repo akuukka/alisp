@@ -209,6 +209,7 @@ void testQuote()
     ASSERT_OUTPUT_EQ(m, "'(a ,b,c)", "(a (, b) (, c))");
     ASSERT_OUTPUT_EQ(m, "`(a b))", "(a b)");
     ASSERT_OUTPUT_EQ(m, "`(a ,(+ 1 2))", "(a 3)");
+    ASSERT_OUTPUT_EQ(m, "`(1 2 (3 ,(+ 4 5)))", "(1 2 (3 9))");
 }
 
 void testCarFunction()
