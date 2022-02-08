@@ -9,6 +9,9 @@
 namespace alisp
 {
 
+ALISP_INLINE Symbol::Symbol(Machine& parent) : parent(&parent) {}
+ALISP_INLINE Symbol::~Symbol() {}
+
 ALISP_STATIC ConsCellObject* getPlist(Symbol& symbol)
 {
     if (!symbol.plist) {
@@ -79,6 +82,28 @@ ALISP_INLINE void Machine::initSymbolFunctions()
             }
         }
         return value.clone();
+    });
+    defun("intern", [this](std::string name) -> std::unique_ptr<Object> {
+            return std::make_unique<SymbolObject>(this, getSymbol(name));
+        });
+    makeFunc("unintern", 1, 1, [this](FArgs& args) {
+        const auto arg = args.pop();
+        const auto sym = dynamic_cast<SymbolObject*>(arg);
+        if (!sym) {
+            throw exceptions::WrongTypeArgument(arg->toString());
+        }
+        const bool uninterned = m_syms.erase(sym->getSymbolName());
+        return uninterned ? makeTrue() : makeNil();
+    });
+    defun("intern-soft", [this](const std::string& name) {
+        std::unique_ptr<Object> r;
+        if (!m_syms.count(name)) {
+            r = makeNil();
+        }
+        else {
+            r = std::make_unique<SymbolObject>(this, getSymbol(name));
+        }
+        return r;
     });
 }
 

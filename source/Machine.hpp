@@ -79,6 +79,7 @@ class Machine
     std::unique_ptr<Object> getNumericConstant(const std::string& str) const;
 
     void initErrorFunctions();
+    void initListFunctions();
     void initFunctionFunctions();
     void initStringFunctions();
     void initSymbolFunctions();

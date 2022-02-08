@@ -74,4 +74,6 @@ struct SymbolObject :
     }
 };
 
+bool operator==(const Object* obj, std::shared_ptr<Symbol> sym);
+
 }

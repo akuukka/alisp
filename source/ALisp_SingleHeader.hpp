@@ -9,6 +9,7 @@
 #include "ConsCell.cpp"
 #include "ConsCellObject.cpp"
 #include "SharedDataObject.cpp"
+#include "ListFunctions.cpp"
 #include "Error.cpp"
 #include "SymbolObject.cpp"
 #include "SymbolFunctions.cpp"

@@ -206,7 +206,9 @@ void testQuote()
     ASSERT_OUTPUT_EQ(m, "'foo", "foo");
     ASSERT_OUTPUT_EQ(m, "''foo", "'foo");
     ASSERT_OUTPUT_EQ(m, "'(quote foo)", "'foo");
+    ASSERT_OUTPUT_EQ(m, "'(a ,b,c)", "(a (, b) (, c))");
     ASSERT_OUTPUT_EQ(m, "`(a b))", "(a b)");
+    ASSERT_OUTPUT_EQ(m, "`(a ,(+ 1 2))", "(a 3)");
 }
 
 void testCarFunction()

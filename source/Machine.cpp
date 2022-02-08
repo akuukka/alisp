@@ -280,6 +280,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
                 makeInt(std::numeric_limits<std::int64_t>::min()));
     initFunctionFunctions();
     initErrorFunctions();
+    initListFunctions();
     initMathFunctions(*this);
     initMacroFunctions(*this);
     initSequenceFunctions();
@@ -294,34 +295,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
     defun("null", [](bool isNil) { return !isNil; });
     defun("not", [](bool value) { return !value; });
-    defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {
-        return cc.car = newcar->clone(), std::move(newcar);
-    });
-    defun("setcdr", [](ConsCell& cc, ObjectPtr newcdr) {
-        return cc.cdr = newcdr->clone(), std::move(newcdr);
-    });
-    defun("car", [this](const ConsCell& cc) { return cc.car ? cc.car->clone() : makeNil(); });
-    defun("cdr", [this](const ConsCell& cc) { return cc.cdr ? cc.cdr->clone() : makeNil(); });
-    defun("consp", [](const Object& obj) { return obj.isList() && !obj.isNil(); });
-    defun("listp", [](const Object& obj) { return obj.isList(); });
-    defun("nlistp", [](const Object& obj) { return !obj.isList(); });
-    defun("proper-list-p", [this](const Object& obj) -> ObjectPtr {
-        if (!obj.isList()) return makeNil();
-        ConsCell* cc = obj.value<ConsCell*>();
-        if (cc->isCyclical()) {
-            return makeNil();
-        }
-        auto p = cc;
-        std::int64_t count = p->car ? 1 : 0;
-        while (p->cdr && p->cdr->isList()) {
-            count++;
-            p = p->cdr->value<ConsCell*>();
-            if (p->cdr && !p->cdr->isList()) {
-                return makeNil();
-            }
-        }
-        return makeInt(count);
-    });
     makeFunc("if", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         if (!!*args.pop()) {
             return args.pop()->clone();
@@ -384,13 +357,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
              std::bind(let, std::placeholders::_1, false));
     makeFunc("let*", 2, std::numeric_limits<int>::max(),
              std::bind(let, std::placeholders::_1, true));
-    defun("make-list", [this](std::int64_t n, ObjectPtr ptr) {
-        std::unique_ptr<Object> r = makeNil();
-        for (std::int64_t i=0; i < n; i++) {
-            r = std::make_unique<ConsCellObject>(ptr->clone(), r->clone(), this);
-        }
-        return r;
-    });
     makeFunc("quote", 1, 1, [this](FArgs& args) {
         return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
     });
@@ -399,24 +365,37 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     });
     makeFunc("backquote", 1, 1, [this](FArgs& args) {
         auto arg = args.current();
-        if (!arg || arg->isNil()) {
+        if (!arg) {
             return makeNil();
         }
-        auto backquote = [](auto&& backquote, const Object* obj) {
-            return obj->clone();
+        auto backquote = [&](auto&& backquote, const Object& obj) -> ObjectPtr {
+            if (!obj.isList() || obj.isNil()) {
+                return obj.clone();
+            }
+            ListBuilder builder(*this);
+            for (const auto& obj : *obj.asList()) {
+                if (obj.isList() && !obj.isNil() && obj.asList()->car() == getSymbol(",")) {
+                    std::cout << "found comma: eval " << obj.asList()->cadr()->toString() << std::endl;
+                    builder.append(obj.asList()->cadr()->eval());
+                }
+                else {
+                    builder.append(obj);                    
+                }
+            }
+            return builder.get();
         };
-        return backquote(backquote, arg);
+        return backquote(backquote, *arg);
     });
-    defun("numberp", [](ObjectPtr obj) { return obj->isInt() || obj->isFloat(); });
+    defun("numberp", [](const Object& obj) { return obj.isInt() || obj.isFloat(); });
     makeFunc("eval", 1, 1, [](FArgs& args) { return args.pop()->eval(); });
-    makeFunc("progn", 0, 0xfffff, [&](FArgs& args) {
+    makeFunc("progn", 0, std::numeric_limits<int>::max(), [&](FArgs& args) {
         std::unique_ptr<Object> ret = makeNil();
         for (auto obj : args) {
             ret = std::move(obj);
         }
         return ret;
     });
-    makeFunc("prog1", 0, 0xfffff, [&](FArgs& args) {
+    makeFunc("prog1", 0, std::numeric_limits<int>::max(), [&](FArgs& args) {
         std::unique_ptr<Object> ret;
         for (auto obj : args) {
             assert(obj);
@@ -426,28 +405,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         if (!ret) ret = makeNil();
         return ret;
-    });
-    defun("intern", [this](std::string name) -> std::unique_ptr<Object> {
-            return std::make_unique<SymbolObject>(this, getSymbol(name));
-        });
-    makeFunc("unintern", 1, 1, [this](FArgs& args) {
-        const auto arg = args.pop();
-        const auto sym = dynamic_cast<SymbolObject*>(arg);
-        if (!sym) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
-        const bool uninterned = m_syms.erase(sym->getSymbolName());
-        return uninterned ? makeTrue() : makeNil();
-    });
-    defun("intern-soft", [this](const std::string& name) {
-        std::unique_ptr<Object> r;
-        if (!m_syms.count(name)) {
-            r = makeNil();
-        }
-        else {
-            r = std::make_unique<SymbolObject>(this, getSymbol(name));
-        }
-        return r;
     });
     makeFunc("set", 2, 2, [this](FArgs& args) {
         const SymbolObject nil(this, nullptr, parsedSymbolName("nil"));

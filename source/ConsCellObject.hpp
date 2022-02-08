@@ -54,6 +54,7 @@ struct ConsCellObject :
     const ConsCellObject* asList() const override { return this; }
     Object* car() const { return cc->car.get();  };
     Object* cdr() const { return cc->cdr.get();  };
+    Object* cadr() const;
     Object* setCar(ObjectPtr obj) { cc->car = std::move(obj); return cc->car.get(); }
     Object* setCdr(ObjectPtr obj) { cc->cdr = std::move(obj); return cc->cdr.get(); }
     std::shared_ptr<Function> resolveFunction() const override;

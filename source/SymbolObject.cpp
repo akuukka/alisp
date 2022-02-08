@@ -5,6 +5,11 @@
 
 namespace alisp {
 
+ALISP_INLINE bool operator==(const Object* obj, std::shared_ptr<Symbol> sym)
+{
+    return obj->isSymbol() && obj->asSymbol()->getSymbol() == sym;
+}
+
 ALISP_INLINE void SymbolObject::traverse(const std::function<bool(const Object&)>& f) const
 {
     if (!f(*this) || !sym) {

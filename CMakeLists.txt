@@ -17,6 +17,7 @@ if (NOT SINGLE_HEADER)
     ${CMAKE_SOURCE_DIR}/source/Error.cpp
     ${CMAKE_SOURCE_DIR}/source/StringFunctions.cpp
     ${CMAKE_SOURCE_DIR}/source/Function.cpp
+    ${CMAKE_SOURCE_DIR}/source/ListFunctions.cpp
     ${CMAKE_SOURCE_DIR}/source/ConsCell.cpp
     ${CMAKE_SOURCE_DIR}/source/MacroFunctions.cpp
     ${CMAKE_SOURCE_DIR}/source/SymbolObject.cpp

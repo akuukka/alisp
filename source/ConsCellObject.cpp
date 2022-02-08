@@ -13,6 +13,11 @@
 namespace alisp
 {
 
+ALISP_INLINE Object* ConsCellObject::cadr() const
+{
+    return cdr() && cdr()->isList() ? cdr()->asList()->car() : nullptr;
+}
+
 ALISP_INLINE ObjectPtr ConsCellObject::copy() const
 {
     ListBuilder builder(*parent);

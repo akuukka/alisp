@@ -22,7 +22,8 @@ struct Symbol
     std::unique_ptr<ConsCellObject> plist;
     std::shared_ptr<Function> function;
 
-    Symbol(Machine& parent) : parent(&parent) {}
+    Symbol(Machine& parent);
+    ~Symbol();
 };
 
 Object* get(const ConsCell& plist, const Object& property);
