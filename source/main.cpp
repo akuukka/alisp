@@ -212,6 +212,8 @@ void testQuote()
     ASSERT_OUTPUT_EQ(m, "`(1 2 (3 ,(+ 4 5)))", "(1 2 (3 9))");
     ASSERT_OUTPUT_EQ(m, "(progn (setq some-list '(2 3)) `(1 ,@some-list 4 ,@some-list) )",
                      "(1 2 3 4 2 3)");
+    ASSERT_OUTPUT_EQ(m, "`(1 2 ,@() 3)", "(1 2 3)");
+    ASSERT_OUTPUT_EQ(m, "`(1 2 ,() 3)", "(1 2 nil 3)");
 }
 
 void testCarFunction()
