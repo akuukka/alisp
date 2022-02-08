@@ -1,3 +1,4 @@
+#include "Error.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "ValueObject.hpp"
@@ -8,6 +9,21 @@ namespace alisp
 
 void Machine::initListFunctions()
 {
+    defun("append", [this](const ConsCell& a, const ConsCell& b) {
+        ListBuilder builder(*this);
+        for (const auto& obj : a) { builder.append(obj); }
+        b.iterateList([&](Object* obj, bool circular, Object* dotcdr) {
+            if (circular) {
+                throw exceptions::CircularList("Can't append");
+            }
+            builder.append(obj->clone());
+            if (dotcdr) {
+                builder.tail()->cdr = dotcdr->clone();
+            }
+            return true;
+        });
+        return builder.get();
+    });
     defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {
         return cc.car = newcar->clone(), std::move(newcar);
     });

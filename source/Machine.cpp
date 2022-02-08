@@ -292,12 +292,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     initSequenceFunctions();
     initStringFunctions();
     initSymbolFunctions();
-    defun("append", [this](const ConsCell& a, const ConsCell& b) {
-        ListBuilder builder(*this);
-        for (const auto& obj : a) { builder.append(obj); }
-        for (const auto& obj : b) { builder.append(obj); }
-        return builder.get();
-    });
     defun("atom", [](const Object& obj) { return !obj.isList() || obj.isNil(); });
     defun("null", [](bool isNil) { return !isNil; });
     defun("not", [](bool value) { return !value; });

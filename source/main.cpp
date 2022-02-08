@@ -117,6 +117,7 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res
 void testListBasics()
 {
     Machine m;
+    ASSERT_OUTPUT_EQ(m, "(append '(1 2) '(3 4 . 5))", "(1 2 3 4 . 5)");
     ASSERT_OUTPUT_EQ(m, "(append '(1 2 3 4) '(5 6 7 8))", "(1 2 3 4 5 6 7 8)");
     ASSERT_OUTPUT_EQ(m, "(make-list 3 'pigs)", "(pigs pigs pigs)");
     ASSERT_OUTPUT_EQ(m, "(make-list 0 'pigs)", "nil");

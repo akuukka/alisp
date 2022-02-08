@@ -6,20 +6,20 @@ namespace alisp
 
 ALISP_INLINE void ConsCell::iterateList(std::function<bool(Object* car,
                                                  bool isCircular,
-                                                 bool dotted)> f) const
+                                                 Object* dotcdr)> f) const
 {
     auto p = this;
     std::set<const ConsCell*> traversed;
     bool circular = false;
-    bool dotted = false;
+    Object* dotcdr = nullptr;
     while (p && p->car) {
         if (traversed.count(p)) {
             circular = true;
         }
         if (p->cdr && !p->cdr->isList()) {
-            dotted = true;
+            dotcdr = p->cdr.get();
         }
-        if (!f(p->car.get(), circular, dotted)) {
+        if (!f(p->car.get(), circular, dotcdr)) {
             return;
         }
         traversed.insert(p);
