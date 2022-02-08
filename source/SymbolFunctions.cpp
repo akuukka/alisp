@@ -86,14 +86,10 @@ ALISP_INLINE void Machine::initSymbolFunctions()
     defun("intern", [this](std::string name) -> std::unique_ptr<Object> {
             return std::make_unique<SymbolObject>(this, getSymbol(name));
         });
-    makeFunc("unintern", 1, 1, [this](FArgs& args) {
-        const auto arg = args.pop();
-        const auto sym = dynamic_cast<SymbolObject*>(arg);
-        if (!sym) {
-            throw exceptions::WrongTypeArgument(arg->toString());
-        }
-        const bool uninterned = m_syms.erase(sym->getSymbolName());
-        return uninterned ? makeTrue() : makeNil();
+    defun("unintern", [this](const Symbol& sym) {
+        const bool uninterned =
+            m_syms.count(sym.name) && m_syms[sym.name].get() == &sym && m_syms.erase(sym.name);
+        return uninterned;
     });
     defun("intern-soft", [this](const std::string& name) {
         std::unique_ptr<Object> r;

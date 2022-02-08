@@ -504,6 +504,13 @@ void testSymbols()
     ASSERT_EXCEPTION(m, "(progn (setq testint (make-symbol \"abracadabra\"))"
                      "(+ 1 (eval testint)))", exceptions::VoidVariable);
 
+    // Unintern should't unintern if the symbol passed is actually an uninterned symbol with
+    // same name:
+    ASSERT_OUTPUT_EQ(m, "(setq interned 1)", "1");
+    ASSERT_OUTPUT_EQ(m, "(unintern (make-symbol \"interned\"))", "nil");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"interned\")", "interned");
+    ASSERT_OUTPUT_EQ(m, "(unintern (intern-soft \"interned\"))", "t");
+    ASSERT_OUTPUT_EQ(m, "(intern-soft \"interned\")", "nil");
 }
 
 void testKeywords()
