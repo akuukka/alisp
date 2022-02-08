@@ -146,16 +146,8 @@ void Machine::initFunctionFunctions()
         auto func = obj.resolveFunction();
         return func && !func->isMacro;
     });
-    defun("func-arity", [&](const Object& obj) {
-        auto func = obj.resolveFunction();
-        if (!func) {
-            if (!obj.isSymbol()) {
-                throw exceptions::Error("invalid function " + obj.toString());
-            }
-            throw exceptions::Error("void-function " + obj.toString());
-            
-        }
-        return makeConsCell(makeInt(func->minArgs), makeInt(func->maxArgs));
+    defun("func-arity", [&](const Function& func) {
+        return makeConsCell(makeInt(func.minArgs), makeInt(func.maxArgs));
     });
     defun("symbol-function", [&](const Symbol& sym) -> ObjectPtr {
         if (!sym.function) {
