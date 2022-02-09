@@ -817,6 +817,19 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, R"code(
 (funcall (lambda (a b c) (+ a b c)) 1 (* 2 3) 1)
 )code", "8");
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun dumb-f () "I'm a function")
+(defvar my-function 'dumb-f)
+(funcall my-function)
+)code", "\"I'm a function\"");
+
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun foobar () "old")
+(set 'foo-backup (symbol-function 'foobar))
+(defun foobar () "new")
+(fset 'foobar foo-backup)
+(foobar)
+)code", "\"old\"");
 }
 
 void testLet()
