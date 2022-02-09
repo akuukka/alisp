@@ -75,7 +75,7 @@ ALISP_INLINE bool isWhiteSpace(const char c)
 
 ALISP_INLINE bool onlyWhitespace(const char* expr)
 {
-    bool inComment = true;
+    bool inComment = false;
     while (*expr) {
         if (*expr == ';') {
             inComment = true;
@@ -563,7 +563,6 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parse(const char *expr)
     if (onlyWhitespace(expr)) {
         return r;
     }
-
     auto prog = makeList(this);
     prog->cc->car =
         std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName("progn"));

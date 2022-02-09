@@ -208,7 +208,7 @@ void testQuote()
     ASSERT_OUTPUT_EQ(m, "''foo", "'foo");
     ASSERT_OUTPUT_EQ(m, "'(quote foo)", "'foo");
     ASSERT_OUTPUT_EQ(m, "'(a ,b,c)", "(a (, b) (, c))");
-    ASSERT_OUTPUT_EQ(m, "`(a b))", "(a b)");
+    ASSERT_OUTPUT_EQ(m, "`(a b)", "(a b)");
     ASSERT_OUTPUT_EQ(m, "`(a ,(+ 1 2))", "(a 3)");
     ASSERT_OUTPUT_EQ(m, "`(1 2 (3 ,(+ 4 5)))", "(1 2 (3 9))");
     ASSERT_OUTPUT_EQ(m, "(progn (setq some-list '(2 3)) `(1 ,@some-list 4 ,@some-list) )",
@@ -753,7 +753,8 @@ void testFunctions()
     Machine m;
     std::stringstream ss;
     m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
-
+    ASSERT_OUTPUT_EQ(m, "(defun tempfunc () nil)"
+                     "(let (tempfunc)(setq tempfunc 5) (fboundp 'tempfunc))", "t");
     ASSERT_OUTPUT_EQ(m, "(fset 'minus '-)", "-");
     ASSERT_OUTPUT_EQ(m, "(fboundp 'minus)", "t");
     ASSERT_OUTPUT_EQ(m, "(fset 'minus 1)" , "1");
@@ -763,9 +764,6 @@ void testFunctions()
     ASSERT_EXCEPTION(m, "(fboundp 5)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(fboundp '+)", "t");
     ASSERT_OUTPUT_EQ(m, "(fboundp '++++)", "nil");
-    ASSERT_OUTPUT_EQ(m, "(progn (defun tempfunc () nil) "
-                     "(let (tempfunc)(setq tempfunc 5) (fboundp 'tempfunc)))",
-                     "t");
     ASSERT_OUTPUT_EQ(m, "(progn (defun gms(y) (+ 1 y)) (symbol-function 'gms))",
                      "(lambda (y) (+ 1 y))");
     ASSERT_OUTPUT_EQ(m, "#'test", "test");
