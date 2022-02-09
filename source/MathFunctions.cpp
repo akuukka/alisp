@@ -91,20 +91,20 @@ ALISP_INLINE std::int64_t ceiling(std::variant<double, std::int64_t> obj)
     return static_cast<std::int64_t>(std::ceil(toDouble(obj)));
 }
 
-void initMathFunctions(Machine& m)
+ALISP_INLINE void Machine::initMathFunctions()
 {
-    m.defun("truncate", truncate);
-    m.defun("floor", floor);
-    m.defun("ceiling", ceiling);
-    m.defun("isnan", [](double num) { return std::isnan(num); });
-    m.defun("evenp", [](std::int64_t i) { return i % 2 == 0; });
-    m.defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
-    m.defun("abs", [](Number num) {
+    defun("truncate", truncate);
+    defun("floor", floor);
+    defun("ceiling", ceiling);
+    defun("isnan", [](double num) { return std::isnan(num); });
+    defun("evenp", [](std::int64_t i) { return i % 2 == 0; });
+    defun("%", [](std::int64_t in1, std::int64_t in2) { return in1 % in2; });
+    defun("abs", [](Number num) {
         num.i = std::abs(num.i);
         num.f = std::abs(num.f);
         return num;
     });
-    m.makeFunc("=", 1, 0xffff, [&m](FArgs& args) {
+    makeFunc("=", 1, 0xffff, [&](FArgs& args) {
         std::int64_t i = 0;
         double f = 0;
         bool fp = false;
@@ -114,7 +114,7 @@ void initMathFunctions(Machine& m)
                 const double v = sym->value<double>();
                 if (!first) {
                     if (v != f) {
-                        return makeNil(&m);
+                        return makeNil();
                     }
                 }
                 f = v;
@@ -124,7 +124,7 @@ void initMathFunctions(Machine& m)
                 const std::int64_t v = sym->value<std::int64_t>();
                 if (!first) {
                     if ((!fp && v != i) || (fp && v != f)) {
-                        return makeNil(&m);
+                        return makeNil();
                     }
                 }
                 i = v;
@@ -135,9 +135,9 @@ void initMathFunctions(Machine& m)
             }
             first = false;
         }
-        return m.makeTrue();
+        return makeTrue();
     });
-    m.defun("1+", [](std::variant<double, std::int64_t> obj) -> std::unique_ptr<Object> {
+    defun("1+", [](std::variant<double, std::int64_t> obj) -> std::unique_ptr<Object> {
         try {
             const std::int64_t i = std::get<std::int64_t>(obj);
             return makeInt(i+1);
@@ -147,7 +147,7 @@ void initMathFunctions(Machine& m)
             return makeFloat(f+1.0);
         }
     });
-    m.makeFunc("+", 0, 0xffff, [](FArgs& args) {
+    makeFunc("+", 0, 0xffff, [](FArgs& args) {
         std::int64_t i = 0;
         double f = 0;
         bool fp = false;
@@ -170,7 +170,7 @@ void initMathFunctions(Machine& m)
         return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
             : static_cast<std::unique_ptr<Object>>(makeInt(i));
     });
-    m.makeFunc("*", 0, 0xffff, [](FArgs& args) {
+    makeFunc("*", 0, 0xffff, [](FArgs& args) {
         std::int64_t i = 1;
         double f = 1;
         bool fp = false;
@@ -193,7 +193,7 @@ void initMathFunctions(Machine& m)
         return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
             : static_cast<std::unique_ptr<Object>>(makeInt(i));
     });
-    m.makeFunc("/", 1, 0xffff, [](FArgs& args) {
+    makeFunc("/", 1, 0xffff, [](FArgs& args) {
         std::int64_t i = 0;
         double f = 0;
         bool first = true;
@@ -233,10 +233,11 @@ void initMathFunctions(Machine& m)
         return fp ? static_cast<std::unique_ptr<Object>>(makeFloat(f))
             : static_cast<std::unique_ptr<Object>>(makeInt(i));
     });
-    m.defun("<=", numberCompare<std::less_equal>);
-    m.defun("<", numberCompare<std::less>);
-    m.defun(">=", numberCompare<std::greater_equal>);
-    m.defun(">", numberCompare<std::greater>);
+    defun("<=", numberCompare<std::less_equal>);
+    defun("<", numberCompare<std::less>);
+    defun(">=", numberCompare<std::greater_equal>);
+    defun(">", numberCompare<std::greater>);
+    defun("ash", [](std::int64_t integer, std::int64_t count) { return integer << count; });
 }
 
 }

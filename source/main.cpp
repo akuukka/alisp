@@ -582,6 +582,9 @@ void testDescribeVariableFunction()
 void testBasicArithmetic()
 {
     Machine m;
+    ASSERT_OUTPUT_EQ(m, "(ash 1 0)", "1");
+    ASSERT_OUTPUT_EQ(m, "(ash 1 1)", "2");
+    ASSERT_OUTPUT_EQ(m, "(ash 1 2)", "4");
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
     ASSERT_OUTPUT_EQ(m, "(zerop 0.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(zerop 0)", "t");
