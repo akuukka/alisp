@@ -404,10 +404,11 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("numberp", [](const Object& obj) { return obj.isInt() || obj.isFloat(); });
     makeFunc("eval", 1, 1, [](FArgs& args) { return args.pop()->eval(); });
     makeFunc("progn", 0, std::numeric_limits<int>::max(), [&](FArgs& args) {
-        std::unique_ptr<Object> ret = makeNil();
+        std::unique_ptr<Object> ret;
         for (auto obj : args) {
             ret = std::move(obj);
         }
+        if (!ret) ret = makeNil();
         return ret;
     });
     makeFunc("prog1", 0, std::numeric_limits<int>::max(), [&](FArgs& args) {
