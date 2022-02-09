@@ -15,6 +15,14 @@ struct ConsCellObject;
 struct StringObject;
 struct Number;
 
+template<typename T, typename O>
+void requireType(const O& obj)
+{
+    if (!dynamic_cast<const T*>(&obj)) {
+        throw exceptions::WrongTypeArgument(obj.toString());
+    }        
+}
+
 class Machine
 {
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
@@ -36,14 +44,6 @@ class Machine
     std::unique_ptr<Object> makeObject(size_t i);
     std::unique_ptr<Object> makeObject(bool);
     std::unique_ptr<Object> makeObject(const Object&);
-
-    template<typename T, typename O>
-    void requireType(const O& obj)
-    {
-        if (!dynamic_cast<const T*>(&obj)) {
-            throw exceptions::WrongTypeArgument(obj.toString());
-        }        
-    }
 
     template <typename... Args>
     inline size_t getMinArgs()

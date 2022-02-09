@@ -29,6 +29,14 @@ void Machine::initListFunctions()
     defun("cons", [this](const Object& car, const Object& cdr) { 
         return makeConsCell(car.clone(), cdr.clone());
     });
+    defun("last", [this](const Object& obj) {
+        requireType<ConsCellObject>(obj);
+        auto ptr = &obj;
+        while (ptr->isList() && ptr->asList()->cdr() && ptr->asList()->cdr()->isList()) {
+            ptr = ptr->asList()->cdr();
+        }
+        return ptr->clone();
+    });
     makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
         auto newList = makeList(&args.m);
         ConsCell *lastCc = newList->cc.get();

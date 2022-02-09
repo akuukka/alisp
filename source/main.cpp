@@ -663,6 +663,10 @@ void testListFunction()
     ASSERT_OUTPUT_EQ(m, "(list 1 2 '(3 4 5) 'foo)", "(1 2 (3 4 5) foo)");
     ASSERT_OUTPUT_EQ(m, "(list)", "nil");
     ASSERT_OUTPUT_EQ(m, "(cdr (list 'a 'b 'c))", "(b c)");
+    ASSERT_OUTPUT_EQ(m, "(last '(1)) ; (3) ", "(1)");
+    ASSERT_OUTPUT_EQ(m, "(last '(1 2 3)) ; (3) ", "(3)");
+    ASSERT_OUTPUT_EQ(m, "(last '(1 2 . 3))", "(2 . 3)");
+    ASSERT_OUTPUT_EQ(m, "(last nil)", "nil");
 }
 
 void testEvalFunction()
