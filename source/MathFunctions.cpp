@@ -243,6 +243,16 @@ ALISP_INLINE void Machine::initMathFunctions()
     defun("lsh", [](std::int64_t integer, std::int64_t count) {
         return count >= 0 ? (integer >> count) : (integer << (-count));
     });
+    defun("logand", [](std::int64_t integer, Rest& rest) {
+        while (rest.hasNext()) {
+            const auto next = rest.pop();
+            if (!next->isInt()) {
+                throw exceptions::WrongTypeArgument(next->toString());
+            }
+            integer = integer & next->value<std::int64_t>();
+        }
+        return integer;
+    });
 }
 
 }
