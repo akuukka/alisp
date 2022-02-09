@@ -168,6 +168,19 @@ void Machine::initFunctionFunctions()
         sym.function = definition.clone();
         return definition.clone();
     });
+    defun("fboundp", [this](const Object& obj) {
+        requireType<SymbolObject>(obj);
+        if (obj.asSymbol()->sym) {
+            return obj.asSymbol()->sym->function != nullptr;
+        }
+        if (getSymbol(obj.asSymbol()->name)->function) {
+            return true;
+        }
+        if (getSymbol(obj.asSymbol()->name, true)->function) {
+            return true;
+        }
+        return false;
+    });
 }
 
 }

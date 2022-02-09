@@ -753,6 +753,12 @@ void testFunctions()
     Machine m;
     std::stringstream ss;
     m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
+    ASSERT_EXCEPTION(m, "(fboundp 5)", exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(fboundp '+)", "t");
+    ASSERT_OUTPUT_EQ(m, "(fboundp '++++)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(progn (defun tempfunc () nil) "
+                     "(let (tempfunc)(setq tempfunc 5) (fboundp 'tempfunc)))",
+                     "t");
     ASSERT_OUTPUT_EQ(m, "(progn (defun gms(y) (+ 1 y)) (symbol-function 'gms))",
                      "(lambda (y) (+ 1 y))");
     ASSERT_OUTPUT_EQ(m, "#'test", "test");
