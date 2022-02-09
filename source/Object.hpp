@@ -115,7 +115,6 @@ struct Object :
     virtual bool isString() const { return false; }
     virtual bool isCharacter() const { return false; }
     virtual bool isSymbol() const { return false; }
-    virtual bool isFunction() const { return false; }
 
     virtual bool operator!() const { return false; }
     virtual Object* trySelfEvaluate() { return nullptr; }

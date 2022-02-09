@@ -115,7 +115,6 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
             return expand(m, closure.get(), [&a](){ return a.pop(false); })->eval();
         };
         func->isMacro = true;
-        func->closure = closure;
         return func;
     }
     const bool lambda = car()->asSymbol()->getSymbol() == m.getSymbol(LambdaName);
@@ -128,7 +127,6 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
         func->minArgs = fp.min;
         func->maxArgs = fp.max;
         func->func = [&m, closure](FArgs& a) { return m.execute(*closure, a); };
-        func->closure = closure;
         return func;
     }
     return SharedDataObject::resolveFunction();

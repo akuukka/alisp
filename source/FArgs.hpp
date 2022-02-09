@@ -19,7 +19,6 @@ struct Function
     int minArgs = 0;
     int maxArgs = 0xffff;
     std::function<std::unique_ptr<Object>(FArgs&)> func;
-    std::shared_ptr<ConsCellObject> closure;
     bool isMacro = false;
 };
 
