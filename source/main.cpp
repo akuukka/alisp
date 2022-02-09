@@ -586,6 +586,10 @@ void testBasicArithmetic()
     ASSERT_OUTPUT_EQ(m, "(ash 1 1)", "2");
     ASSERT_OUTPUT_EQ(m, "(ash 1 2)", "4");
     ASSERT_OUTPUT_EQ(m, "(ash 8 -1)", "4");
+    ASSERT_OUTPUT_EQ(m, "(logxor 12 5 7)", "14");
+    ASSERT_OUTPUT_EQ(m, "(lognot 5)", "-6");
+    ASSERT_OUTPUT_EQ(m, "(logcount 43)", "4");
+    ASSERT_OUTPUT_EQ(m, "(logcount -43)", "3");
     ASSERT_OUTPUT_EQ(m, "-1", "-1");
     ASSERT_OUTPUT_EQ(m, "(zerop 0.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(zerop 0)", "t");

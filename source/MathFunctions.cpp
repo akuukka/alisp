@@ -243,7 +243,8 @@ ALISP_INLINE void Machine::initMathFunctions()
     defun("lsh", [](std::int64_t integer, std::int64_t count) {
         return count >= 0 ? (integer >> count) : (integer << (-count));
     });
-    defun("logand", [](std::int64_t integer, Rest& rest) {
+    defun("logand", [](Rest& rest) {
+        std::int64_t integer = -1;
         while (rest.hasNext()) {
             const auto next = rest.pop();
             if (!next->isInt()) {
@@ -252,6 +253,36 @@ ALISP_INLINE void Machine::initMathFunctions()
             integer = integer & next->value<std::int64_t>();
         }
         return integer;
+    });
+    defun("logior", [](Rest& rest) {
+        std::int64_t integer = 0;
+        while (rest.hasNext()) {
+            const auto next = rest.pop();
+            if (!next->isInt()) {
+                throw exceptions::WrongTypeArgument(next->toString());
+            }
+            integer = integer | next->value<std::int64_t>();
+        }
+        return integer;
+    });
+    defun("logxor", [](Rest& rest) {
+        std::int64_t integer = 0;
+        while (rest.hasNext()) {
+            const auto next = rest.pop();
+            if (!next->isInt()) {
+                throw exceptions::WrongTypeArgument(next->toString());
+            }
+            integer = integer ^ next->value<std::int64_t>();
+        }
+        return integer;
+    });
+    defun("lognot", [](std::int64_t integer) { return ~integer; });
+    defun("logcount", [](std::int64_t integer) {
+        std::int64_t c = 0;
+        for (std::int64_t i = 0;i < 64; i++) {
+            c += (integer & (1L << i)) ? (integer >= 0 ? 1 : 0) : (integer < 0 ? 1 : 0);
+        }
+        return c;
     });
 }
 
