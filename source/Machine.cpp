@@ -563,21 +563,13 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parse(const char *expr)
     if (onlyWhitespace(expr)) {
         return r;
     }
-    auto prog = makeList(this);
-    prog->cc->car =
-        std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName("progn"));
-    
-    auto consCell = makeList(this);
-    consCell->cc->car = std::move(r);
-    auto lastCell = consCell->cc.get();
-    
+    ListBuilder builder(*this);
+    builder.append(makeSymbol("progn", true));
+    builder.append(std::move(r));
     while (!onlyWhitespace(expr)) {
-        auto n = parseNext(expr);
-        lastCell->cdr = std::make_unique<ConsCellObject>(std::move(n), nullptr, this);
-        lastCell = lastCell->next();
+        builder.append(parseNext(expr));
     }
-    prog->cc->cdr = std::move(consCell);
-    return prog;
+    return builder.get();
 }
 
 ALISP_INLINE std::string Machine::parseNextName(const char*& str)
