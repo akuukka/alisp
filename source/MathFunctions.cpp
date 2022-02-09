@@ -284,6 +284,9 @@ ALISP_INLINE void Machine::initMathFunctions()
         }
         return c;
     });
+    defun("sin", [](Number f) { return std::sin(f.f); });
+    defun("cos", [](Number f) { return std::cos(f.f); });
+    defun("tan", [](Number f) { return std::tan(f.f); });
 }
 
 }

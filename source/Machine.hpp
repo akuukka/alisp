@@ -33,6 +33,7 @@ class Machine
     bool popLocalVariable(std::string name);
     
     std::unique_ptr<Object> makeObject(Number num);
+    std::unique_ptr<Object> makeObject(double value);
     std::unique_ptr<Object> makeObject(std::string str);
     std::unique_ptr<Object> makeObject(String str);
     std::unique_ptr<Object> makeObject(const char* value);
