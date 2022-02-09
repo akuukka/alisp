@@ -813,4 +813,14 @@ ALISP_INLINE Machine::SymbolRef Machine::operator[](const char* name)
     return ref;
 }
 
+ALISP_INLINE void Machine::setVariable(std::string name,
+                                       std::unique_ptr<Object> obj,
+                                       bool constant)
+{
+    assert(obj);
+    auto s = getSymbol(name);
+    s->variable = std::move(obj);
+    s->constant = constant;
+}
+
 }

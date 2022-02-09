@@ -115,14 +115,7 @@ public:
         defunInternal(name, lambda_to_func(f));
     }
 
-    void setVariable(std::string name, std::unique_ptr<Object> obj, bool constant = false)
-    {
-        assert(obj);
-        auto s = getSymbol(name);
-        s->variable = std::move(obj);
-        s->constant = constant;
-    }
-
+    void setVariable(std::string name, std::unique_ptr<Object> obj, bool constant = false);
     std::shared_ptr<Symbol> getSymbolOrNull(std::string name, bool alwaysGlobal = false);
     std::shared_ptr<Symbol> getSymbol(std::string name, bool alwaysGlobal = false);
     std::unique_ptr<Object> makeTrue();
