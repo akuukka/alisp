@@ -99,7 +99,7 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
         throw exceptions::VoidFunction(NilName);
     }
     if (!car()->isSymbol()) {
-        return SharedDataObject::resolveFunction();
+        return SharedValueObjectBase::resolveFunction();
     }
     auto& m = *parent;
     const bool macro = car()->asSymbol()->getSymbol() == m.getSymbol(MacroName);
@@ -129,7 +129,7 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
         func->func = [&m, closure](FArgs& a) { return m.execute(*closure, a); };
         return func;
     }
-    return SharedDataObject::resolveFunction();
+    return SharedValueObjectBase::resolveFunction();
 }
 
 ALISP_INLINE bool ConsCellObject::equals(const Object &o) const

@@ -4,7 +4,7 @@
 
 namespace alisp {
 
-ALISP_INLINE void SharedDataObject::tryDestroySharedData()
+ALISP_INLINE void SharedValueObjectBase::tryDestroySharedData()
 {
     if (!sharedDataPointer()) {
         return;
@@ -38,7 +38,7 @@ ALISP_INLINE void SharedDataObject::tryDestroySharedData()
     std::map<const void*, RefData> referredTimes;
     size_t maxUseCount = 0;
     traverse([&](const Object& baseObj) {
-        const SharedDataObject* obj = dynamic_cast<const SharedDataObject*>(&baseObj);
+        const SharedValueObjectBase* obj = dynamic_cast<const SharedValueObjectBase*>(&baseObj);
         if (!obj || !obj->sharedDataPointer()) {
             return false;
         }
@@ -64,13 +64,13 @@ ALISP_INLINE void SharedDataObject::tryDestroySharedData()
     if (Object::destructionDebug()) {
         std::cout << "The whole cycle is unreachable!\n";
     }
-    std::set<SharedDataObject*> clearList;
+    std::set<SharedValueObjectBase*> clearList;
     traverse([&](const Object& baseObj) {
-        const SharedDataObject* obj = dynamic_cast<const SharedDataObject*>(&baseObj);
+        const SharedValueObjectBase* obj = dynamic_cast<const SharedValueObjectBase*>(&baseObj);
         if (!obj || !obj->sharedDataPointer()) {
             return false;
         }
-        auto cc = const_cast<SharedDataObject*>(obj);
+        auto cc = const_cast<SharedValueObjectBase*>(obj);
         if (clearList.count(cc)) {
             return false;
         }

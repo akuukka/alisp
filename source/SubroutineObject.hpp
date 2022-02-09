@@ -1,34 +1,20 @@
 #pragma once
-#include "Object.hpp"
+#include "SharedDataObject.hpp"
 #include "FArgs.hpp"
 
 namespace alisp
 {
 
-struct SubroutineObject : Object
+struct SubroutineObject : SharedValueObject<Function>
 {
-    std::shared_ptr<Function> value;
-
-    SubroutineObject(std::shared_ptr<Function> func) : value(func) { }
-    std::string toString(bool aesthetic) const override
-    {
-        return "#<subr " + value->name + ">";
-    }
-
-    std::unique_ptr<Object> clone() const override
+    SubroutineObject(std::shared_ptr<Function> func) : SharedValueObject<Function>(func) { }
+    
+    std::unique_ptr<Object> clone() const override 
     {
         return std::make_unique<SubroutineObject>(value);
     }
-
-    bool equals(const Object& o) const override
-    {
-        const SubroutineObject* op = dynamic_cast<const SubroutineObject*>(&o);
-        if (!op) {
-            return false;
-        }
-        return value == op->value;
-    }
-
+    
+    std::string toString(bool aesthetic) const override { return "#<subr " + value->name + ">"; }
     std::shared_ptr<Function> resolveFunction() const override { return value; }
 };
 

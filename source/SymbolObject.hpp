@@ -7,7 +7,7 @@ namespace alisp
 {
 
 struct SymbolObject :
-        SharedDataObject,
+        SharedValueObjectBase,
         ConvertibleTo<const Symbol&>,
         ConvertibleTo<Symbol&>,
         ConvertibleTo<std::shared_ptr<Symbol>>

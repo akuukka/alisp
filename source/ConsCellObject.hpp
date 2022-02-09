@@ -11,7 +11,7 @@ class Machine;
 struct Symbol;
 
 struct ConsCellObject :
-        SharedDataObject,
+        SharedValueObjectBase,
         Sequence,
         ConvertibleTo<const Symbol&>,
         ConvertibleTo<Symbol&>,
