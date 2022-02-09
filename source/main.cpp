@@ -677,6 +677,13 @@ void testEvalFunction()
 void testMacros()
 {
     Machine m;
+    ASSERT_OUTPUT_EQ(m, "((lambda (x) (+ x 1)) 1)", "2");
+    ASSERT_OUTPUT_EQ(m, "(defmacro test-macro (a) a)", "test-macro");
+    ASSERT_OUTPUT_EQ(m, "(symbol-function 'test-macro)", "(macro lambda (a) a)");
+    ASSERT_OUTPUT_EQ(m, "(macroexpand 1)", "1");
+    ASSERT_OUTPUT_EQ(m, "(macroexpand nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(macroexpand '(test-macro 123))", "123");
+    ASSERT_OUTPUT_EQ(m, "(test-macro 123)", "123");
     ASSERT_OUTPUT_EQ(m, "(when t)", "nil");
     ASSERT_OUTPUT_EQ(m, "(when nil t)", "nil");
     ASSERT_OUTPUT_EQ(m, "(when t nil)", "nil");
@@ -698,8 +705,6 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(asetf 1 2))", "(2 3)");
     ASSERT_OUTPUT_EQ(m, "ty", "2");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(setf (car x) 7))", "(let* ((v x)) (setcar v 7))");
-    ASSERT_OUTPUT_EQ(m, "(macroexpand 1)", "1");
-    ASSERT_OUTPUT_EQ(m, "(macroexpand nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(inc r))", "(set 'r (1+ r))");
     ASSERT_OUTPUT_EQ(m, "(setf x (list 1 2))", "(1 2)");
     ASSERT_OUTPUT_EQ(m, "(setf (car x) 3)", "3");
@@ -761,6 +766,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(symbol-function '+)", "#<subr +>");
     ASSERT_OUTPUT_EQ(m, "(funcall (symbol-function '+) 1 2)", "3");
     ASSERT_OUTPUT_EQ(m, "(functionp 5)", "nil");
+    ASSERT_EXCEPTION(m, "(functionp abbu)", exceptions::VoidVariable);
     ASSERT_OUTPUT_EQ(m, "(functionp 'set)", "t");
     ASSERT_OUTPUT_EQ(m, "(functionp 'setq)", "nil");
     ASSERT_OUTPUT_EQ(m, "(functionp nil)", "nil");
@@ -779,6 +785,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(defun foo () (princ \"foo\" debugstream) 5)", "foo");
     ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (princ msg debugstream) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(symbol-function nil)", "nil");
+    std::cout << m.evaluate("(symbol-function 'foo2)") << std::endl;
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-function 'foo2))", "t");
     ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(lambda (msg) (princ msg debugstream) msg)");
     ASSERT_EXCEPTION(m, "((symbol-function 'foo2) \"fsda\")", exceptions::Error);
@@ -1176,11 +1183,12 @@ void testSequences()
 
 void test()
 {
+    testFunctions();
+    testMacros();
     testQuote();
     testSequences();
     testListBasics();
     testErrors();
-    testFunctions();
     testNullFunction();
     testCarFunction();
     testConverter();
@@ -1189,7 +1197,6 @@ void test()
     testVariables();
     testMemoryLeaks();
     testCyclicals(); // Lot of work to do here still...
-    testMacros();
     testLet();
     testSymbols();
     testIf();

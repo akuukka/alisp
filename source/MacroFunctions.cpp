@@ -6,8 +6,6 @@
 namespace alisp
 {
 
-namespace {
-
 void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::string, Object*>& conv)
 {
     auto p = obj.cc.get();
@@ -25,46 +23,48 @@ void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::string, Object*
     }
 }
 
-std::pair<bool, std::string> isMacroCall(const ConsCellObject* form)
+std::pair<bool, ConsCellObject*> isMacroCall(const ConsCellObject* form)
 {
     if (form && form->car() && form->car()->isSymbol()) {
         const SymbolObject* sym = dynamic_cast<const SymbolObject*>(form->car());
         assert(sym);
-        const std::shared_ptr<Function> func = sym->parent->resolveFunction(sym->name);
-        if (func && func->isMacro) {
-            return std::make_pair(true, sym->name);
+        if (sym->getSymbol()->function->isList()) {
+            auto list = sym->getSymbol()->function->asList();
+            if (list->car() && list->car()->isSymbol() &&
+                list->car() == form->parent->getSymbol(MacroName))
+            {
+                return std::make_pair(true, list);
+            }
         }
     }
-    return std::make_pair(false, std::string());
+    return std::make_pair(false, nullptr);
 }
 
-struct Macro {
-    ConsCellObject code;
-    FuncParams params;
-    Macro(const ConsCellObject& code, FuncParams fp) : code(code), params(fp) { }
-};
-
-ObjectPtr expand(Machine& m, const Macro& macro, std::function<Object*()> paramSource)
+ObjectPtr expand(Machine& m,
+                 ConsCellObject* code,
+                 std::function<Object*()> paramSource)
 {
+    const auto params = getFuncParams(*code->cdr()->asList());
+    code = code->cdr()->asList()->cdr()->asList();
     ListBuilder builder(m);
     ObjectPtr restList;
     std::map<std::string, Object*> conv;
-    const int nc = static_cast<int>(macro.params.names.size());
+    const int nc = static_cast<int>(params.names.size());
     for (int i = 0; i < nc; i++) {
-        if (macro.params.rest && i == nc - 1) {
+        if (params.rest && i == nc - 1) {
             auto next = paramSource();
             while (next) {
                 builder.append(next->clone());
                 next = paramSource();
             }
             restList = builder.get();
-            conv[macro.params.names[i]] = restList.get();
+            conv[params.names[i]] = restList.get();
         }
         else {
-            conv[macro.params.names[i]] = paramSource();
+            conv[params.names[i]] = paramSource();
         }
     }
-    auto copied = macro.code.deepCopy();
+    auto copied = code->deepCopy();
     renameSymbols(m, *copied, conv);
     ObjectPtr ret;
     for (const auto& obj : *copied) {
@@ -73,8 +73,7 @@ ObjectPtr expand(Machine& m, const Macro& macro, std::function<Object*()> paramS
     return ret;
 }
 
-ObjectPtr macroExpand(std::shared_ptr<std::map<std::string, Macro>> storage,
-                      bool once,
+ObjectPtr macroExpand(bool once,
                       ObjectPtr obj)
 {
     if (!obj->isList() || obj->isNil()) {
@@ -86,11 +85,10 @@ ObjectPtr macroExpand(std::shared_ptr<std::map<std::string, Macro>> storage,
         if (!macroCall.first) {
             break;
         }
+        auto code = macroCall.second->cdr()->asList();
         auto cc = form->cc.get();
-        assert(storage->count(macroCall.second));
-        const auto& macro = storage->at(macroCall.second);
         obj = expand(*form->parent,
-                     macro,
+                     code,
                      [&cc](){ cc = cc->next(); return cc ? cc->car.get() : nullptr; });
         if (once) {
             break;
@@ -99,42 +97,31 @@ ObjectPtr macroExpand(std::shared_ptr<std::map<std::string, Macro>> storage,
     return obj->clone();
 }
 
-}
-
 void initMacroFunctions(Machine& m)
 {
-    std::shared_ptr<std::map<std::string, Macro>> storage =
-        std::make_shared<std::map<std::string, Macro>>();
-    
-    m.makeFunc("defmacro", 2, std::numeric_limits<int>::max(), [&m, storage](FArgs& args) {
-        const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.cc->car.get());
+    m.makeFunc("defmacro", 2, std::numeric_limits<int>::max(), [&m](FArgs& args) {
+        const SymbolObject* nameSym = dynamic_cast<SymbolObject*>(args.current());
         if (!nameSym || nameSym->name.empty()) {
             throw exceptions::WrongTypeArgument(args.cc->car->toString());
         }
         std::string macroName = nameSym->name;
-        args.skip();
-        const auto params = getFuncParams(*m.makeConsCell(args.cc->car->clone(), nullptr));
-        args.skip();
         ListBuilder builder(m);
-        while (args.cc) {
-            builder.append(args.cc->car->clone());
-            args.skip();
+        builder.append(m.makeSymbol("macro", true));
+        builder.append(m.makeSymbol("lambda", true));
+        args.skip();
+        auto cc = args.cc;
+        while (cc && cc->car) {
+            builder.append(cc->car->clone());
+            cc = cc->next();
         }
-        auto code = builder.get();
-        (*storage).insert(std::make_pair(macroName, Macro(*code, params)));
-        m.makeFunc(macroName.c_str(), params.min, params.max, [&m, macroName, storage](FArgs& a) {
-            assert(storage->count(macroName));
-            const auto& macro = storage->at(macroName);
-            return expand(m, macro, [&a](){ return a.pop(false); })->eval();
-        });
-        m.getSymbol(macroName)->resolveFunction()->isMacro = true;
+        m.getSymbol(macroName)->function = builder.get();
         return std::make_unique<SymbolObject>(&m, nullptr, std::move(macroName));
     });
-    m.defun("macroexpand", [storage](ObjectPtr obj) { 
-        return macroExpand(storage, false, std::move(obj));
+    m.defun("macroexpand", [](ObjectPtr obj) { 
+        return macroExpand(false, std::move(obj));
     });
-    m.defun("macroexpand-1", [storage](ObjectPtr obj) {
-        return macroExpand(storage, true, std::move(obj));
+    m.defun("macroexpand-1", [](ObjectPtr obj) {
+        return macroExpand(true, std::move(obj));
     });
 }
 

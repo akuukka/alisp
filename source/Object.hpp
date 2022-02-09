@@ -120,7 +120,7 @@ struct Object :
     virtual bool operator!() const { return false; }
     virtual Object* trySelfEvaluate() { return nullptr; }
 
-    virtual std::shared_ptr<Function> resolveFunction() const { return nullptr; }
+    virtual std::shared_ptr<Function> resolveFunction() const;
     virtual std::unique_ptr<Object> clone() const = 0;
     virtual bool equals(const Object& o) const { return false; }
 

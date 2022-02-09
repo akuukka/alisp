@@ -11,3 +11,5 @@ constexpr const char* NilName = ConvertParsedNamesToUpperCase ? "NIL" : "nil";
 constexpr const char* TName = ConvertParsedNamesToUpperCase ? "T" : "t";
 constexpr const char* RestName = ConvertParsedNamesToUpperCase ? "&REST" : "&rest";
 constexpr const char* OptionalName = ConvertParsedNamesToUpperCase ? "&OPTIONAL" : "&optional";
+constexpr const char* MacroName = ConvertParsedNamesToUpperCase ? "MACRO" : "macro";
+constexpr const char* LambdaName = ConvertParsedNamesToUpperCase ? "LAMBDA" : "lambda";

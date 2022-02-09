@@ -143,24 +143,29 @@ void Machine::initFunctionFunctions()
         return makeSymbol(funcName, false);
     });
     defun("functionp", [](const Object& obj) {
-        auto func = obj.resolveFunction();
-        return func && !func->isMacro;
+        try {
+            auto func = obj.resolveFunction();
+            return func && !func->isMacro;
+        }
+        catch (exceptions::InvalidFunction&) {
+            return false;
+        }
+        catch (exceptions::VoidFunction&) {
+            return false;
+        }
     });
     defun("func-arity", [&](const Function& func) {
         return makeConsCell(makeInt(func.minArgs), makeInt(func.maxArgs));
     });
-    defun("symbol-function", [&](const Symbol& sym) -> ObjectPtr {
+    defun("symbol-function", [&](const Symbol& sym) {
         if (!sym.function) {
             return sym.parent->makeNil();
-        }
-        auto func = sym.resolveFunction();
-        if (func && func->closure) {
-            return makeConsCell(makeSymbol("lambda", true), func->closure->clone());
         }
         return sym.function->clone();
     });
     defun("fset", [](Symbol& sym, const Object& definition) {
-        return false;
+        sym.function = definition.clone();
+        return definition.clone();
     });
 }
 

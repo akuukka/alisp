@@ -1,4 +1,5 @@
 #include "SymbolObject.hpp"
+#include "Error.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "ConsCellObject.hpp"
@@ -7,7 +8,7 @@ namespace alisp {
 
 ALISP_INLINE bool operator==(const Object* obj, std::shared_ptr<Symbol> sym)
 {
-    return obj->isSymbol() && obj->asSymbol()->getSymbol() == sym;
+    return obj && obj->isSymbol() && obj->asSymbol()->getSymbol() == sym;
 }
 
 ALISP_INLINE void SymbolObject::traverse(const std::function<bool(const Object&)>& f) const
@@ -46,10 +47,13 @@ ALISP_INLINE std::unique_ptr<Object> SymbolObject::eval()
 ALISP_INLINE std::shared_ptr<Function> SymbolObject::resolveFunction() const
 {
     if (sym) {
-        return sym->resolveFunction();
+        return sym->function->resolveFunction();
     }
-    assert(name.size());
-    return parent->resolveFunction(name);
+    auto sym = parent->getSymbol(name);
+    if (!sym->function) {
+        throw exceptions::VoidFunction(toString());
+    }
+    return sym->function->resolveFunction();
 }
 
 ALISP_INLINE std::string SymbolObject::toString(bool aesthetic) const

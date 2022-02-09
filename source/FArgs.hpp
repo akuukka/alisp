@@ -18,9 +18,9 @@ struct Function
     std::string name;
     int minArgs = 0;
     int maxArgs = 0xffff;
-    bool isMacro = false;
     std::function<std::unique_ptr<Object>(FArgs&)> func;
     std::shared_ptr<ConsCellObject> closure;
+    bool isMacro = false;
 };
 
 inline int countArgs(const ConsCell* cc)
@@ -104,14 +104,9 @@ inline T getFuncParam(FArgs& args)
     if constexpr (std::is_same_v<T, const Function&>) {
         Object* arg = args.pop();
         auto func = arg->resolveFunction();
-        if (func) {
-            args.funcStorage.push_back(func);
-            return *func;
-        }
-        if (arg->isSymbol() || arg->isList()) {
-            throw exceptions::VoidFunction(arg->toString());
-        }
-        throw exceptions::InvalidFunction(arg->toString());
+        assert(func && "Should have thrown...");
+        args.funcStorage.push_back(func);
+        return *func;
     }
     else if constexpr (std::is_same_v<T, FArgs&>) {
         return args;

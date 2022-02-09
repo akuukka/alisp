@@ -24,8 +24,6 @@ struct Symbol
 
     Symbol(Machine& parent);
     ~Symbol();
-
-    std::shared_ptr<Function> resolveFunction() const;
 };
 
 Object* get(const ConsCell& plist, const Object& property);

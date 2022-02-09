@@ -1,7 +1,13 @@
 #include "Object.hpp"
+#include "Error.hpp"
 
 namespace alisp
 {
+
+std::shared_ptr<Function> Object::resolveFunction() const
+{
+    throw exceptions::InvalidFunction(toString());
+}
 
 std::ostream &operator<<(std::ostream &os, const Object &sym)
 {

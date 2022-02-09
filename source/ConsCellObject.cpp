@@ -1,5 +1,6 @@
 #include "ConsCell.hpp"
 #include "Error.hpp"
+#include "SharedDataObject.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "SymbolObject.hpp"
@@ -85,15 +86,41 @@ ALISP_INLINE std::unique_ptr<ConsCellObject> ConsCellObject::deepCopy() const
     return copy;
 }
 
+ObjectPtr expand(Machine& m,
+                 ConsCellObject* code,
+                 std::function<Object*()> paramSource);
+
 ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
 {
-    if (isNil() || !car()->isSymbol()) {
-        return nullptr;
+    if (isNil()) {
+        if (parent->getSymbol(NilName)->function) {
+            return parent->getSymbol(NilName)->function->resolveFunction();
+        }
+        throw exceptions::VoidFunction(NilName);
+    }
+    if (!car()->isSymbol()) {
+        return SharedDataObject::resolveFunction();
     }
     auto& m = *parent;
-    if (car()->asSymbol()->getSymbol() == m.getSymbol(m.parsedSymbolName("lambda"))) {
+    const bool macro = car()->asSymbol()->getSymbol() == m.getSymbol(MacroName);
+    if (macro) {
         auto func = std::make_shared<Function>();
-
+        auto cc = this->cc->next();
+        std::shared_ptr<ConsCellObject> closure =
+            parent->makeConsCell(cc->car->clone(), cc->cdr->clone());
+        const FuncParams fp = getFuncParams(*closure->cdr()->asList());
+        func->minArgs = fp.min;
+        func->maxArgs = fp.max;
+        func->func = [&m, closure](FArgs& a) {
+            return expand(m, closure.get(), [&a](){ return a.pop(false); })->eval();
+        };
+        func->isMacro = true;
+        func->closure = closure;
+        return func;
+    }
+    const bool lambda = car()->asSymbol()->getSymbol() == m.getSymbol(LambdaName);
+    if (lambda) {
+        auto func = std::make_shared<Function>();
         auto cc = this->cc->next();
         std::shared_ptr<ConsCellObject> closure =
             parent->makeConsCell(cc->car->clone(), cc->cdr->clone());
@@ -104,7 +131,7 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
         func->closure = closure;
         return func;
     }
-    return nullptr;
+    return SharedDataObject::resolveFunction();
 }
 
 ALISP_INLINE bool ConsCellObject::equals(const Object &o) const

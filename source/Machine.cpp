@@ -558,14 +558,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     evaluate(getInitCode());
 }
 
-ALISP_INLINE std::shared_ptr<Function> Machine::resolveFunction(const std::string& name)
-{
-    if (m_syms.count(name)) {
-        return m_syms[name]->resolveFunction();
-    }
-    return nullptr;
-}
-
 ALISP_INLINE std::string Machine::parsedSymbolName(std::string name)
 {
     if (!ConvertParsedNamesToUpperCase) {
