@@ -31,9 +31,9 @@ void Machine::initListFunctions()
     });
     defun("last", [this](const Object& obj) {
         requireType<ConsCellObject>(obj);
-        auto ptr = &obj;
-        while (ptr->isList() && ptr->asList()->cdr() && ptr->asList()->cdr()->isList()) {
-            ptr = ptr->asList()->cdr();
+        auto ptr = dynamic_cast<const ConsCellObject*>(&obj);
+        while (ptr->cdr() && ptr->cdr()->isList()) {
+            ptr = ptr->cdr()->asList();
         }
         return ptr->clone();
     });
