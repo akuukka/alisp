@@ -237,7 +237,12 @@ ALISP_INLINE void Machine::initMathFunctions()
     defun("<", numberCompare<std::less>);
     defun(">=", numberCompare<std::greater_equal>);
     defun(">", numberCompare<std::greater>);
-    defun("ash", [](std::int64_t integer, std::int64_t count) { return integer << count; });
+    defun("ash", [](std::int64_t integer, std::int64_t count) {
+        return count >= 0 ? (integer << count) : (integer >> (-count));
+    });
+    defun("lsh", [](std::int64_t integer, std::int64_t count) {
+        return count >= 0 ? (integer >> count) : (integer << (-count));
+    });
 }
 
 }
