@@ -358,10 +358,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     makeFunc("let*", 2, std::numeric_limits<int>::max(),
              std::bind(let, std::placeholders::_1, true));
     makeFunc("quote", 1, 1, [this](FArgs& args) {
-        return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
+        return args.current() && !args.current()->isNil() ? args.current()->clone() : makeNil();
     });
     makeFunc("function", 1, 1, [this](FArgs& args) {
-        return args.cc->car && !args.cc->car->isNil() ? args.cc->car->clone() : makeNil();
+        return args.current() && !args.current()->isNil() ? args.current()->clone() : makeNil();
     });
     makeFunc("backquote", 1, 1, [this](FArgs& args) {
         auto arg = args.current();
@@ -536,15 +536,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         sym->variable = nullptr;
         return sym;
-    });
-    defun("symbol-value", [this](std::shared_ptr<Symbol> sym) -> ObjectPtr {
-        if (!sym) {
-            return makeNil();
-        }
-        if (!sym->variable) {
-            throw exceptions::VoidVariable(sym->name);
-        }
-        return sym->variable->clone();
     });
     makeFunc("while", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         while (!args.current()->eval()->isNil()) { 

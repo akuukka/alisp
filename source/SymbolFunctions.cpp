@@ -101,6 +101,12 @@ ALISP_INLINE void Machine::initSymbolFunctions()
         }
         return r;
     });
+    defun("symbol-value", [this](const Symbol& sym) {
+        if (!sym.variable) {
+            throw exceptions::VoidVariable(sym.name);
+        }
+        return sym.variable->clone();
+    });
 }
 
 }

@@ -466,6 +466,7 @@ void testVariables()
 void testSymbols()
 {
     Machine m;
+    ASSERT_OUTPUT_EQ(m, "(symbol-value nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-plist 'cbdc))", "t");
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-plist nil))", "t");
     ASSERT_OUTPUT_EQ(m, "(symbol-plist :akeyword)", "nil");
