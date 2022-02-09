@@ -806,4 +806,11 @@ ALISP_INLINE std::unique_ptr<Object> Machine::evaluate(const char *expr)
     return obj ? obj->eval() : nullptr;
 }
 
+ALISP_INLINE Machine::SymbolRef Machine::operator[](const char* name)
+{
+    SymbolRef ref;
+    ref.symbol = getSymbol(name, true);
+    return ref;
+}
+
 }

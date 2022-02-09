@@ -1187,9 +1187,6 @@ void testErrors()
     (error 1000000)))
 (safe-divide2 5000 0)
 )code", "1000000");
-
-    
-    
 }
 
 void testSequences()
@@ -1208,8 +1205,21 @@ void testSequences()
     ASSERT_OUTPUT_EQ(m, "(reverse '(1))", "(1)");
 }
 
+static int testFunction(int a, int b) { return a + b; }
+
+void testPublicInterface()
+{
+    Machine m;
+    m["name"] = "Antti";
+    m["cpp-func"] = [](std::string name){ return name + ", hello from C++!"; };
+    m["c-func"] = testFunction;
+    ASSERT_OUTPUT_EQ(m, "(cpp-func name)", "\"Antti, hello from C++!\"");
+    ASSERT_OUTPUT_EQ(m, "(c-func 1 2)", "3");
+}
+
 void test()
 {
+    testPublicInterface();
     testFunctions();
     testMacros();
     testQuote();

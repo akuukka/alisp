@@ -87,19 +87,38 @@ inline typename std::enable_if<I < sizeof...(Args), size_t>::type countNonOpts()
 }
 
 template <size_t I, typename... Args>
-inline typename std::enable_if<I == sizeof...(Args), size_t>::type countMaxArgs()
+inline size_t countMaxArgs()
 {
-    return sizeof...(Args);
-}
-
-template <size_t I, typename... Args>
-inline typename std::enable_if<I < sizeof...(Args), size_t>::type countMaxArgs()
-{
-    using ThisType = NthTypeOf<I, Args...>;
-    if (std::is_same<FArgs&, ThisType>::value) {
-        return static_cast<size_t>(std::numeric_limits<std::int32_t>::max());
+    if constexpr (I == sizeof...(Args)) {
+        return sizeof...(Args);
     }
-    return countMaxArgs<I+1, Args...>();
+    else {
+        using ThisType = NthTypeOf<I, Args...>;
+        if (std::is_same<FArgs&, ThisType>::value) {
+            return static_cast<size_t>(std::numeric_limits<std::int32_t>::max());
+        }
+        return countMaxArgs<I+1, Args...>();
+    }
 }
 
+template <typename T>
+class IsCallable
+{
+    typedef char one;
+    typedef long two;
+
+    template <typename C> static one test( decltype(&C::operator()) ) ;
+    template <typename C> static two test(...);
+
+    template <typename Fun>
+    struct IsFuncPtr
+        : std::integral_constant<bool, std::is_pointer<Fun>::value
+                                 && std::is_function<
+                                           typename std::remove_pointer<Fun>::type
+                                           >::value>
+    {};
+public:
+    enum { value = IsFuncPtr<T>::value || sizeof(test<T>(0)) == sizeof(char) };
+};
+    
 }

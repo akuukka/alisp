@@ -3,6 +3,7 @@
 #include <type_traits>
 #include "Error.hpp"
 #include "Object.hpp"
+#include "Template.hpp"
 #include "alisp.hpp"
 #include "Symbol.hpp"
 #include "FArgs.hpp"
@@ -125,6 +126,25 @@ public:
     std::shared_ptr<Symbol> getSymbolOrNull(std::string name, bool alwaysGlobal = false);
     std::shared_ptr<Symbol> getSymbol(std::string name, bool alwaysGlobal = false);
     std::unique_ptr<Object> makeTrue();
+
+    struct SymbolRef
+    {
+        std::shared_ptr<Symbol> symbol;
+
+        template <typename T>
+        void operator=(T t)
+        {
+            if constexpr (IsCallable<T>::value) {
+                std::cout << symbol->name << " is func" << std::endl;
+                symbol->parent->defun(symbol->name.c_str(), t);
+            }
+            else {
+                std::cout << symbol->name << " is var" << std::endl;
+                symbol->variable = symbol->parent->makeObject(t);
+            }
+        }
+    };
+    SymbolRef operator[](const char* name);
 };
 
 }
