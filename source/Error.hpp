@@ -43,6 +43,7 @@ struct Error : Exception
 {
     std::unique_ptr<SymbolObject> sym;
     std::unique_ptr<Object> data;
+    std::string stackTrace;
     
     Error(std::unique_ptr<SymbolObject> sym,
           std::unique_ptr<Object> data);

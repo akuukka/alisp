@@ -26,7 +26,6 @@ void requireType(const O& obj)
 class Machine
 {
     std::map<std::string, std::shared_ptr<Symbol>> m_syms;
- 
     std::map<std::string, std::vector<std::shared_ptr<Symbol>>> m_locals;
 
     void pushLocalVariable(std::string name, std::unique_ptr<Object> obj);

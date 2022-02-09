@@ -154,15 +154,21 @@ ALISP_INLINE ObjectPtr ConsCellObject::eval()
     if (!c) {
         return std::make_unique<ConsCellObject>(parent);
     }
-    const auto f = c.car->resolveFunction();
-    assert(f && "Throws if fails");
-    const int argc = countArgs(c.next());
-    if (argc < f->minArgs || argc > f->maxArgs) {
-        throw exceptions::WrongNumberOfArguments(argc);
+    try {
+        const auto f = c.car->resolveFunction();
+        assert(f && "Throws if fails");
+        const int argc = countArgs(c.next());
+        if (argc < f->minArgs || argc > f->maxArgs) {
+            throw exceptions::WrongNumberOfArguments(argc);
+        }
+        FArgs args(*c.next(), *parent);
+        args.funcName = f->name;
+        return f->func(args);
     }
-    FArgs args(*c.next(), *parent);
-    args.funcName = f->name;
-    return f->func(args);
+    catch (exceptions::Error& err) {
+        err.stackTrace += toString() + "\n";
+        throw;
+    }
 }
 
 ALISP_INLINE void ConsCellObject::traverse(const std::function<bool(const Object&)>& f) const

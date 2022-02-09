@@ -61,7 +61,6 @@ void ASSERT_EQ(const std::unique_ptr<alisp::Object>& a, std::string b)
 
 void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, std::string res)
 {
-    // std::cout << expr << std::endl;
     try {
         std::string out = m.evaluate(expr)->toString();
         std::string oout, ores;
@@ -78,10 +77,8 @@ void ASSERT_OUTPUT_EQ(alisp::Machine& m, const char* expr, std::string res)
         }
     }
     catch (std::runtime_error& ex) {
-        std::cerr << "Exception thrown while evaluating " << expr << std::endl;
         throw;
     }
-    // std::cout << " => " << out << std::endl;
 }
 
 void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res)
@@ -1303,7 +1300,16 @@ static std::string readFile(const std::string &file_path)
 int main(int argc, char** argv)
 {
     if (argc >= 2 && std::string(argv[1]) == "--test") {
-        test();
+        try {
+            test();
+        }
+        catch (exceptions::Error& error) {
+            std::cerr << "Unhandled exception occurred:" << std::endl;
+            std::cerr << error.getMessageString() << std::endl;
+            std::cerr << "Call stack:\n";
+            std::cerr << error.stackTrace << std::endl;
+            return 1;
+        }
         return 0;
     }
     else if (argc >=2 && exists(std::string(argv[1]))) {
