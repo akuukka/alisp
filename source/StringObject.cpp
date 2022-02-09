@@ -1,4 +1,5 @@
 #include "alisp.hpp"
+#include "SharedValueObject.hpp"
 #include "StringObject.hpp"
 #include "ValueObject.hpp"
 #include <stdexcept>
@@ -6,6 +7,24 @@
 #include "UTF8.hpp"
 
 namespace alisp {
+
+ALISP_INLINE StringObject::StringObject(std::string value) :
+    SharedValueObject<std::string>(std::make_shared<std::string>(std::move(value)))
+{
+
+}
+
+ALISP_INLINE StringObject::StringObject(const StringObject& o) :
+    SharedValueObject<std::string>(o.value)
+{
+
+}
+
+ALISP_INLINE StringObject::StringObject(const String& o) :
+    SharedValueObject<std::string>(o.sharedPointer())
+{
+
+}
 
 ALISP_INLINE
 size_t StringObject::length() const

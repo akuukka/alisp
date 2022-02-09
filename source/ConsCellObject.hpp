@@ -1,7 +1,7 @@
 #pragma once
 #include "ConsCell.hpp"
 #include "Object.hpp"
-#include "SharedDataObject.hpp"
+#include "SharedValueObject.hpp"
 #include "Sequence.hpp"
 #include "Error.hpp"
 

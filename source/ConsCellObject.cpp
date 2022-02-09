@@ -1,6 +1,5 @@
 #include "ConsCell.hpp"
 #include "Error.hpp"
-#include "SharedDataObject.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
 #include "SymbolObject.hpp"

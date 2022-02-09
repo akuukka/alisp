@@ -1,7 +1,7 @@
 #pragma once
 #include "Object.hpp"
 #include "Symbol.hpp"
-#include "SharedDataObject.hpp"
+#include "SharedValueObject.hpp"
 
 namespace alisp
 {

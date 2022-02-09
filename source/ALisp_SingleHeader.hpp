@@ -8,7 +8,7 @@
 #include "Machine.cpp"
 #include "ConsCell.cpp"
 #include "ConsCellObject.cpp"
-#include "SharedDataObject.cpp"
+#include "SharedValueObject.cpp"
 #include "ListFunctions.cpp"
 #include "Error.cpp"
 #include "SymbolObject.cpp"

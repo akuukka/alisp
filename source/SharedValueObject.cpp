@@ -1,6 +1,7 @@
 #define ENABLE_DEBUG_REFCOUNTING
 #include "alisp.hpp"
-#include "SharedDataObject.hpp"
+#include "SharedValueObject.hpp"
+#include <map>
 
 namespace alisp {
 

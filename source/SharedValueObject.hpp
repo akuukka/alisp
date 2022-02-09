@@ -1,6 +1,6 @@
 #pragma once
-#include <map>
 #include "Object.hpp"
+#include <set>
 
 namespace alisp
 {
@@ -15,7 +15,10 @@ struct SharedValueObjectBase : Object
 };
 
 template<typename T>
-struct SharedValueObject : SharedValueObjectBase
+struct SharedValueObject : SharedValueObjectBase,
+    ConvertibleTo<T>,
+    ConvertibleTo<T&>,
+    ConvertibleTo<const T&>
 {
     std::shared_ptr<T> value;
 
@@ -33,6 +36,10 @@ struct SharedValueObject : SharedValueObjectBase
         }
         return value == op->value;
     }
+
+    T convertTo(typename ConvertibleTo<T>::Tag) const override { return *value; }
+    T& convertTo(typename ConvertibleTo<T&>::Tag) const override { return *value; }
+    const T& convertTo(typename ConvertibleTo<const T&>::Tag) const override { return *value; }
 };
 
 }
