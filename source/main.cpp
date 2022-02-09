@@ -753,6 +753,13 @@ void testFunctions()
     Machine m;
     std::stringstream ss;
     m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
+
+    ASSERT_OUTPUT_EQ(m, "(fset 'minus '-)", "-");
+    ASSERT_OUTPUT_EQ(m, "(fboundp 'minus)", "t");
+    ASSERT_OUTPUT_EQ(m, "(fset 'minus 1)" , "1");
+    ASSERT_OUTPUT_EQ(m, "(fboundp 'minus)", "t");
+    ASSERT_OUTPUT_EQ(m, "(fset 'minus nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(fboundp 'minus)", "nil");
     ASSERT_EXCEPTION(m, "(fboundp 5)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(fboundp '+)", "t");
     ASSERT_OUTPUT_EQ(m, "(fboundp '++++)", "nil");

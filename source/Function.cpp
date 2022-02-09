@@ -165,7 +165,7 @@ void Machine::initFunctionFunctions()
         return sym.function->clone();
     });
     defun("fset", [](Symbol& sym, const Object& definition) {
-        sym.function = definition.clone();
+        sym.function = definition.isNil() ? nullptr : definition.clone();
         return definition.clone();
     });
     defun("fboundp", [this](const Object& obj) {
