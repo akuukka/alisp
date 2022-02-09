@@ -1,21 +1,22 @@
 #include "Object.hpp"
 #include "Error.hpp"
+#include "alisp.hpp"
 
 namespace alisp
 {
 
-std::shared_ptr<Function> Object::resolveFunction() const
+ALISP_INLINE std::shared_ptr<Function> Object::resolveFunction() const
 {
     throw exceptions::InvalidFunction(toString());
 }
 
-std::ostream &operator<<(std::ostream &os, const Object &sym)
+ALISP_INLINE std::ostream &operator<<(std::ostream &os, const Object &sym)
 {
     os << sym.toString();
     return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const std::unique_ptr<Object> &sym)
+ALISP_INLINE std::ostream &operator<<(std::ostream &os, const std::unique_ptr<Object> &sym)
 {
     if (sym) {
         os << sym->toString();

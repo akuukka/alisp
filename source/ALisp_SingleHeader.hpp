@@ -20,3 +20,4 @@
 #include "SequenceFunctions.cpp"
 #include "StringFunctions.cpp"
 #include "Function.cpp"
+#include "Object.cpp"
