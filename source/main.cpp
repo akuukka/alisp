@@ -1214,7 +1214,8 @@ void testPublicInterface()
     m["cpp-func"] = [](std::string name){ return name + ", hello from C++!"; };
     m["c-func"] = testFunction;
     ASSERT_OUTPUT_EQ(m, "(cpp-func name)", "\"Antti, hello from C++!\"");
-    ASSERT_OUTPUT_EQ(m, "(c-func 1 2)", "3");
+    int res = m.evaluate("(c-func 1 2)")->value<int>();
+    assert(res == 3);
 }
 
 void test()

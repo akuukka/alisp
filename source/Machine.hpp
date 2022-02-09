@@ -135,11 +135,9 @@ public:
         void operator=(T t)
         {
             if constexpr (IsCallable<T>::value) {
-                std::cout << symbol->name << " is func" << std::endl;
                 symbol->parent->defun(symbol->name.c_str(), t);
             }
             else {
-                std::cout << symbol->name << " is var" << std::endl;
                 symbol->variable = symbol->parent->makeObject(t);
             }
         }
