@@ -133,13 +133,15 @@ void Machine::initFunctionFunctions()
             throw exceptions::WrongTypeArgument(args.cc->car->toString());
         }
         std::string funcName = nameSym->name;
+        ListBuilder builder(*this);
+        builder.append(makeSymbol("lambda", true));
         args.skip();
-        std::shared_ptr<ConsCellObject> closure =
-            makeConsCell(args.cc->car->clone(), args.cc->cdr->clone());
-        const FuncParams fp = getFuncParams(*closure);
-        makeFunc(funcName.c_str(), fp.min, fp.max, [this, closure](FArgs& a) {
-            return execute(*closure, a);
-        })->closure = closure;
+        auto cc = args.cc;
+        while (cc && cc->car) {
+            builder.append(cc->car->clone());
+            cc = cc->next();
+        }
+        getSymbol(funcName)->function = builder.get();
         return makeSymbol(funcName, false);
     });
     defun("functionp", [](const Object& obj) {

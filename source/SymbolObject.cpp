@@ -50,6 +50,9 @@ ALISP_INLINE std::shared_ptr<Function> SymbolObject::resolveFunction() const
         return sym->function->resolveFunction();
     }
     auto sym = parent->getSymbol(name);
+    if (sym && !sym->function && sym->local) {
+        sym = parent->getSymbol(name, true);
+    }
     if (!sym->function) {
         throw exceptions::VoidFunction(toString());
     }

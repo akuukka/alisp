@@ -123,8 +123,8 @@ public:
         s->constant = constant;
     }
 
-    std::shared_ptr<Symbol> getSymbolOrNull(std::string name);
-    std::shared_ptr<Symbol> getSymbol(std::string name);
+    std::shared_ptr<Symbol> getSymbolOrNull(std::string name, bool alwaysGlobal = false);
+    std::shared_ptr<Symbol> getSymbol(std::string name, bool alwaysGlobal = false);
     std::unique_ptr<Object> makeTrue();
 };
 

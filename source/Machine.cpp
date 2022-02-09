@@ -39,9 +39,9 @@ ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxA
     return func.get();
 }
 
-ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)
+ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name, bool alwaysGlobal)
 {
-    if (m_locals.count(name)) {
+    if (!alwaysGlobal && m_locals.count(name)) {
         return m_locals[name].back();
     }
     if (!m_syms.count(name)) {
@@ -50,9 +50,9 @@ ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbolOrNull(std::string name)
     return m_syms[name];
 }
 
-ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name)
+ALISP_INLINE std::shared_ptr<Symbol> Machine::getSymbol(std::string name, bool alwaysGlobal)
 {
-    if (m_locals.count(name)) {
+    if (!alwaysGlobal && m_locals.count(name)) {
         return m_locals[name].back();
     }
     if (!m_syms.count(name)) {
@@ -547,7 +547,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return sym->variable->clone();
     });
     makeFunc("while", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
-        while (!args.cc->car->eval()->isNil()) { 
+        while (!args.current()->eval()->isNil()) { 
             args.evalAll(args.cc->next());
         }
         return makeNil();
@@ -802,6 +802,7 @@ ALISP_INLINE void Machine::pushLocalVariable(std::string name, ObjectPtr obj)
 {
     auto sym = std::make_shared<Symbol>(*this);
     m_locals[name].push_back(sym);
+    sym->name = std::move(name);
     sym->variable = std::move(obj);
     sym->local = true;
 }

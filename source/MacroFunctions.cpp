@@ -1,3 +1,4 @@
+#include "alisp.hpp"
 #include "ConsCellObject.hpp"
 #include "Function.hpp"
 #include "Machine.hpp"
@@ -6,7 +7,7 @@
 namespace alisp
 {
 
-void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::string, Object*>& conv)
+ALISP_STATIC void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::string, Object*>& conv)
 {
     auto p = obj.cc.get();
     while (p) {
@@ -23,7 +24,7 @@ void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::string, Object*
     }
 }
 
-std::pair<bool, ConsCellObject*> isMacroCall(const ConsCellObject* form)
+ALISP_STATIC std::pair<bool, ConsCellObject*> isMacroCall(const ConsCellObject* form)
 {
     if (form && form->car() && form->car()->isSymbol()) {
         const SymbolObject* sym = dynamic_cast<const SymbolObject*>(form->car());

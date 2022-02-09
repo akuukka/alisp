@@ -748,6 +748,8 @@ void testFunctions()
     Machine m;
     std::stringstream ss;
     m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
+    ASSERT_OUTPUT_EQ(m, "(progn (defun gms(y) (+ 1 y)) (symbol-function 'gms))",
+                     "(lambda (y) (+ 1 y))");
     ASSERT_OUTPUT_EQ(m, "#'test", "test");
     ASSERT_OUTPUT_EQ(m, "(apply '+ '(3 4))", "7");
     ASSERT_EXCEPTION(m, "(apply '+)", exceptions::Error);
@@ -785,7 +787,6 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(defun foo () (princ \"foo\" debugstream) 5)", "foo");
     ASSERT_OUTPUT_EQ(m, "(defun foo2 (msg) (princ msg debugstream) msg)", "foo2");
     ASSERT_OUTPUT_EQ(m, "(symbol-function nil)", "nil");
-    std::cout << m.evaluate("(symbol-function 'foo2)") << std::endl;
     ASSERT_OUTPUT_EQ(m, "(listp (symbol-function 'foo2))", "t");
     ASSERT_OUTPUT_CONTAINS(m, "(symbol-function 'foo2)", "(lambda (msg) (princ msg debugstream) msg)");
     ASSERT_EXCEPTION(m, "((symbol-function 'foo2) \"fsda\")", exceptions::Error);
