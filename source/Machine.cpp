@@ -3,7 +3,7 @@
 #include <memory>
 #include <ostream>
 #include <sstream>
-#include "FunctionObject.hpp"
+#include "SubroutineObject.hpp"
 #include "Error.hpp"
 #include "Object.hpp"
 #include "Sequence.hpp"
@@ -35,7 +35,7 @@ ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxA
     func->maxArgs = maxArgs;
     func->func = std::move(f);
     auto sym = getSymbol(name);
-    sym->function = std::make_unique<FunctionObject>(func);
+    sym->function = std::make_unique<SubroutineObject>(func);
     return func.get();
 }
 

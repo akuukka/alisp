@@ -5,11 +5,11 @@
 namespace alisp
 {
 
-struct FunctionObject : Object
+struct SubroutineObject : Object
 {
     std::shared_ptr<Function> value;
 
-    FunctionObject(std::shared_ptr<Function> func) : value(func) { }
+    SubroutineObject(std::shared_ptr<Function> func) : value(func) { }
     std::string toString(bool aesthetic) const override
     {
         return "#<subr " + value->name + ">";
@@ -17,12 +17,12 @@ struct FunctionObject : Object
 
     std::unique_ptr<Object> clone() const override
     {
-        return std::make_unique<FunctionObject>(value);
+        return std::make_unique<SubroutineObject>(value);
     }
 
     bool equals(const Object& o) const override
     {
-        const FunctionObject* op = dynamic_cast<const FunctionObject*>(&o);
+        const SubroutineObject* op = dynamic_cast<const SubroutineObject*>(&o);
         if (!op) {
             return false;
         }
