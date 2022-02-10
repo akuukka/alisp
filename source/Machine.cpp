@@ -683,15 +683,30 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNamedObject(const char*& str)
     return std::make_unique<SymbolObject>(this, nullptr, std::move(next));
 }
 
-ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char *&str)
+ALISP_INLINE std::unique_ptr<StringObject> Machine::parseString(const char*& str)
 {
+    bool escape = false;
     auto sym = std::make_unique<StringObject>("");
-    while (*str && *str != '"') {
-        *sym->value += *str;
-        str++;
+    while (*str && ((*str != '"' && !escape) || (*str == '"' && escape))) {
+        escape = false;
+        std::uint32_t encoding;
+        const size_t proceed = utf8::next(str, &encoding);
+        if (!proceed) {
+            throw std::runtime_error("UTF8-error");
+        }
+        const std::uint32_t codepoint = utf8::decode(encoding);
+        if (codepoint == '\\') {
+            escape = true;
+            str += 1;
+            continue;
+        }
+        for (size_t i = 0; i < proceed; i++) {
+            *sym->value += *str;
+            str += 1;
+        }
     }
     if (!*str) {
-        throw std::runtime_error("unexpected end of file");
+        throw std::runtime_error("Unexpected EOF");
     }
     str++;
     return sym;

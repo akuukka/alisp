@@ -364,6 +364,7 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, R"code((string-to-number "3"))code", "3");
     ASSERT_OUTPUT_CONTAINS(m, R"code((string-to-number "3.5"))code", "3.5");
     ASSERT_OUTPUT_EQ(m, R"code((string-to-number "X256"))code", "0");
+    ASSERT_OUTPUT_EQ(m, R"code("2\"5\"6")code", R"code("2"5"6")code");
 }
 
 void testDivision()
