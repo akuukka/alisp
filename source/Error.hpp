@@ -22,13 +22,7 @@ struct Exception : std::runtime_error
         (name)(std::string msg) : Exception(msg) {}             \
     };                                                          \
 
-DEFINE_EXCEPTION(UnableToEvaluate)
 DEFINE_EXCEPTION(SyntaxError)
-
-struct VoidVariable : Exception
-{
-    VoidVariable(std::string vname) : Exception("void-variable: " + vname) {}
-};
 
 struct Error : Exception
 {
@@ -93,6 +87,14 @@ struct WrongNumberOfArguments : Error
 
     }
 };
+
+struct VoidVariable : Error
+{
+    VoidVariable(std::string vname) : Error(vname, 
+                                            ConvertParsedNamesToUpperCase ?
+                                            "VOID-VARIABLE" : "void-variable") {}
+};
+
 
 } // namespace exceptions
 }

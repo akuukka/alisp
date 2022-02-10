@@ -97,6 +97,7 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 (define-error 'circular-list "Circular list")
 (define-error 'wrong-type-argument "Wrong type argument")
 (define-error 'void-function "Void function")
+(define-error 'void-variable "Void variable")
 (define-error 'invalid-function "Invalid function")
 (define-error 'setting-costant "Setting constant")
 (define-error 'wrong-number-of-arguments "Wrong number of arguments")
