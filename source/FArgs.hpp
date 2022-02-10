@@ -45,7 +45,7 @@ struct FArgs
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 
-    Object* current() { return cc->car.get(); }
+    Object* current() { return cc ? cc->car.get() : nullptr; }
     Object* pop(bool eval = true);
     
     void skip()
