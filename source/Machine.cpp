@@ -421,6 +421,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         if (!ret) ret = makeNil();
         return ret;
     });
+    defun("prog2", [](const Object&, const Object& ret, Rest& rest) {
+        rest.evalAll();
+        return ret.clone();
+    });
     makeFunc("set", 2, 2, [this](FArgs& args) {
         const SymbolObject nil(this, nullptr, parsedSymbolName("nil"));
         const auto& p1 = args.pop();

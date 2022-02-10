@@ -163,6 +163,9 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(setcar (cdr x1) 'foo)", "foo");
     ASSERT_OUTPUT_EQ(m, "x1", "(a foo c)");
     ASSERT_OUTPUT_EQ(m, "x2", "(z foo c)");
+    ASSERT_OUTPUT_EQ(m, "(prog2 1 2 (setq p3 3))", "2");
+    ASSERT_OUTPUT_EQ(m, "(prog2 (setq p1 4) 2 (setq p3 3))", "2");
+    ASSERT_OUTPUT_EQ(m, "(= (+ p1 p3) 7)", "t");
 }
 
 template <typename E>
