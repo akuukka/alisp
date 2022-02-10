@@ -523,6 +523,9 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return makeNil();
     });
+    defun("xor", [](const Object& cond1, const Object& cond2) {
+        return (((!cond1 ? 1 : 0) + (!cond2 ? 1 : 0)) % 2) == 1;
+    });
     defun("and", [](Rest& args) -> ObjectPtr {
         ObjectPtr ret = args.m.makeTrue();
         while (args.cc) {

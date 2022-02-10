@@ -1070,6 +1070,10 @@ void testControlStructures()
 )code", "2");
     ASSERT_OUTPUT_EQ(m, R"code( (cond ((= 1 2) 1)) )code", "nil");
     ASSERT_OUTPUT_EQ(m, "(cond)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(xor t t)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(xor nil nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(xor t nil)", "t");
+    ASSERT_OUTPUT_EQ(m, "(xor nil t)", "t");
 }
 
 void testConverter()
