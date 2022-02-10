@@ -550,6 +550,17 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
     defun("integerp", [](const Object& obj) { return obj.isInt(); });
     defun("floatp", [](const Object& obj) { return obj.isFloat(); });
     defun("zerop", [](Number obj) { return obj.isFloat ? (obj.f == 0) : (obj.i == 0); });
+    defun("cond", [this](Rest& args) {
+        while (args.current()) {
+            const Object& obj = *args.current();
+            requireType<ConsCellObject>(obj);
+            if (!obj.asList()->car()->eval()->isNil()) {
+                return obj.asList()->cadr()->eval();
+            }
+            args.skip();
+        }
+        return makeNil();
+    });
     evaluate(getInitCode());
 }
 

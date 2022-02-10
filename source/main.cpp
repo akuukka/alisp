@@ -1061,6 +1061,15 @@ void testControlStructures()
     ASSERT_OUTPUT_EQ(m, "(unless t 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(unless t 1 2)", "nil");
     ASSERT_EXCEPTION(m, "(unless)", exceptions::WrongNumberOfArguments);
+    ASSERT_OUTPUT_EQ(m, R"code(
+(cond
+ ((= 2 4) no-evaluation-unless-condition-is-true)
+ ((= 2 3) 3)
+ ((= 2 2) (+ 1 1))
+ ((= 2 1) 1)) ; 2
+)code", "2");
+    ASSERT_OUTPUT_EQ(m, R"code( (cond ((= 1 2) 1)) )code", "nil");
+    ASSERT_OUTPUT_EQ(m, "(cond)", "nil");
 }
 
 void testConverter()
