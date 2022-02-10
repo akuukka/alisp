@@ -140,6 +140,19 @@ ALISP_INLINE bool ConsCellObject::equals(const Object &o) const
     return this->cc == op->cc;
 }
 
+ALISP_STATIC int countArgs(const ConsCell* cc)
+{
+    if (!cc || !(*cc)) {
+        return 0;
+    }
+    int i = 0;
+    while (cc) {
+        i++;
+        cc = cc->next();
+    }
+    return i;
+}
+
 ALISP_INLINE ObjectPtr ConsCellObject::eval()
 {
     thread_local int depth = 0;

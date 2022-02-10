@@ -440,7 +440,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         auto sym = name->getSymbol();
         assert(sym);
         if (sym->constant) {
-            throw exceptions::Error("setting-constant " + name->toString());
+            throw exceptions::SettingConstant(name->toString());
         }
         sym->variable = args.pop()->clone();
         return sym->variable->clone();
@@ -535,14 +535,6 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
             }
         }
         return ret;
-    });
-    defun("boundp", [](const Symbol& sym) { return sym.variable ? true : false; });
-    defun("makunbound", [](std::shared_ptr<Symbol> sym) {
-        if (!sym || sym->constant) {
-            throw exceptions::Error("setting-constant" + (sym ? sym->name : std::string("nil")));
-        }
-        sym->variable = nullptr;
-        return sym;
     });
     makeFunc("while", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         while (!args.current()->eval()->isNil()) { 

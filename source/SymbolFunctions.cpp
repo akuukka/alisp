@@ -107,6 +107,14 @@ ALISP_INLINE void Machine::initSymbolFunctions()
         }
         return sym.variable->clone();
     });
+    defun("boundp", [](const Symbol& sym) { return sym.variable ? true : false; });
+    defun("makunbound", [](std::shared_ptr<Symbol> sym) {
+        if (!sym || sym->constant) {
+            throw exceptions::SettingConstant(sym ? sym->name : std::string("nil"));
+        }
+        sym->variable = nullptr;
+        return sym;
+    });
 }
 
 }

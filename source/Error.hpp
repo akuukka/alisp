@@ -86,6 +86,12 @@ struct CircularList : Error
         Error(msg, ConvertParsedNamesToUpperCase ? "CIRCULAR-LIST" : "circular-list") {}
 };
 
+struct SettingConstant : Error
+{
+    SettingConstant(std::string msg) :
+        Error(msg, ConvertParsedNamesToUpperCase ? "SETTING-CONSTANT" : "setting-constant") {}
+};
+
 
 } // namespace exceptions
 }

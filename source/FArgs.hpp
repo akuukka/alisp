@@ -22,19 +22,6 @@ struct Function
     bool isMacro = false;
 };
 
-inline int countArgs(const ConsCell* cc)
-{
-    if (!cc || !(*cc)) {
-        return 0;
-    }
-    int i = 0;
-    while (cc) {
-        i++;
-        cc = cc->next();
-    }
-    return i;
-}
-
 struct FArgs
 {
     ConsCell* cc;
@@ -86,15 +73,7 @@ struct FArgs
         return Iterator{&m, nullptr};
     }
 
-    ObjectPtr evalAll(ConsCell* begin = nullptr)
-    {
-        auto code = begin ? begin : cc;
-        while (code->next()) {
-            code->car->eval();
-            code = code->next();
-        }
-        return code->car->eval();
-    }
+    ObjectPtr evalAll(ConsCell* begin = nullptr);
 };
 
 template<typename T>
@@ -150,26 +129,6 @@ inline T getFuncParam(FArgs& args)
     }
 }
     
-inline Object* FArgs::pop(bool eval)
-{
-    if (!cc) {
-        return nullptr;
-    }
-    auto self = cc->car->trySelfEvaluate();
-    if (self) {
-        cc = cc->next();
-        return self;
-    }
-    if (!eval) {
-        auto ptr = cc->car.get();
-        cc = cc->next();
-        return ptr;
-    }
-    argStorage.push_back(cc->car->eval());
-    cc = cc->next();
-    return argStorage.back().get();
-}
-
 inline std::unique_ptr<Object> FArgs::Iterator::operator*() { return cc->car->eval(); }
 
 using Rest = FArgs;
