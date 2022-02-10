@@ -310,6 +310,8 @@ void testStrings()
     ASSERT_OUTPUT_EQ(m, "(stringp \"abc\")", "t");
     ASSERT_OUTPUT_EQ(m, "(stringp 1)", "nil");
     ASSERT_OUTPUT_EQ(m, "(stringp ())", "nil");
+    ASSERT_OUTPUT_EQ(m, R"code((format "%c" 65))code", R"code("A")code");
+    ASSERT_OUTPUT_EQ(m, R"code((format "%c" 12472))code", R"code("ジ")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "test"))code", R"code("test")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "a%%b"))code", R"code("a%b")code");
     ASSERT_OUTPUT_EQ(m, R"code((format "%d" 15))code", R"code("15")code");

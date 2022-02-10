@@ -52,11 +52,8 @@ ALISP_STATIC String format(const String str, FArgs& args)
             else if (n == 'd') {
                 const auto nextSym = args.pop();
                 std::string val;
-                if (nextSym->isInt()) {
-                    val = std::to_string(nextSym->value<std::int64_t>());
-                }
-                else if (nextSym->isFloat()) {
-                    val = std::to_string(static_cast<std::int64_t>(nextSym->value<double>()));
+                if (nextSym->isInt() || nextSym->isFloat()) {
+                    val = std::to_string(nextSym->value<Number>().i);
                 }
                 else {
                     throw exceptions::Error("Format specifier doesn’t match argument type");
@@ -71,6 +68,13 @@ ALISP_STATIC String format(const String str, FArgs& args)
                     }
                 }
                 ret += val;
+            }
+            else if (n == 'c') {
+                const auto nextSym = args.pop();
+                if (!nextSym->isCharacter()) {
+                    throw exceptions::Error("Format specifier doesn’t match argument type");
+                }
+                ret += utf8::encode(nextSym->value<std::uint32_t>());
             }
             else if (n == 'S') { ret += args.pop()->toString(false); }
             else if (n == 's') { ret += args.pop()->toString(true); }
