@@ -30,15 +30,6 @@ struct VoidVariable : Exception
     VoidVariable(std::string vname) : Exception("void-variable: " + vname) {}
 };
 
-struct WrongNumberOfArguments : Exception
-{
-    WrongNumberOfArguments(int num) :
-        Exception("wrong-number-of-arguments: " + std::to_string(num))
-    {
-
-    }
-};
-
 struct Error : Exception
 {
     std::unique_ptr<SymbolObject> sym;
@@ -92,6 +83,16 @@ struct SettingConstant : Error
         Error(msg, ConvertParsedNamesToUpperCase ? "SETTING-CONSTANT" : "setting-constant") {}
 };
 
+struct WrongNumberOfArguments : Error
+{
+    WrongNumberOfArguments(int num) :
+        Error(std::to_string(num),
+              ConvertParsedNamesToUpperCase ?
+              "WRONG-NUMBER-OF-ARGUMENTS" : "wrong-number-of-arguments")
+    {
+
+    }
+};
 
 } // namespace exceptions
 }

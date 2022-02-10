@@ -410,7 +410,7 @@ void testVariables()
     ASSERT_OUTPUT_EQ(m, "(numberp 1.0)", "t");
     ASSERT_OUTPUT_EQ(m, "(numberp nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(numberp \"A\")", "nil");
-    ASSERT_EXCEPTION(m, "(setq nil t)", std::bad_cast);
+    ASSERT_EXCEPTION(m, "(setq nil t)", exceptions::SettingConstant);
     ASSERT_OUTPUT_EQ(m, "(set 'y 15)", "15");
     ASSERT_OUTPUT_EQ(m, "(progn (setq x 1) (let (x z) (setq x 2) "
                      "(setq z 3) (setq y x)) (list x y))", "(1 2)");
@@ -855,6 +855,8 @@ void testFunctions()
 (fset 'foobar foo-backup)
 (foobar)
 )code", "\"old\"");
+    ASSERT_OUTPUT_EQ(m, "(mapatoms (lambda (str) (print str debugstream)))", "nil");
+    assert(ss.str().find("truncate") != std::string::npos);
 }
 
 void testLet()
