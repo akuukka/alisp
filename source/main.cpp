@@ -1055,6 +1055,12 @@ void testControlStructures()
     total))
 (triangle 7)
 )code", "28");
+    ASSERT_OUTPUT_EQ(m, "(unless nil 5)", "5");
+    ASSERT_OUTPUT_EQ(m, "(unless nil 5 6)", "6");
+    ASSERT_OUTPUT_EQ(m, "(unless nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(unless t 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(unless t 1 2)", "nil");
+    ASSERT_EXCEPTION(m, "(unless)", exceptions::WrongNumberOfArguments);
 }
 
 void testConverter()

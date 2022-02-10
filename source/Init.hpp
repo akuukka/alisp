@@ -69,6 +69,10 @@ namespace alisp { inline const char* getInitCode() { return R"code(
   "If COND yields non-nil, do BODY, else return nil."
   (list 'if cond (cons 'progn body)))
 
+(defmacro unless (cond &rest body)
+  "If COND yields nil, do BODY, else return nil."
+  (cons 'if (cons cond (cons nil body))))
+
 (defmacro lambda (&rest cdr)
   "Return an anonymous function."
   (list 'function (cons 'lambda cdr)))
