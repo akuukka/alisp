@@ -52,8 +52,8 @@ struct ConsCellObject :
     bool operator!() const override { return !cc || !(*cc); }
     ConsCellObject* asList() override { return this; }
     const ConsCellObject* asList() const override { return this; }
-    Object* car() const { return cc->car.get();  };
-    Object* cdr() const { return cc->cdr.get();  };
+    Object* car() const { return cc ? cc->car.get() : nullptr; };
+    Object* cdr() const { return cc ? cc->cdr.get() : nullptr; };
     Object* cadr() const;
     Object* setCar(ObjectPtr obj) { cc->car = std::move(obj); return cc->car.get(); }
     Object* setCdr(ObjectPtr obj) { cc->cdr = std::move(obj); return cc->cdr.get(); }

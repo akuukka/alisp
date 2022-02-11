@@ -919,7 +919,6 @@ void testIf()
 void testCyclicals()
 {
     Machine m;
-    assert(!alisp::makeList(&m)->cc->isCyclical());
     ASSERT_OUTPUT_EQ(m,
                      "(progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z)",
                      "(1 2 3 2 . #2)");
