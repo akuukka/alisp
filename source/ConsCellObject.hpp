@@ -74,12 +74,12 @@ struct ConsCellObject :
 
     ConsCell::Iterator begin() const
     {
-        return cc->begin();
+        return cc ? cc->begin() : ConsCell::Iterator{nullptr};
     }
     
     ConsCell::Iterator end() const
     {
-        return cc->end();
+        return cc ? cc->end() : ConsCell::Iterator{nullptr};
     }
 
     std::unique_ptr<ConsCellObject> deepCopy() const;
