@@ -75,7 +75,9 @@ void Machine::initListFunctions()
     defun("nlistp", [](const Object& obj) { return !obj.isList(); });
     defun("proper-list-p", [this](const Object& obj) -> ObjectPtr {
         if (!obj.isList()) return makeNil();
+        if (obj.isNil()) return makeInt(0);
         ConsCell* cc = obj.value<ConsCell*>();
+        assert(cc);
         if (cc->isCyclical()) {
             return makeNil();
         }
