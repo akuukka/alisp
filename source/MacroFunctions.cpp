@@ -16,9 +16,11 @@ ALISP_STATIC void renameSymbols(Machine&m, ConsCellObject& obj, std::map<std::st
         if (sym && conv.count(sym->name)) {
             p->car = m.quote(conv[sym->name]->clone());
         }
-        ConsCellObject* cc = dynamic_cast<ConsCellObject*>(&obj);
-        if (cc) {
-            renameSymbols(m, *cc, conv);
+        else {
+            ConsCellObject* cc = dynamic_cast<ConsCellObject*>(&obj);
+            if (cc) {
+                renameSymbols(m, *cc, conv);
+            }
         }
         p = p->next();
     }
