@@ -725,7 +725,7 @@ std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj, const char* 
         std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName(quoteFunc));
     ObjectPtr cdr =
         std::make_unique<ConsCellObject>(std::move(obj), nullptr, this);
-    return std::make_unique<ConsCellObject>(std::move(car), std::move(cdr), this);
+    return makeConsCell(std::move(car), std::move(cdr));
 }
 
 ALISP_INLINE
