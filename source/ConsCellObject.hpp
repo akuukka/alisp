@@ -24,13 +24,14 @@ struct ConsCellObject :
     std::shared_ptr<ConsCell> cc;
     Machine* parent = nullptr;
 
-    ConsCellObject(Machine* parent) : parent(parent) { cc = std::make_shared<ConsCell>(); }
+    ConsCellObject(Machine* parent) : parent(parent) { }
     ConsCellObject(std::shared_ptr<ConsCell> value, Machine* machine) :
         cc(value),
         parent(machine) {}
     ConsCellObject(std::unique_ptr<Object> car, std::unique_ptr<Object> cdr, Machine* p) :
         ConsCellObject(p)
     {
+        cc = std::make_shared<ConsCell>();
         this->cc->car = std::move(car);
         if (!cdr || !(*cdr)) {
             return;
