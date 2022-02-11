@@ -26,8 +26,14 @@ void Machine::initSequenceFunctions()
     });
     defun("reverse", [](const Sequence& seq) { return seq.reverse(); });
     defun("copy-sequence", [](const Sequence& seq) { return seq.copy(); });
-    defun("mapcar", [](const Function& func, const Sequence& seq) {
-        return seq.mapCar(func);
+    defun("mapcar", [](const Function& func, const Sequence& seq) { return seq.mapCar(func); });
+    defun("mapc", [](const Function& func, const Object& obj) {
+        auto seq = dynamic_cast<const Sequence*>(&obj);
+        if (!seq) {
+            throw exceptions::WrongTypeArgument(obj.toString());
+        }
+        seq->mapCar(func);
+        return obj.clone();
     });
 }
 
