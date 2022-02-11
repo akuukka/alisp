@@ -30,6 +30,7 @@ struct StringObject :
 
     ObjectPtr copy() const override;
     ObjectPtr reverse() const override;
+    std::unique_ptr<ConsCellObject> mapCar(const Function& func) const override;
 
     size_t length() const override;
     std::unique_ptr<Object> elt(std::int64_t index) const override;

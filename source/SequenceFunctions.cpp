@@ -26,6 +26,9 @@ void Machine::initSequenceFunctions()
     });
     defun("reverse", [](const Sequence& seq) { return seq.reverse(); });
     defun("copy-sequence", [](const Sequence& seq) { return seq.copy(); });
+    defun("mapcar", [](const Function& func, const Sequence& seq) {
+        return seq.mapCar(func);
+    });
 }
 
 }

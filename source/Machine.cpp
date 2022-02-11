@@ -29,7 +29,7 @@ ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxA
     if (ConvertParsedNamesToUpperCase) {
         name = utf8::toUpper(name);
     }
-    auto func = std::make_shared<Function>();
+    auto func = std::make_shared<Function>(*this);
     func->name = name;
     func->minArgs = minArgs;
     func->maxArgs = maxArgs;

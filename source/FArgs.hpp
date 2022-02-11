@@ -15,6 +15,8 @@ struct ConsCellObject;
 
 struct Function
 {
+    Function(Machine& parent) : parent(parent) {}
+    Machine& parent;
     std::string name;
     int minArgs = 0;
     int maxArgs = 0xffff;

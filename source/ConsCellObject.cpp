@@ -33,6 +33,27 @@ ALISP_INLINE ObjectPtr ConsCellObject::copy() const
     });
     return builder.get();
 }
+
+ALISP_INLINE ListPtr ConsCellObject::mapCar(const Function& func) const
+{
+    ListBuilder builder(*parent);
+    if (!isNil()) {
+        cc->iterateList([&](Object* obj, bool circular, Object* dot) {
+            if (circular) {
+                throw exceptions::CircularList(toString());
+            }
+            else if (dot) {
+                throw exceptions::WrongTypeArgument(toString());
+            }
+            ConsCell cc;
+            cc.car = parent->quote(obj->clone());
+            FArgs args(cc, *parent);
+            builder.append(func.func(args));
+            return true;
+        });
+    }
+    return builder.get();
+}
     
 ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
 {
@@ -97,7 +118,7 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
     auto& m = *parent;
     const bool macro = car()->asSymbol()->getSymbol() == m.getSymbol(MacroName);
     if (macro) {
-        auto func = std::make_shared<Function>();
+        auto func = std::make_shared<Function>(*parent);
         auto cc = this->cc->next();
         std::shared_ptr<ConsCellObject> closure =
             parent->makeConsCell(cc->car->clone(), cc->cdr->clone());
@@ -112,7 +133,7 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
     }
     const bool lambda = car()->asSymbol()->getSymbol() == m.getSymbol(LambdaName);
     if (lambda) {
-        auto func = std::make_shared<Function>();
+        auto func = std::make_shared<Function>(*parent);
         auto cc = this->cc->next();
         std::shared_ptr<ConsCellObject> closure =
             parent->makeConsCell(cc->car->clone(), cc->cdr->clone());

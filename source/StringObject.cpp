@@ -1,4 +1,5 @@
 #include "alisp.hpp"
+#include "ConsCellObject.hpp"
 #include "SharedValueObject.hpp"
 #include "StringObject.hpp"
 #include "ValueObject.hpp"
@@ -59,6 +60,11 @@ ALISP_INLINE std::unique_ptr<Object> StringObject::elt(std::int64_t index) const
         offset += proceed;
     }
     return makeInt(utf8::decode(encoded));
+}
+
+ListPtr StringObject::mapCar(const Function& func) const
+{
+    throw std::runtime_error("Not implemented");
 }
 
 }

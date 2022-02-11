@@ -1244,6 +1244,7 @@ void testSequences()
     ASSERT_OUTPUT_EQ(m, "(reverse '(1 2 3))", "(3 2 1)");
     ASSERT_OUTPUT_EQ(m, "(reverse ())", "nil");
     ASSERT_OUTPUT_EQ(m, "(reverse '(1))", "(1)");
+    ASSERT_OUTPUT_EQ(m, "(mapcar 'car '((a b) (c d) (e f)))", "(a c e)");
 }
 
 static int testFunction(int a, int b) { return a + b; }

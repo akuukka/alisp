@@ -72,6 +72,7 @@ struct ConsCellObject :
     size_t length() const override;
     std::unique_ptr<Object> eval() override;
     std::unique_ptr<Object> elt(std::int64_t index) const override;
+    std::unique_ptr<ConsCellObject> mapCar(const Function& func) const override;
 
     ConsCell::Iterator begin() const
     {
@@ -128,5 +129,7 @@ public:
     ConsCell* tail() { return m_last; }
     std::unique_ptr<ConsCellObject> get();
 };
+
+using ListPtr = std::unique_ptr<ConsCellObject>;
 
 }
