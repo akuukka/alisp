@@ -214,10 +214,8 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
             return parseNamedObject(expr);
         }
         else if (c == '(') {
-            auto l = makeList(this);
+            ListBuilder builder(*this);
             bool dot = false;
-            auto lastConsCell = l->cc.get();
-            assert(lastConsCell);
             expr++;
             skipWhitespace(expr);
             while (*expr != ')' && *expr) {
@@ -235,24 +233,17 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
                 auto sym = parseNext(expr);
                 skipWhitespace(expr);
                 if (dot) {
-                    assert(lastConsCell->car);
-                    lastConsCell->cdr = std::move(sym);
+                    builder.dot(std::move(sym));
                 }
                 else {
-                    if (lastConsCell->car) {
-                        assert(!lastConsCell->cdr);
-                        lastConsCell->cdr = std::make_unique<ConsCellObject>(this);
-                        assert(lastConsCell != lastConsCell->next());
-                        lastConsCell = lastConsCell->next();
-                    }
-                    lastConsCell->car = std::move(sym);
+                    builder.append(std::move(sym));
                 }
             }
             if (!*expr) {
                 throw exceptions::SyntaxError("End of file during parsing");
             }
             expr++;
-            return l;
+            return builder.get();
         }
         else {
             std::stringstream os;

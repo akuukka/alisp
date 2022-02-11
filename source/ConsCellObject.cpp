@@ -315,6 +315,11 @@ ALISP_INLINE void ListBuilder::append(const Object& obj)
     append(obj.clone());
 }
 
+ALISP_INLINE void ListBuilder::dot(std::unique_ptr<Object> obj)
+{
+    m_last->cdr = std::move(obj);
+}
+
 ALISP_INLINE void ListBuilder::append(std::unique_ptr<Object> obj)
 {
     if (!m_list) {
