@@ -55,7 +55,7 @@ ALISP_INLINE void ConsCell::traverse(const std::function<bool(const ConsCell*)>&
         if (!f(cell)) {
             return;
         }
-        if (cell->car->isList()) {
+        if (cell->car->isList() && !cell->car->isNil()) {
             cell->car->asList()->cc.get()->traverse(f);
         }
         cell = cell->next();
