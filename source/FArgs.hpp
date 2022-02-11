@@ -26,7 +26,6 @@ struct FArgs
 {
     ConsCell* cc;
     Machine& m;
-    std::string funcName = ""; // For debugging until proper stack traces will be available
     std::vector<std::unique_ptr<Object>> argStorage;
     std::vector<std::shared_ptr<Function>> funcStorage;
     

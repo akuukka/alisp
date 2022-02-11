@@ -155,19 +155,18 @@ ALISP_INLINE ObjectPtr ConsCellObject::eval()
         throw exceptions::Error("Max recursion depth limit exceeded.");
     }
     
-    auto &c = *cc;
-    if (!c) {
+    if (!cc || !(*cc)) {
         return std::make_unique<ConsCellObject>(parent);
     }
     try {
-        const auto f = c.car->resolveFunction();
+        auto &c = *cc;
+        const auto f = car()->resolveFunction();
         assert(f && "Throws if fails");
         const int argc = countArgs(c.next());
         if (argc < f->minArgs || argc > f->maxArgs) {
             throw exceptions::WrongNumberOfArguments(argc);
         }
         FArgs args(*c.next(), *parent);
-        args.funcName = f->name;
         return f->func(args);
     }
     catch (exceptions::Error& err) {
