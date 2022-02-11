@@ -220,7 +220,7 @@ ALISP_INLINE std::string ConsCellObject::toString(bool aesthetic) const
     }
 
     auto carToString = [&](const Object* car) -> std::string {
-        if (car->isList()) {
+        if (car->isList() && !car->isNil()) {
             const ConsCell* car2 = car->asList()->cc.get();
             if (car2->isCyclical()) {
                 std::int64_t i = -1;
