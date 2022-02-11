@@ -49,7 +49,7 @@ struct ConsCellObject :
     std::string toString(bool aesthetic = false) const override;
     bool isList() const override { return true; }
     bool isNil() const override { return !(*this); }
-    bool operator!() const override { return !(*cc); }
+    bool operator!() const override { return !cc || !(*cc); }
     ConsCellObject* asList() override { return this; }
     const ConsCellObject* asList() const override { return this; }
     Object* car() const { return cc->car.get();  };

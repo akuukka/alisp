@@ -719,7 +719,7 @@ std::unique_ptr<SymbolObject> Machine::makeSymbol(std::string name, bool parsedN
 }
 
 ALISP_INLINE
-std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj, const char* quoteFunc)
+ObjectPtr Machine::quote(ObjectPtr obj, const char* quoteFunc)
 {
     ObjectPtr car =
         std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName(quoteFunc));
