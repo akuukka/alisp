@@ -38,18 +38,9 @@ void Machine::initListFunctions()
         return ptr->clone();
     });
     makeFunc("list", 0, std::numeric_limits<int>::max(), [](FArgs& args) {
-        auto newList = makeList(&args.m);
-        ConsCell *lastCc = newList->cc.get();
-        bool first = true;
-        for (auto obj : args) {
-            if (!first) {
-                lastCc->cdr = std::make_unique<ConsCellObject>(&args.m);
-                lastCc = lastCc->next();
-            }
-            lastCc->car = obj->clone();
-            first = false;
-        }
-        return newList;
+        ListBuilder builder(args.m);
+        while (args.hasNext()) { builder.append(args.pop()->clone()); }
+        return builder.get();
     });
     makeFunc("dolist", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         const auto p1 = args.pop(false)->asList();
