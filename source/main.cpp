@@ -119,6 +119,10 @@ void testListBasics()
     builder.append(m.makeTrue());
     builder.append(m.makeNil());
     ASSERT_EQ(builder.get()->toString(), "(t nil)");
+    ASSERT_OUTPUT_EQ(m, "(memq 2 nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(memq 2 '(1 2 3 4 . 5))", "(2 3 4 . 5)");
+    ASSERT_EXCEPTION(m, "(memq 6 '(1 2 3 4 . 5))", exceptions::WrongTypeArgument);
+    ASSERT_EXCEPTION(m, "(memq 6 123)", exceptions::WrongTypeArgument);
     ASSERT_OUTPUT_EQ(m, "(append '(1 2) '(3 4 . 5))", "(1 2 3 4 . 5)");
     ASSERT_OUTPUT_EQ(m, "(append '(1 2 3 4) '(5 6 7 8))", "(1 2 3 4 5 6 7 8)");
     ASSERT_OUTPUT_EQ(m, "(make-list 3 'pigs)", "(pigs pigs pigs)");

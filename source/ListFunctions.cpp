@@ -1,3 +1,4 @@
+#include "ConsCell.hpp"
 #include "Error.hpp"
 #include "AtScopeExit.hpp"
 #include "SymbolObject.hpp"
@@ -98,6 +99,21 @@ void Machine::initListFunctions()
             r = std::make_unique<ConsCellObject>(ptr.clone(), r->clone(), this);
         }
         return r;
+    });
+    defun("memq", [this](const Object& object, const Object& listObj) {
+        requireType<ConsCellObject>(listObj);
+        if (listObj.isNil()) {
+            return makeNil();
+        }
+        auto p = &listObj;
+        while (p) {
+            requireType<ConsCellObject>(*p);
+            if (p->asList()->car()->equals(object)) {
+                return p->asList()->clone();
+            }
+            p = p->asList()->cdr();
+        }
+        return makeNil();
     });
 }
 
