@@ -57,32 +57,25 @@ ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
 
 ALISP_INLINE std::unique_ptr<ConsCellObject> ConsCellObject::deepCopy() const
 {
-    std::unique_ptr<ConsCellObject> copy = std::make_unique<ConsCellObject>(parent);
-    ConsCell *origPtr = cc.get();
-    ConsCell *copyPtr = copy->cc.get();
-    assert(origPtr && copyPtr);
-    while (origPtr) {
-        if (origPtr->car) {
-            if (origPtr->car->isList()) {
-                const auto list = dynamic_cast<ConsCellObject*>(origPtr->car.get());
-                copyPtr->car = list->deepCopy();
+    ListBuilder builder(*parent);
+    if (cc) {
+        cc->iterateList([&](Object* object, bool circular, Object* dotCdr) {
+            if (circular) {
+                throw std::runtime_error("Circular list");
+            }
+            if (object->isList()) {
+                builder.append(object->asList()->deepCopy());
             }
             else {
-                copyPtr->car = origPtr->car->clone();
+                builder.append(object->clone());
             }
-        }
-        auto cdr = origPtr->cdr.get();
-        origPtr = origPtr->next();
-        if (origPtr) {
-            copyPtr->cdr = std::make_unique<ConsCellObject>(parent);
-            copyPtr = copyPtr->next();
-        }
-        else if (cdr) {
-            assert(!cdr->isList());
-            copyPtr->cdr = cdr->clone(); 
-        }
+            if (dotCdr) {
+                builder.dot(dotCdr->clone());
+            }
+            return true;
+        });
     }
-    return copy;
+    return builder.get();
 }
 
 ObjectPtr expand(Machine& m,
