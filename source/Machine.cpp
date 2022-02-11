@@ -508,10 +508,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return p->clone();
     });
     defun("mapatoms", [this](const Function& func) {
-        auto list = makeList(this);
+        ConsCell cc;
         for (const auto& p : m_syms) {
-            list->cc->car = quote(std::make_unique<SymbolObject>(this, p.second, ""));
-            FArgs args(*list->cc, *this);
+            cc.car = quote(std::make_unique<SymbolObject>(this, p.second));
+            FArgs args(cc, *this);
             func.func(args);
         }
         return makeNil();
