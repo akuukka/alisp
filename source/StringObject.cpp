@@ -1,4 +1,5 @@
 #include "alisp.hpp"
+#include "FArgs.hpp"
 #include "ConsCellObject.hpp"
 #include "SharedValueObject.hpp"
 #include "StringObject.hpp"
@@ -64,7 +65,18 @@ ALISP_INLINE std::unique_ptr<Object> StringObject::elt(std::int64_t index) const
 
 ListPtr StringObject::mapCar(const Function& func) const
 {
-    throw std::runtime_error("Not implemented");
+    ListBuilder builder(func.parent);
+    std::unique_ptr<IntObject> integer = makeInt(0);
+    IntObject* ptr = integer.get();
+    ConsCell cc;
+    cc.car = std::move(integer);
+    for (const std::uint32_t codepoint : String(value)) {
+        ptr->value = codepoint;
+        FArgs args(cc, func.parent);
+        builder.append(func.func(args));
+    }
+    return builder.get();
+
 }
 
 }

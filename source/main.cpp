@@ -1245,6 +1245,8 @@ void testSequences()
     ASSERT_OUTPUT_EQ(m, "(reverse ())", "nil");
     ASSERT_OUTPUT_EQ(m, "(reverse '(1))", "(1)");
     ASSERT_OUTPUT_EQ(m, "(mapcar 'car '((a b) (c d) (e f)))", "(a c e)");
+    ASSERT_OUTPUT_EQ(m, R"code((mapcar 'string "abc"))code",
+                     R"code(("a" "b" "c"))code");
 }
 
 static int testFunction(int a, int b) { return a + b; }
