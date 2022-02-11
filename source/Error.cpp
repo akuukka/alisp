@@ -102,8 +102,11 @@ void Machine::initErrorFunctions()
                                                                ""),
                                 data.clone());
     });
-    defun("error-message-string", [](const ConsCell& err) {
-        return err.car->toString() + ":" + err.cdr->toString();
+    defun("error-message-string", [](const ConsCell* err) {
+        if (!err) {
+            return std::string("peculiar error");
+        }
+        return err->car->toString() + ":" + err->cdr->toString();
     });
     makeFunc("condition-case", 2, std::numeric_limits<int>::max(), [&](FArgs& args) {
         auto arg = args.pop(false);

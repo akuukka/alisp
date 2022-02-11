@@ -11,19 +11,23 @@ namespace alisp
 
 void Machine::initListFunctions()
 {
-    defun("append", [this](const ConsCell& a, const ConsCell& b) {
+    defun("append", [this](const ConsCell* a, const ConsCell* b) {
         ListBuilder builder(*this);
-        for (const auto& obj : a) { builder.append(obj); }
-        b.iterateList([&](Object* obj, bool circular, Object* dotcdr) {
-            if (circular) {
-                throw exceptions::CircularList("Can't append");
-            }
-            builder.append(obj->clone());
-            if (dotcdr) {
-                builder.tail()->cdr = dotcdr->clone();
-            }
-            return true;
-        });
+        if (a) {
+            for (const auto& obj : *a) { builder.append(obj); }
+        }
+        if (b) {
+            b->iterateList([&](Object* obj, bool circular, Object* dotcdr) {
+                if (circular) {
+                    throw exceptions::CircularList("Can't append");
+                }
+                builder.append(obj->clone());
+                if (dotcdr) {
+                    builder.tail()->cdr = dotcdr->clone();
+                }
+                return true;
+            });
+        }
         return builder.get();
     });
     defun("cons", [this](const Object& car, const Object& cdr) { 
@@ -64,8 +68,8 @@ void Machine::initListFunctions()
     defun("setcdr", [](ConsCell& cc, ObjectPtr newcdr) {
         return cc.cdr = newcdr->clone(), std::move(newcdr);
     });
-    defun("car", [this](const ConsCell& cc) { return cc.car ? cc.car->clone() : makeNil(); });
-    defun("cdr", [this](const ConsCell& cc) { return cc.cdr ? cc.cdr->clone() : makeNil(); });
+    defun("car", [&](const ConsCell* cc) { return cc && cc->car ? cc->car->clone() : makeNil(); });
+    defun("cdr", [&](const ConsCell* cc) { return cc && cc->cdr ? cc->cdr->clone() : makeNil(); });
     defun("consp", [](const Object& obj) { return obj.isList() && !obj.isNil(); });
     defun("listp", [](const Object& obj) { return obj.isList(); });
     defun("nlistp", [](const Object& obj) { return !obj.isList(); });

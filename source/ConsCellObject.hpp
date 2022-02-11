@@ -100,6 +100,8 @@ struct ConsCellObject :
     const ConsCell* convertTo(ConvertibleTo<const ConsCell*>::Tag) const override {
         return cc.get();
     }
+    bool canConvertTo(ConvertibleTo<ConsCell&>::Tag) const override;
+    bool canConvertTo(ConvertibleTo<const ConsCell&>::Tag) const override;
 };
 
 inline std::unique_ptr<Object> makeNil(Machine* parent)

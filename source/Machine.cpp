@@ -480,9 +480,10 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return std::make_unique<StringObject>(descr);
     });
-    defun("nth", [&](std::int64_t index, const ConsCell& list) {
-        auto p = &list;
-        auto obj = list.car.get();
+    defun("nth", [&](std::int64_t index, const ConsCell* list) {
+        if (!list) return makeNil();
+        auto p = list;
+        auto obj = list->car.get();
         for (size_t i = 0; i < index; i++) {
             p = p->next();
             if (!p) {

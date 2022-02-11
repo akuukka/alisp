@@ -375,4 +375,14 @@ bool ConsCellObject::canConvertTo(ConvertibleTo<Symbol&>::Tag) const
     return isNil();
 }
 
+bool ConsCellObject::canConvertTo(ConvertibleTo<ConsCell&>::Tag) const
+{
+    return !isNil();
+}
+
+bool ConsCellObject::canConvertTo(ConvertibleTo<const ConsCell&>::Tag) const
+{
+    return !isNil();
+}
+
 }

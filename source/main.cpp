@@ -171,6 +171,7 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(prog2 1 2 (setq p3 3))", "2");
     ASSERT_OUTPUT_EQ(m, "(prog2 (setq p1 4) 2 (setq p3 3))", "2");
     ASSERT_OUTPUT_EQ(m, "(= (+ p1 p3) 7)", "t");
+    ASSERT_EXCEPTION(m, "(setcar nil 4)", exceptions::WrongTypeArgument);
 }
 
 template <typename E>
