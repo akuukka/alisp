@@ -333,11 +333,10 @@ ALISP_INLINE void ListBuilder::append(std::unique_ptr<Object> obj)
         m_last->car = std::move(obj);
     }
     else {
-        auto newCc = std::make_unique<ConsCellObject>(&m_parent);
+        auto newCc = std::make_unique<ConsCellObject>(std::move(obj), nullptr, &m_parent);
         auto nextLast = newCc->cc.get();
         m_last->cdr = std::move(newCc);
         m_last = nextLast;
-        m_last->car = std::move(obj);
     }
 }
 

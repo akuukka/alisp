@@ -3,6 +3,7 @@
 #include <memory>
 #include <ostream>
 #include <sstream>
+#include "ConsCell.hpp"
 #include "SubroutineObject.hpp"
 #include "Error.hpp"
 #include "Object.hpp"
@@ -256,14 +257,14 @@ ALISP_INLINE std::unique_ptr<Object> Machine::parseNext(const char *&expr)
 
 ALISP_INLINE Machine::Machine(bool initStandardLibrary)
 {
-    if (!initStandardLibrary) {
-        return;
-    }
     setVariable(parsedSymbolName("&optional"),
                 std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName("&optional")), true);
     setVariable(NilName, makeNil(), true);
     setVariable(TName,
                 std::make_unique<SymbolObject>(this, nullptr, TName), true);
+    if (!initStandardLibrary) {
+        return;
+    }
     setVariable(parsedSymbolName("*standard-output*"),
                 std::make_unique<OStreamObject>(&std::cout));
     setVariable(parsedSymbolName("*standard-input*"),
@@ -720,12 +721,11 @@ std::unique_ptr<SymbolObject> Machine::makeSymbol(std::string name, bool parsedN
 ALISP_INLINE
 std::unique_ptr<Object> Machine::quote(std::unique_ptr<Object> obj, const char* quoteFunc)
 {
-    std::unique_ptr<ConsCellObject> list = std::make_unique<ConsCellObject>(this);
-    list->cc->car = std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName(quoteFunc));
-    std::unique_ptr<ConsCellObject> cdr = std::make_unique<ConsCellObject>(this);
-    cdr->cc->car = std::move(obj);
-    list->cc->cdr = std::move(cdr);
-    return list;
+    ObjectPtr car =
+        std::make_unique<SymbolObject>(this, nullptr, parsedSymbolName(quoteFunc));
+    ObjectPtr cdr =
+        std::make_unique<ConsCellObject>(std::move(obj), nullptr, this);
+    return std::make_unique<ConsCellObject>(std::move(car), std::move(cdr), this);
 }
 
 ALISP_INLINE

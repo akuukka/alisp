@@ -115,6 +115,10 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res
 void testListBasics()
 {
     Machine m;
+    ListBuilder builder(m);
+    builder.append(m.makeTrue());
+    builder.append(m.makeNil());
+    ASSERT_EQ(builder.get()->toString(), "(t nil)");
     ASSERT_OUTPUT_EQ(m, "(append '(1 2) '(3 4 . 5))", "(1 2 3 4 . 5)");
     ASSERT_OUTPUT_EQ(m, "(append '(1 2 3 4) '(5 6 7 8))", "(1 2 3 4 5 6 7 8)");
     ASSERT_OUTPUT_EQ(m, "(make-list 3 'pigs)", "(pigs pigs pigs)");
@@ -1257,12 +1261,12 @@ void testPublicInterface()
 
 void test()
 {
+    testListBasics();
     testPublicInterface();
     testFunctions();
     testMacros();
     testQuote();
     testSequences();
-    testListBasics();
     testErrors();
     testNullFunction();
     testCarFunction();
