@@ -1,6 +1,7 @@
+#define ENABLE_DEBUG_REFCOUNTING
 #include <exception>
 #include <typeinfo>
-#define ENABLE_DEBUG_REFCOUNTING
+#include <chrono>
 #include "Error.hpp"
 #include "StreamObject.hpp"
 #include <variant>
@@ -1348,7 +1349,12 @@ int main(int argc, char** argv)
 {
     if (argc >= 2 && std::string(argv[1]) == "--test") {
         try {
+            auto start = std::chrono::steady_clock::now();
             test();
+            auto end = std::chrono::steady_clock::now();
+            std::cout << "Tests took "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+                      << " ms" << std::endl;
         }
         catch (exceptions::Error& error) {
             std::cerr << "Unhandled exception occurred:" << std::endl;
