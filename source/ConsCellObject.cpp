@@ -48,7 +48,8 @@ ALISP_INLINE ObjectPtr ConsCellObject::reverse() const
         auto newcc = std::make_shared<ConsCell>();
         newcc->car = obj->clone();
         newcc->cdr =
-            prev->car || prev->cdr ? std::make_unique<ConsCellObject>(prev, parent) : nullptr;
+            (prev && (prev->car || prev->cdr)) ?
+            std::make_unique<ConsCellObject>(prev, parent) : nullptr;
         reversed->cc = newcc;
         return true;
     });
