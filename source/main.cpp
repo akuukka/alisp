@@ -955,7 +955,7 @@ void testCyclicals()
     });
     assert(!list->asList()->cc->isCyclical());
     assert(ints.empty());
-    m.evaluate("nil")->asList()->cc->traverse([](const alisp::ConsCell* cell) {
+    m.evaluate("nil")->asList()->traverse([](const Object&) {
         assert(false && "Traversing empty list...");
         return false;
     });
