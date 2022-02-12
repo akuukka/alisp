@@ -115,6 +115,33 @@ void Machine::initListFunctions()
         }
         return makeNil();
     });
+    defun("delq", [this](const Object& object, const Object& listObj) {
+        requireType<ConsCellObject>(listObj);
+        if (listObj.isNil()) {
+            return makeNil();
+        }
+        ConsCellObject ret(listObj.asList()->cc, this);
+        while (ret.car() && ret.car()->equals(object)) {
+            assert(!ret.cdr() || ret.cdr()->asList());
+            ret.cc = ret.cdr() ? ret.cdr()->asList()->cc : nullptr;
+        }
+        if (!ret.cc) {
+            return makeNil();
+        }
+        auto cc = ret.cc.get();
+        assert(cc && !ret.cc->car->equals(object));
+        while (cc && cc->cdr) {
+            requireType<ConsCellObject>(*cc->cdr);
+            assert(cc->cdr->asList()->car());
+            if (cc->cdr->asList()->car()->equals(object)) {
+                cc->cdr = std::move(cc->next()->cdr);
+            }
+            else {
+                cc = cc->next();
+            }
+        }
+        return ret.clone();
+    });
 }
 
 }

@@ -112,6 +112,31 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res
     }                                                                   \
 }
 
+void testDelqFunction()
+{
+    Machine m;
+    ASSERT_OUTPUT_EQ(m, "(setq sample-list (list 'a 'b 'c '(4)))", "(a b c (4))");
+    ASSERT_OUTPUT_EQ(m, "(delq 'a sample-list)", "(b c (4))");
+    ASSERT_OUTPUT_EQ(m, "sample-list", "(a b c (4))");
+    ASSERT_OUTPUT_EQ(m, "(delq 'c sample-list)", "(a b (4))");
+    ASSERT_OUTPUT_EQ(m, "sample-list", "(a b (4))");
+
+    ASSERT_OUTPUT_EQ(m, "(setq sample-list2 (list 'a 'a 'a 'a 'b 'c '(4)))", "(a a a a b c (4))");
+    ASSERT_OUTPUT_EQ(m, "(delq 'a sample-list2)", "(b c (4))");
+    ASSERT_OUTPUT_EQ(m, "sample-list2", "(a a a a b c (4))");
+
+    ASSERT_OUTPUT_EQ(m, "(setq sample-list3 (list 1 2 1 3 1 1))", "(1 2 1 3 1 1)");
+    ASSERT_OUTPUT_EQ(m, "(delq 1 sample-list3)", "(2 3)");
+    ASSERT_OUTPUT_EQ(m, "sample-list3", "(1 2 3)");
+
+    // A dotted list causes an error, but not pre-emptively:
+    ASSERT_OUTPUT_EQ(m, "(setq sample-list4 (cons 3 (cons 4 (cons 1 2)))  )", "(3 4 1 . 2)");
+    ASSERT_EXCEPTION(m, "(delq 4 sample-list4)", exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "sample-list4", "(3 1 . 2)");
+
+    ASSERT_OUTPUT_EQ(m, "(delq 1 '(1 1 1 1))", "nil");
+}
+
 void testListBasics()
 {
     Machine m;
@@ -119,6 +144,7 @@ void testListBasics()
     builder.append(m.makeTrue());
     builder.append(m.makeNil());
     ASSERT_EQ(builder.get()->toString(), "(t nil)");
+    
     ASSERT_OUTPUT_EQ(m, "(memq 2 nil)", "nil");
     ASSERT_OUTPUT_EQ(m, "(memq 2 '(1 2 3 4 . 5))", "(2 3 4 . 5)");
     ASSERT_EXCEPTION(m, "(memq 6 '(1 2 3 4 . 5))", exceptions::WrongTypeArgument);
@@ -1291,6 +1317,7 @@ void test()
     testCdrFunction();
     testConsFunction();
     testListFunction();
+    testDelqFunction();
     testKeywords();
     testNthFunction();
     testStrings();

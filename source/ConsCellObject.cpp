@@ -146,13 +146,11 @@ ALISP_INLINE std::shared_ptr<Function> ConsCellObject::resolveFunction() const
     return SharedValueObjectBase::resolveFunction();
 }
 
-ALISP_INLINE bool ConsCellObject::equals(const Object &o) const
+ALISP_INLINE bool ConsCellObject::equals(const Object& o) const
 {
-    const ConsCellObject *op = dynamic_cast<const ConsCellObject *>(&o);
-    if (op && !(*this) && !(*op)) {
-        return true;
-    }
-    return this->cc == op->cc;
+    const ConsCellObject *op = dynamic_cast<const ConsCellObject*>(&o);
+    if (op && !(*this) && !(*op)) { return true; }
+    return op && cc == op->cc;
 }
 
 ALISP_STATIC int countArgs(const ConsCell* cc)
