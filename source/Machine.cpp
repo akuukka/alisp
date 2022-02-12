@@ -459,6 +459,12 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return std::make_unique<SymbolObject>(this, m_syms[name->name], "");
     });
     defun("eq", [this](const Object& obj1, const Object& obj2) { return obj1.equals(obj2); });
+    defun("eql", [this](const Object& obj1, const Object& obj2) {
+        if (obj1.equals(obj2)) {
+            return obj1.isInt() == obj2.isInt() && obj1.isFloat() == obj2.isFloat();
+        }
+        return false;
+    });
     makeFunc("describe-variable", 1, 1, [this](FArgs& args) {
         const auto arg = args.pop();
         std::string descr = "You did not specify a variable.";

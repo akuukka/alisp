@@ -444,6 +444,10 @@ void testVariables()
 {
     Machine m;
     ASSERT_OUTPUT_EQ(m, "(eq (+ most-positive-fixnum 1) most-negative-fixnum)", "t");
+    ASSERT_OUTPUT_EQ(m, "(eql 1 1)", "t");
+    ASSERT_OUTPUT_EQ(m, "(eql 1.0 1)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(eql 'crab 'crab)", "t");
+    ASSERT_OUTPUT_EQ(m, "(eql () ())", "t");
     ASSERT_OUTPUT_EQ(m, "'(;comment\n1)", "(1)");
     ASSERT_OUTPUT_CONTAINS(m, "1e5", "100000.0");
     ASSERT_OUTPUT_EQ(m, "(boundp 'abracadabra)", "nil");
