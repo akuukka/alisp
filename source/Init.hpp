@@ -82,6 +82,12 @@ namespace alisp { inline const char* getInitCode() { return R"code(
       (indirect-function (symbol-function function))
     function))
 
+(defun remq (elt list)
+  (while (and (eq elt (car list)) (setq list (cdr list))))
+  (if (memq elt list)
+      (delq elt (copy-sequence list))
+    list))
+
 (defun error (&rest args)
   (signal 'error (list (apply 'format args))))
 

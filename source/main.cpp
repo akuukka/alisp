@@ -112,6 +112,17 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res
     }                                                                   \
 }
 
+void testRemqFunction()
+{
+    Machine m;
+    ASSERT_OUTPUT_EQ(m, "(remq 'a nil)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(remq 'a (list 'a))", "nil");
+    ASSERT_OUTPUT_EQ(m, "(setq sample-list (list 'a 'b 'c 'a 'b 'c))", "(a b c a b c)");
+    ASSERT_OUTPUT_EQ(m, "(remq 'a sample-list)", "(b c b c)");
+    ASSERT_OUTPUT_EQ(m, "(remq 1 '(1 2 3))", "(2 3)");
+    ASSERT_EXCEPTION(m, "(remq 1 '(1 2 . 3))", exceptions::WrongTypeArgument);
+}
+
 void testDelqFunction()
 {
     Machine m;
@@ -1329,6 +1340,7 @@ void test()
     testConsFunction();
     testListFunction();
     testDelqFunction();
+    testRemqFunction();
     testKeywords();
     testNthFunction();
     testStrings();
@@ -1367,9 +1379,10 @@ void eval(Machine& m, const std::string& expr, bool interactive)
     catch (exceptions::Error& ex) {
         ex.onHandle(m);
         std::cerr << ex.getMessageString() << std::endl;
+        std::cerr << "\nCall stack:\n";
+        std::cerr << ex.stackTrace << std::endl;
     }
     catch (exceptions::Exception& ex) {
-        
         std::cerr << "An error was encountered:\n";
         std::cerr << ex.what() << std::endl;
     }

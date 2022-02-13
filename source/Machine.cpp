@@ -535,8 +535,8 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return ret;
     });
-    makeFunc("while", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
-        while (!args.current()->eval()->isNil()) { 
+    makeFunc("while", 1, std::numeric_limits<int>::max(), [this](FArgs& args) {
+        while (!args.current()->eval()->isNil()) {
             args.evalAll(args.cc->next());
         }
         return makeNil();

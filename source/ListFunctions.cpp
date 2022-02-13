@@ -1,6 +1,7 @@
 #include "ConsCell.hpp"
 #include "Error.hpp"
 #include "AtScopeExit.hpp"
+#include "Object.hpp"
 #include "SymbolObject.hpp"
 #include "alisp.hpp"
 #include "Machine.hpp"
@@ -107,7 +108,9 @@ void Machine::initListFunctions()
         }
         auto p = &listObj;
         while (p) {
-            requireType<ConsCellObject>(*p);
+            if (!p->isList()) {
+                throw exceptions::WrongTypeArgument(ListpName + (", " + listObj.toString()));
+            }
             if (p->asList()->car()->equals(object)) {
                 return p->asList()->clone();
             }

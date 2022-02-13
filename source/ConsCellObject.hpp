@@ -58,6 +58,7 @@ struct ConsCellObject :
     Object* cadr() const;
     Object* setCar(ObjectPtr obj) { cc->car = std::move(obj); return cc->car.get(); }
     Object* setCdr(ObjectPtr obj) { cc->cdr = std::move(obj); return cc->cdr.get(); }
+    const ConsCellObject* next() const;
     std::shared_ptr<Function> resolveFunction() const override;
 
     std::unique_ptr<Object> clone() const override

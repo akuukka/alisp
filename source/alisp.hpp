@@ -13,3 +13,4 @@ constexpr const char* RestName = ConvertParsedNamesToUpperCase ? "&REST" : "&res
 constexpr const char* OptionalName = ConvertParsedNamesToUpperCase ? "&OPTIONAL" : "&optional";
 constexpr const char* MacroName = ConvertParsedNamesToUpperCase ? "MACRO" : "macro";
 constexpr const char* LambdaName = ConvertParsedNamesToUpperCase ? "LAMBDA" : "lambda";
+constexpr const char* ListpName = ConvertParsedNamesToUpperCase ? "LISTP" : "listp";
