@@ -22,6 +22,7 @@ struct StringObject :
     }
 
     bool isString() const override { return true; }
+    bool equal(const Object& obj) const override;
 
     std::unique_ptr<Object> clone() const override
     {

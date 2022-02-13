@@ -28,6 +28,11 @@ ALISP_INLINE StringObject::StringObject(const String& o) :
 
 }
 
+ALISP_INLINE bool StringObject::equal(const Object& obj) const
+{
+    return eq(obj) || (obj.isString() && *value == obj.value<const std::string&>());
+}
+
 ALISP_INLINE
 size_t StringObject::length() const
 {

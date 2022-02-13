@@ -122,6 +122,7 @@ struct Object :
     virtual std::shared_ptr<Function> resolveFunction() const;
     virtual std::unique_ptr<Object> clone() const = 0;
     virtual bool eq(const Object& o) const { return false; }
+    virtual bool equal(const Object& o) const { return eq(o); }
 
     virtual ConsCellObject* asList() { return nullptr; }
     virtual const ConsCellObject* asList() const { return nullptr; }

@@ -70,6 +70,7 @@ struct ConsCellObject :
     ObjectPtr reverse() const override;
 
     bool eq(const Object &o) const override;
+    bool equal(const Object &o) const override;
     size_t length() const override;
     std::unique_ptr<Object> eval() override;
     std::unique_ptr<Object> elt(std::int64_t index) const override;

@@ -158,6 +158,20 @@ ALISP_INLINE bool ConsCellObject::eq(const Object& o) const
     return op && cc == op->cc;
 }
 
+ALISP_INLINE bool ConsCellObject::equal(const Object& o) const
+{
+    if (eq(o)) return true;
+    if (!o.isList()) return false;
+    const Object* myCar = car();
+    const Object* otherCar = o.asList()->car();
+    const Object* myCdr = cdr();
+    const Object* otherCdr = o.asList()->cdr();
+    if ((!myCar && otherCar) || (myCar && !otherCar)) return false;
+    if ((!myCdr && otherCdr) || (myCdr && !otherCdr)) return false;
+    return (myCar == otherCdr || myCar->equal(*otherCar)) &&
+        (myCdr == otherCdr || myCdr->equal(*otherCdr));    
+}
+
 ALISP_STATIC int countArgs(const ConsCell* cc)
 {
     if (!cc || !(*cc)) {

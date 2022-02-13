@@ -459,6 +459,7 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         return std::make_unique<SymbolObject>(this, m_syms[name->name], "");
     });
     defun("eq", [this](const Object& obj1, const Object& obj2) { return obj1.eq(obj2); });
+    defun("equal", [this](const Object& obj1, const Object& obj2) { return obj1.equal(obj2); });
     defun("eql", [this](const Object& obj1, const Object& obj2) {
         if (obj1.eq(obj2)) {
             return obj1.isInt() == obj2.isInt() && obj1.isFloat() == obj2.isFloat();

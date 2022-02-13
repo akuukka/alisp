@@ -600,6 +600,11 @@ void testEqFunction()
     ASSERT_EQ(m.evaluate("(eq () nil)"), "t");
     ASSERT_EQ(m.evaluate("(eq '() nil)"), "t");
     ASSERT_EQ(m.evaluate("(progn (setq l '(a b))(eq l l))"), "t");
+    ASSERT_OUTPUT_EQ(m, "(equal 'foo 'foo)", "t");
+    ASSERT_OUTPUT_EQ(m, "(equal 456 456)", "t");
+    ASSERT_OUTPUT_EQ(m, "(equal \"asdf\" \"asdf\")", "t");
+    ASSERT_OUTPUT_EQ(m, "(equal '(1 (2 (3))) '(1 (2 (3))))", "t");
+    ASSERT_OUTPUT_EQ(m, "(eq '(1 (2 (3))) '(1 (2 (3))))", "nil");
 }
 
 void testInternFunction()
