@@ -52,7 +52,7 @@ struct SymbolObject :
 
     std::unique_ptr<Object> eval() override;
 
-    bool equals(const Object& o) const override;
+    bool eq(const Object& o) const override;
 
     SymbolObject* asSymbol() override { return this; }
     const SymbolObject* asSymbol() const override { return this; }

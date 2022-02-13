@@ -28,7 +28,7 @@ struct SharedValueObject : SharedValueObjectBase,
     size_t sharedDataRefCount() const override { return value.use_count(); };
     void reset() override { value.reset(); }
 
-    bool equals(const Object& o) const override
+    bool eq(const Object& o) const override
     {
         const SharedValueObject* op = dynamic_cast<const SharedValueObject*>(&o);
         if (!op) {

@@ -1043,8 +1043,8 @@ void testMemoryLeaks()
                                "z)");
         const std::string zname = m->parsedSymbolName("z");
         m->getSymbolOrNull(zname);
-        assert(obj->equals(*m->getSymbolOrNull(zname)->variable));
-        assert(obj->equals(*m->evaluate(zname.c_str())));
+        assert(obj->eq(*m->getSymbolOrNull(zname)->variable));
+        assert(obj->eq(*m->evaluate(zname.c_str())));
         assert(Object::getDebugRefCount() > baseCount && "Circular2");
         auto clone = obj->clone();
         clone = nullptr;

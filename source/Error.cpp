@@ -79,14 +79,14 @@ std::string Error::getMessageString()
 
 ALISP_STATIC bool handlerMatches(const SymbolObject& error, const SymbolObject& handler)
 {
-    if (error.equals(handler)) {
+    if (error.eq(handler)) {
         return true;
     }
     const auto prop = error.parent->makeSymbol("error-conditions", true);
     const auto matchesHandlers = get(error.getSymbol()->plist, *prop);
     if (matchesHandlers->isList()) {
         for (const auto& obj : *matchesHandlers->asList()) {
-            if (handler.equals(obj)) {
+            if (handler.eq(obj)) {
                 return true;
             }
         }

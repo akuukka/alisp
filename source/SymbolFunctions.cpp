@@ -23,7 +23,7 @@ ALISP_STATIC ConsCellObject* getPlist(Symbol& symbol)
 ALISP_INLINE Object* get(const ConsCell& plist, const Object& property)
 {
     for (auto it = plist.begin(); it != plist.end();) {
-        if ((*it).equals(property)) {
+        if ((*it).eq(property)) {
             if ((it + 1) == plist.end()) {
                 return nullptr;
             }
@@ -66,7 +66,7 @@ ALISP_INLINE void Machine::initSymbolFunctions()
         else {
             for (auto cc = plist->cc.get(); cc != nullptr; cc = cc->next()) {
                 const Object& keyword = *cc->car;
-                if (keyword.equals(property)) {
+                if (keyword.eq(property)) {
                     cc = cc->next();
                     assert(cc);
                     cc->car = value.clone();

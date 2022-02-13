@@ -16,7 +16,7 @@ struct ValueObject : Object, ConvertibleTo<T>
         value(o.value)
     {}
     
-    bool equals(const Object& o) const override
+    bool eq(const Object& o) const override
     {
         const ValueObject<T>* op = dynamic_cast<const ValueObject<T>*>(&o);
         return op && op->value == value;

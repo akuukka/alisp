@@ -111,7 +111,7 @@ void Machine::initListFunctions()
             if (!p->isList()) {
                 throw exceptions::WrongTypeArgument(ListpName + (", " + listObj.toString()));
             }
-            if (p->asList()->car()->equals(object)) {
+            if (p->asList()->car()->eq(object)) {
                 return p->asList()->clone();
             }
             p = p->asList()->cdr();
@@ -124,7 +124,7 @@ void Machine::initListFunctions()
             return makeNil();
         }
         ConsCellObject ret(listObj.asList()->cc, this);
-        while (ret.car() && ret.car()->equals(object)) {
+        while (ret.car() && ret.car()->eq(object)) {
             assert(!ret.cdr() || ret.cdr()->asList());
             ret.cc = ret.cdr() ? ret.cdr()->asList()->cc : nullptr;
         }
@@ -132,11 +132,11 @@ void Machine::initListFunctions()
             return makeNil();
         }
         auto cc = ret.cc.get();
-        assert(cc && !ret.cc->car->equals(object));
+        assert(cc && !ret.cc->car->eq(object));
         while (cc && cc->cdr) {
             requireType<ConsCellObject>(*cc->cdr);
             assert(cc->cdr->asList()->car());
-            if (cc->cdr->asList()->car()->equals(object)) {
+            if (cc->cdr->asList()->car()->eq(object)) {
                 cc->cdr = std::move(cc->next()->cdr);
             }
             else {

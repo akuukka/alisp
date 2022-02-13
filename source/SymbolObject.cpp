@@ -24,7 +24,7 @@ ALISP_INLINE void SymbolObject::traverse(const std::function<bool(const Object&)
     }
 }
 
-ALISP_INLINE bool SymbolObject::equals(const Object& o) const
+ALISP_INLINE bool SymbolObject::eq(const Object& o) const
 {
     const SymbolObject* op = dynamic_cast<const SymbolObject*>(&o);
     if (!op) {
