@@ -536,6 +536,14 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return ret;
     });
+    defun("or", [this](Rest& args) {
+        for (const auto& obj : args) {
+            if (!obj->isNil()) {
+                return obj->clone();
+            }
+        }
+        return makeNil();
+    });
     makeFunc("while", 1, std::numeric_limits<int>::max(), [this](FArgs& args) {
         while (!args.current()->eval()->isNil()) {
             args.evalAll(args.cc->next());

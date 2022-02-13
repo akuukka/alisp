@@ -108,4 +108,13 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 (define-error 'setting-costant "Setting constant")
 (define-error 'wrong-number-of-arguments "Wrong number of arguments")
 
+(defvar gensym-counter 0)
+(defun gensym (&optional prefix)
+"Return an uninterned symbol whose name is made by appending a prefix
+(defaults to \"g\") to an increasing counter."
+  (let ((num (prog1 gensym-counter
+               (setq gensym-counter (1+ gensym-counter)))))
+    (make-symbol (format "%s%d" (or prefix "g") num))))
+
+
 )code"; }}
