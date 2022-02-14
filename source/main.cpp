@@ -605,6 +605,17 @@ void testEqFunction()
     ASSERT_OUTPUT_EQ(m, "(equal \"asdf\" \"asdf\")", "t");
     ASSERT_OUTPUT_EQ(m, "(equal '(1 (2 (3))) '(1 (2 (3))))", "t");
     ASSERT_OUTPUT_EQ(m, "(eq '(1 (2 (3))) '(1 (2 (3))))", "nil");
+    /*
+    ASSERT_OUTPUT_EQ(m, "(setq cy1 (progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z))",
+                     "(1 2 3 2 . #2)");
+    ASSERT_OUTPUT_EQ(m, "(setq cy2 (progn (set 'z (list 1 2 3))(setcdr (cdr (cdr z)) (cdr z)) z))",
+                     "(1 2 3 2 . #2)");
+    std::cout << m.evaluate("cy1")->toString() << std::endl;
+    std::cout << m.evaluate("cy1")->asList() << std::endl;
+    auto cc = m.evaluate("cy1");
+    std::cout << "Is " << cc->toString() << std::flush << " cyclical? " << cc->asList()->cc->isCyclical() << std::endl;
+    ASSERT_EXCEPTION(m, "(equal cy1 cy2)", exceptions::CircularList);
+    */
 }
 
 void testInternFunction()
@@ -1021,6 +1032,28 @@ void testCyclicals()
      */
     ASSERT_OUTPUT_EQ(m, "(setq x (list 1 2 3))", "(1 2 3)");
     ASSERT_OUTPUT_EQ(m, "(setcar x x)", "(#0 2 3)");
+
+
+    ASSERT_OUTPUT_EQ(m, "(setq li (list 1 2 3 4 5 6 7 8))", "(1 2 3 4 5 6 7 8)");
+    ASSERT_OUTPUT_EQ(m, "(setcar (cdr (cdr (cdr li))) (cdr li))", "(2 3 #0 5 6 7 8)");
+    ASSERT_OUTPUT_EQ(m, "(setcar (cdr (cdr (cdr (cdr li)))) (cdr li))", "(2 3 #0 #0 6 7 8)");
+    ASSERT_OUTPUT_EQ(m, "li", "(1 2 3 #1 #1 6 7 8)");
+    auto li = m.evaluate("li");
+    assert(li->isList());
+    assert(li->asList()->cc->isCyclical());
+
+    ASSERT_OUTPUT_EQ(m, "(progn (setq subli (list 10 11 12 13 14 15))"
+                     "(setq li2 (list 1 2 subli 3 4 subli 5 6)))",
+                     "(1 2 (10 11 12 13 14 15) 3 4 (10 11 12 13 14 15) 5 6)");
+    auto li2 = m.evaluate("li2");
+    assert(li2->isList());
+    assert(!li2->asList()->cc->isCyclical());
+
+    ASSERT_OUTPUT_EQ(m, "(progn (setq li3 (list 1 2 3))(setcdr (cdr (cdr li3)) li3))",
+                     "(1 2 3 1 2 . #2)");
+    auto li3 = m.evaluate("li3");
+    assert(li3->isList());
+    assert(li3->asList()->cc->isCyclical());
 }
 
 void testMemoryLeaks()

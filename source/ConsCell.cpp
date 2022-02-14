@@ -1,4 +1,5 @@
 #include "alisp.hpp"
+#include <vector>
 #include "ConsCellObject.hpp"
 
 namespace alisp
@@ -62,29 +63,42 @@ ALISP_INLINE void ConsCell::traverse(const std::function<bool(const ConsCell*)>&
     }
 }
 
+ALISP_STATIC bool traverseCycle(const ConsCell* cc,
+                                std::vector<const ConsCell*>& visited,
+                                size_t d)
+{
+    assert(cc && cc->car);
+    /*
+    if (cc->car->isInt()) {
+        std::cout << std::string(d, ' ') << cc->car->toString() << " " << cc << " "
+                  << visited.size() << std::endl;
+    }
+    */
+    if (std::find(visited.begin(), visited.end(), cc) != visited.end()) {
+        return true;
+    }
+    visited.push_back(cc);
+    if (cc->car && cc->car->isList() && !cc->car->isNil()) {
+        if (traverseCycle(cc->car->asList()->cc.get(), visited, d+1)) {
+            return true;
+        }
+    }
+    if (cc->cdr && cc->cdr->isList() && !cc->cdr->isNil()) {
+        if (traverseCycle(cc->cdr->asList()->cc.get(), visited, d+1)) {
+            return true;
+        }
+    }
+    visited.pop_back();
+    return false;
+}
+
 ALISP_INLINE bool ConsCell::isCyclical() const
 {
     if (!*this) {
         return false;
     }
-    size_t selfTimes = 0;
-    bool cycled = false;
-    std::set<const ConsCell*> visited;
-    traverse([&](const ConsCell* cell) {
-        if (cell == this) {
-            selfTimes++;
-            if (selfTimes >= 2) {
-                cycled = true;
-                return false;
-            }
-        }
-        if (visited.count(cell)) {
-            return false;
-        }
-        visited.insert(cell);
-        return true;
-    });
-    return cycled;
+    std::vector<const ConsCell*> visited;
+    return traverseCycle(this, visited, 0);
 }
 
 }
