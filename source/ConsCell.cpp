@@ -67,28 +67,28 @@ ALISP_STATIC bool traverseCycle(const ConsCell* cc,
                                 std::vector<const ConsCell*>& visited,
                                 size_t d)
 {
-    assert(cc && cc->car);
-    /*
-    if (cc->car->isInt()) {
-        std::cout << std::string(d, ' ') << cc->car->toString() << " " << cc << " "
-                  << visited.size() << std::endl;
-    }
-    */
-    if (std::find(visited.begin(), visited.end(), cc) != visited.end()) {
-        return true;
-    }
-    visited.push_back(cc);
-    if (cc->car && cc->car->isList() && !cc->car->isNil()) {
-        if (traverseCycle(cc->car->asList()->cc.get(), visited, d+1)) {
+    size_t added = 0;
+    while (cc) {
+        assert(cc && cc->car);
+        //if (cc->car->isInt()) {
+        //    std::cout << std::string(d, ' ') << cc->car->toString() << " " << cc << " "
+        //              << visited.size() << std::endl;
+        //}
+        if (std::find(visited.begin(), visited.end(), cc) != visited.end()) {
             return true;
         }
-    }
-    if (cc->cdr && cc->cdr->isList() && !cc->cdr->isNil()) {
-        if (traverseCycle(cc->cdr->asList()->cc.get(), visited, d+1)) {
-            return true;
+        visited.push_back(cc);
+        added++;
+        if (cc->car && cc->car->isList() && !cc->car->isNil()) {
+            if (traverseCycle(cc->car->asList()->cc.get(), visited, d+1)) {
+                return true;
+            }
         }
+        cc = cc->next();
     }
-    visited.pop_back();
+    for (size_t i=0;i<added;i++) {
+        visited.pop_back();
+    }
     return false;
 }
 
