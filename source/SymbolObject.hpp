@@ -44,6 +44,7 @@ struct SymbolObject :
     void reset() override { sym.reset(); }
     bool isSymbol() const override { return true; }
     std::string toString(bool aesthetic = false) const override;
+    std::string typeOf() const override { return "symbol"; }
 
     std::unique_ptr<Object> clone() const override
     {

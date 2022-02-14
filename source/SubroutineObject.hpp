@@ -16,6 +16,7 @@ struct SubroutineObject : SharedValueObject<Function>
     
     std::string toString(bool aesthetic) const override { return "#<subr " + value->name + ">"; }
     std::shared_ptr<Function> resolveFunction() const override { return value; }
+    std::string typeOf() const override { return "subr"; }
 };
 
 }

@@ -60,6 +60,7 @@ struct ConsCellObject :
     Object* setCdr(ObjectPtr obj) { cc->cdr = std::move(obj); return cc->cdr.get(); }
     const ConsCellObject* next() const;
     std::shared_ptr<Function> resolveFunction() const override;
+    std::string typeOf() const override { return "cons"; }
 
     std::unique_ptr<Object> clone() const override
     {

@@ -536,6 +536,9 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         }
         return ret;
     });
+    defun("type-of", [this](const Object& obj) {
+        return makeSymbol(obj.typeOf(), true);
+    });
     defun("or", [this](Rest& args) {
         for (const auto& obj : args) {
             if (!obj->isNil()) {

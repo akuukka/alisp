@@ -29,7 +29,6 @@ struct ValueObject : Object, ConvertibleTo<T>
     }
     Object* trySelfEvaluate() override { return this; }
     T convertTo(typename ConvertibleTo<T>::Tag) const override { return value; }
-    ObjectPtr clone() const override { return std::make_unique<ValueObject>(value); }
 };
 
 struct Number
@@ -52,6 +51,7 @@ struct IntObject :
     bool isInt() const override { return true; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<IntObject>(value); }
     bool isCharacter() const override;
+    std::string typeOf() const override { return "integer"; }
 
     int convertTo(ConvertibleTo<int>::Tag) const override { return value; }
     std::uint32_t convertTo(ConvertibleTo<std::uint32_t>::Tag) const override { return value; }
@@ -67,6 +67,7 @@ struct FloatObject :
     FloatObject(double value) : ValueObject<double>(value) {}
     bool isFloat() const override { return true; }
     std::unique_ptr<Object> clone() const override { return std::make_unique<FloatObject>(value); }
+    std::string typeOf() const override { return "float"; }
     Number convertTo(ConvertibleTo<Number>::Tag) const override {
         return Number(value);
     }

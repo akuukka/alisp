@@ -115,6 +115,7 @@ struct Object :
     virtual bool isString() const { return false; }
     virtual bool isCharacter() const { return false; }
     virtual bool isSymbol() const { return false; }
+    virtual std::string typeOf() const = 0;
 
     virtual bool operator!() const { return false; }
     virtual Object* trySelfEvaluate() { return nullptr; }
