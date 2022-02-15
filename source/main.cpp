@@ -1337,6 +1337,22 @@ void testSequences()
     ASSERT_OUTPUT_EQ(m, "(mapcar 'car '((a b) (c d) (e f)))", "(a c e)");
     ASSERT_OUTPUT_EQ(m, R"code((mapcar 'string "abc"))code",
                      R"code(("a" "b" "c"))code");
+    ASSERT_OUTPUT_EQ(m, "(nreverse ())", "nil");
+    ASSERT_OUTPUT_EQ(m, "(nreverse '(1))", "(1)");
+    ASSERT_OUTPUT_EQ(m, "(setq x (list 1 2))", "(1 2)");
+    ASSERT_OUTPUT_EQ(m, "(nreverse x)", "(2 1)");
+    ASSERT_OUTPUT_EQ(m, "(setq x (list 'a 'b 'c))", "(a b c)");
+    ASSERT_OUTPUT_EQ(m, "(nreverse x)", "(c b a)");
+    ASSERT_OUTPUT_EQ(m, "x", "(a)");
+    ASSERT_OUTPUT_EQ(m, "(setq x (list 'a 'b 'c 'd 'e))", "(a b c d e)");
+    ASSERT_OUTPUT_EQ(m, "(seq-elt x 3)", "d");
+    ASSERT_OUTPUT_EQ(m, "(nreverse x)", "(e d c b a)");
+    ASSERT_OUTPUT_EQ(m, "x", "(a)");
+    ASSERT_OUTPUT_EQ(m, "(setq dotted '(1 2 3 4 . 5))", "(1 2 3 4 . 5)");
+    ASSERT_EXCEPTION(m, "(nreverse dotted)", exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(progn (set 'z (list 1 2 3))"
+                     "(setcdr (cdr (cdr z)) (cdr z)) z)", "(1 2 3 2 . #2)");
+    ASSERT_EXCEPTION(m, "(nreverse z)", exceptions::CircularList);
 }
 
 static int testFunction(int a, int b) { return a + b; }

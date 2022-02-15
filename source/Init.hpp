@@ -88,6 +88,10 @@ namespace alisp { inline const char* getInitCode() { return R"code(
       (delq elt (copy-sequence list))
     list))
 
+(defun seq-elt (sequence n)
+  "Return Nth element of SEQUENCE."
+  (elt sequence n))
+
 (defun error (&rest args)
   (signal 'error (list (apply 'format args))))
 

@@ -35,6 +35,40 @@ void Machine::initSequenceFunctions()
         seq->mapCar(func);
         return obj.clone();
     });
+    defun("nreverse", [this](const Object& obj) -> ObjectPtr {
+        if (obj.isList()) {
+            auto list = obj.asList();
+            auto head = list->cc;
+            auto tail = list->cc;
+            std::set<const ConsCell*> heads;
+            while (tail && tail->cdr) {
+                assert(tail->cdr->isList());
+                auto newhead = tail->cdr->asList()->cc;
+                if (heads.count(newhead.get())) {
+                    throw exceptions::CircularList(obj.toString());
+                }
+                heads.insert(newhead.get());
+                assert(tail->cdr->asList()->cc.get());
+                std::shared_ptr<ConsCell> oldc;
+                if (newhead->cdr) {
+                    if (!newhead->cdr->asList()) {
+                        auto to = ConsCellObject(newhead, this);
+                        throw exceptions::WrongTypeArgument(to.toString());
+                    }
+                    assert(newhead->cdr->asList());
+                    assert(newhead->cdr->asList()->cc);
+                    oldc = newhead->cdr->asList()->cc;
+                }
+                newhead->cdr = std::make_unique<ConsCellObject>(head, this);
+                tail->cdr = oldc ? std::make_unique<ConsCellObject>(oldc, this) : nullptr;
+                head = newhead;
+            }
+            return std::make_unique<ConsCellObject>(head, this);
+        }
+        else {
+            throw exceptions::WrongTypeArgument(obj.toString());
+        }
+    });
 }
 
 }
