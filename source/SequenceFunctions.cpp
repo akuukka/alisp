@@ -92,7 +92,7 @@ void Machine::initSequenceFunctions()
             cca.cdr = std::make_unique<ConsCellObject>(this);
             cca.cdr->asList()->cc = std::make_shared<ConsCell>();
             ConsCell& ccb = *cca.cdr->asList()->cc;            
-            std::sort(ccs.begin(), ccs.end(), [&](const auto& a, const auto& b) {
+            std::stable_sort(ccs.begin(), ccs.end(), [&](const auto& a, const auto& b) {
                 cca.car = a->car->clone();
                 ccb.car = b->car->clone();
                 FArgs args(cca, *this);
