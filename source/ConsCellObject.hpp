@@ -53,6 +53,7 @@ struct ConsCellObject :
     bool operator!() const override { return !cc || !(*cc); }
     ConsCellObject* asList() override { return this; }
     const ConsCellObject* asList() const override { return this; }
+    std::shared_ptr<ConsCell> consCell() const { return cc;  }
     Object* car() const { return cc ? cc->car.get() : nullptr; };
     Object* cdr() const { return cc ? cc->cdr.get() : nullptr; };
     Object* cadr() const;

@@ -69,6 +69,47 @@ void Machine::initSequenceFunctions()
             throw exceptions::WrongTypeArgument(obj.toString());
         }
     });
+    defun("sort", [this](const Object& obj, const Function& pred) -> ObjectPtr {
+        if (obj.isNil()) {
+            return obj.clone();
+        }
+        else if (obj.isList()) {
+            std::vector<std::shared_ptr<ConsCell>> ccs;
+            std::set<const ConsCell*> inserted;
+            auto ptr = obj.asList();
+            while (ptr) {
+                if (inserted.count(ptr->consCell().get())) {
+                    throw exceptions::CircularList(obj.toString());
+                }
+                inserted.insert(ptr->consCell().get());
+                ccs.push_back(ptr->consCell());
+                if (ptr->cdr() && !ptr->cdr()->isList()) {
+                    throw exceptions::WrongTypeArgument("listp " + ptr->cdr()->toString());
+                }
+                ptr = ptr->next();
+            }
+            ConsCell cca;
+            cca.cdr = std::make_unique<ConsCellObject>(this);
+            cca.cdr->asList()->cc = std::make_shared<ConsCell>();
+            ConsCell& ccb = *cca.cdr->asList()->cc;            
+            std::sort(ccs.begin(), ccs.end(), [&](const auto& a, const auto& b) {
+                cca.car = a->car->clone();
+                ccb.car = b->car->clone();
+                FArgs args(cca, *this);
+                return !pred.func(args)->isNil();
+            });
+            for (auto it = ccs.begin(); it != ccs.end(); ++it) {
+                if (it + 1 == ccs.end()) {
+                    it->get()->cdr = nullptr;
+                }
+                else {
+                    it->get()->cdr = std::make_unique<ConsCellObject>(*(it +1), this);
+                }
+            }
+            return std::make_unique<ConsCellObject>(ccs.front(), this);
+        }
+        throw exceptions::WrongTypeArgument(obj.toString());
+    });
 }
 
 }

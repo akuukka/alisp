@@ -1353,6 +1353,16 @@ void testSequences()
     ASSERT_OUTPUT_EQ(m, "(progn (set 'z (list 1 2 3))"
                      "(setcdr (cdr (cdr z)) (cdr z)) z)", "(1 2 3 2 . #2)");
     ASSERT_EXCEPTION(m, "(nreverse z)", exceptions::CircularList);
+    ASSERT_OUTPUT_EQ(m, "(setq nums (list 1 3 2 6 5 4 0))", "(1 3 2 6 5 4 0)");
+    ASSERT_OUTPUT_EQ(m, "(sort nums #'<)", "(0 1 2 3 4 5 6)");
+    ASSERT_OUTPUT_EQ(m, "nums", "(1 2 3 4 5 6)");
+    ASSERT_OUTPUT_EQ(m, "(sort nil #'<)", "nil");
+    ASSERT_OUTPUT_EQ(m, "(sort (list 1) #'<)", "(1)");
+    ASSERT_OUTPUT_EQ(m, "(setq dotted '(1 3 2 6 5 4 . 0))", "(1 3 2 6 5 4 . 0)");
+    ASSERT_EXCEPTION(m, "(sort dotted #'<)", exceptions::WrongTypeArgument);
+    ASSERT_OUTPUT_EQ(m, "(progn (set 'z (list 1 2 3))"
+                     "(setcdr (cdr (cdr z)) (cdr z)) z)", "(1 2 3 2 . #2)");
+    ASSERT_EXCEPTION(m, "(sort z #'<)", exceptions::CircularList);
 }
 
 static int testFunction(int a, int b) { return a + b; }
