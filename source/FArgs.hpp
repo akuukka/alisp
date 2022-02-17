@@ -30,6 +30,7 @@ struct FArgs
     Machine& m;
     std::vector<std::unique_ptr<Object>> argStorage;
     std::vector<std::shared_ptr<Function>> funcStorage;
+    bool disableEval = false;
     
     FArgs(ConsCell& cc, Machine& m) : cc(&cc), m(m) {}
 

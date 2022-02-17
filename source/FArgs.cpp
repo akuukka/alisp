@@ -14,7 +14,7 @@ ALISP_INLINE Object* FArgs::pop(bool eval)
         cc = cc->next();
         return self;
     }
-    if (!eval) {
+    if (!eval || disableEval) {
         auto ptr = cc->car.get();
         cc = cc->next();
         return ptr;

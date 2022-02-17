@@ -97,6 +97,7 @@ void Machine::initFunctionFunctions()
                 return func->func(args);
             }
             args.cc = arg->asList()->cc.get();
+            args.disableEval = true;
             return func->func(args);
         }
         ListBuilder builder(args.m);
@@ -117,6 +118,7 @@ void Machine::initFunctionFunctions()
         }
         auto li = builder.get();
         args.cc = li->cc.get();
+        args.disableEval = true;
         return func->func(args);
     });
     defun("funcall", [](const Object& obj, FArgs& args) {

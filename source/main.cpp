@@ -859,6 +859,7 @@ void testFunctions()
     ASSERT_OUTPUT_EQ(m, "(progn (defun gms(y) (+ 1 y)) (symbol-function 'gms))",
                      "(lambda (y) (+ 1 y))");
     ASSERT_OUTPUT_EQ(m, "#'test", "test");
+    ASSERT_OUTPUT_EQ(m, "(apply 'set (list 'foo 5))", "5");
     ASSERT_OUTPUT_EQ(m, "(apply '+ '(3 4))", "7");
     ASSERT_EXCEPTION(m, "(apply '+)", exceptions::Error);
     ASSERT_EXCEPTION(m, "(apply '+ 7)", exceptions::Error);
@@ -1387,6 +1388,9 @@ void testPublicInterface()
 void testSetf()
 {
     Machine m;
+    ASSERT_OUTPUT_EQ(m, "(setq li (list 1 2 3))", "(1 2 3)");
+    
+    
     ASSERT_OUTPUT_EQ(m, "(setf (symbol-value 'foo) 5)", "5");
     ASSERT_OUTPUT_EQ(m, "foo", "5");
     /*
