@@ -213,6 +213,12 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(prog2 (setq p1 4) 2 (setq p3 3))", "2");
     ASSERT_OUTPUT_EQ(m, "(= (+ p1 p3) 7)", "t");
     ASSERT_EXCEPTION(m, "(setcar nil 4)", exceptions::WrongTypeArgument);
+
+    ASSERT_OUTPUT_EQ(m, "(setq *some-list* (list* 'one 'two 'three 'four))",
+                     "(one two three . four)");
+    ASSERT_OUTPUT_EQ(m, "(rplaca *some-list* 'uno)", "(uno two three . four)");
+    ASSERT_OUTPUT_EQ(m, "(rplacd (last *some-list*) (list 'iv))", "(three iv)");
+    ASSERT_OUTPUT_EQ(m, "*some-list*", "(uno two three iv)");
 }
 
 template <typename E>

@@ -48,6 +48,24 @@ void Machine::initListFunctions()
         while (args.hasNext()) { builder.append(args.pop()->clone()); }
         return builder.get();
     });
+    makeFunc("list*", 0, std::numeric_limits<int>::max(), [](FArgs& args) -> ObjectPtr {
+        ListBuilder builder(args.m);
+        bool first = true;
+        while (args.hasNext()) {
+            auto next = args.pop()->clone();
+            if (args.hasNext()) {
+                builder.append(std::move(next));
+            }
+            else {
+                if (first) {
+                    return next->clone();
+                }
+                builder.dot(std::move(next));
+            }
+            first = false;
+        }
+        return builder.get();
+    });
     makeFunc("dolist", 2, std::numeric_limits<int>::max(), [this](FArgs& args) {
         const auto p1 = args.pop(false)->asList();
         const std::string varName = p1->car()->asSymbol()->name;
@@ -63,6 +81,14 @@ void Machine::initListFunctions()
             }
         }
         return makeNil();
+    });
+    defun("rplaca", [&](std::shared_ptr<ConsCell> cc, const Object& obj) {
+        cc->car = obj.clone();
+        return std::make_unique<ConsCellObject>(cc, this);
+    });
+    defun("rplacd", [&](std::shared_ptr<ConsCell> cc, const Object& obj) {
+        cc->cdr = obj.clone();
+        return std::make_unique<ConsCellObject>(cc, this);
     });
     defun("setcar", [](ConsCell& cc, ObjectPtr newcar) {
         return cc.car = newcar->clone(), std::move(newcar);
