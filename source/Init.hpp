@@ -51,7 +51,8 @@ namespace alisp { inline const char* getInitCode() { return R"code(
   (let ((li (list 'setq var value))
         (simple (get 'setf-simple-rules (car-safe var))))
     (when simple
-      (setq li (list 'let* (list (list 'v (cadr var))) (list 'apply (list 'quote simple) (append '(list) (append (cdr var) (list  value)))  ))))
+      (let ((params (append (cdr var) (list value) )))
+        (setq li `(apply ',simple ,(append '(list) params)))))
     (if (eq 'cadr (car-safe var))
         (setq li (list 'let* (list (list 'v (cadr var))) (list 'setcar (list 'cdr 'v) value)  )))
     li))

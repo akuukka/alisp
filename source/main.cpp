@@ -859,6 +859,7 @@ void testFunctions()
                      "(lambda (y) (+ 1 y))");
     ASSERT_OUTPUT_EQ(m, "#'test", "test");
     ASSERT_OUTPUT_EQ(m, "(apply 'set (list 'foo 5))", "5");
+    ASSERT_OUTPUT_EQ(m, "(apply 'set '(foo 5))", "5");
     ASSERT_OUTPUT_EQ(m, "(apply '+ '(3 4))", "7");
     ASSERT_EXCEPTION(m, "(apply '+)", exceptions::Error);
     ASSERT_EXCEPTION(m, "(apply '+ 7)", exceptions::Error);
