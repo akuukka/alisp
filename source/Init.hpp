@@ -45,6 +45,7 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 
 (defsetf car setcar)
 (defsetf cdr setcdr)
+(defsetf symbol-value set)
 
 (defmacro setf (var value)
   (let ((li (list 'setq var value))
