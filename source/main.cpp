@@ -801,7 +801,6 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(defmacro asetf (var value) (setq ty value) (list 2 3))", "asetf");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(asetf 1 2))", "(2 3)");
     ASSERT_OUTPUT_EQ(m, "ty", "2");
-    ASSERT_OUTPUT_EQ(m, "(macroexpand '(setf (car x) 7))", "(let* ((v x)) (setcar v 7))");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(inc r))", "(set 'r (1+ r))");
     ASSERT_OUTPUT_EQ(m, "(setf x (list 1 2))", "(1 2)");
     ASSERT_OUTPUT_EQ(m, "(setf (car x) 3)", "3");
