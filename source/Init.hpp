@@ -39,12 +39,12 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 (defmacro setq (sym var)
   (list 'set (list 'quote sym) var))
 
-(defun defsetf (access-fn update-fn)
- "Add as simple setf rule"
- (put 'setf-simple-rules access-fn update-fn))
+(defmacro defsetf (access-fn update-fn)
+  "Add as simple setf rule"
+  (list 'put (list 'quote 'setf-simple-rules) (list 'quote access-fn) (list 'quote update-fn)))
 
-(defsetf 'car 'setcar)
-(defsetf 'cdr 'setcdr)
+(defsetf car setcar)
+(defsetf cdr setcdr)
 
 (defmacro setf (var value)
   (let ((li (list 'setq var value))

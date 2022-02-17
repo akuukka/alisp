@@ -1378,8 +1378,29 @@ void testPublicInterface()
     assert(res == 3);
 }
 
+void testSetf()
+{
+    Machine m;
+    /*
+    ASSERT_OUTPUT_EQ(m, R"code(
+(defun eleventh (list)
+  (nth 10 list))
+
+(defun set-eleventh (list new-val)
+  (setf (nth 10 list) new-val))
+
+(defsetf 'eleventh 'set-eleventh)
+
+(let ((l (list 1 2 3 4 5 6 7 8 9 10 11 12 13)))
+  (setf (eleventh l) :foo)
+  l)
+)code", "1000000");
+    */
+}
+
 void test()
 {
+    testSetf();
     testListBasics();
     testPublicInterface();
     testFunctions();
