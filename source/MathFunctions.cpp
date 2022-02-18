@@ -137,15 +137,15 @@ ALISP_INLINE void Machine::initMathFunctions()
         }
         return makeTrue();
     });
-    defun("1+", [](std::variant<double, std::int64_t> obj) -> std::unique_ptr<Object> {
-        try {
-            const std::int64_t i = std::get<std::int64_t>(obj);
-            return makeInt(i+1);
-        }
-        catch (std::bad_variant_access&) {
-            const double f = std::get<double>(obj);
-            return makeFloat(f+1.0);
-        }
+    defun("1+", [](Number num) {
+        num.f += 1;
+        num.i += 1;
+        return num;
+    });
+    defun("1-", [](Number num) {
+        num.f -= 1;
+        num.i -= 1;
+        return num;
     });
     makeFunc("+", 0, 0xffff, [](FArgs& args) {
         std::int64_t i = 0;
