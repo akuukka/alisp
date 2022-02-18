@@ -132,6 +132,9 @@ void TEST_CODE(Machine& m, std::string code)
         while (res[0] == ' ') {
             res = res.substr(1);
         }
+        while (res.size() && res.back() == ' ') {
+            res.pop_back();
+        }
         ASSERT_OUTPUT_EQ(m, expr.c_str(), res);
         if (newline == std::string::npos) {
             break;
@@ -258,9 +261,21 @@ void testListBasics()
 (nconc x y) =>  (a b c d e f)
 x =>  (a b c d e f)
 
+(setq foo (list 'a 'b 'c 'd 'e)
+       bar (list 'f 'g 'h 'i 'j)
+       baz (list 'k 'l 'm)) =>  (k l m)
+ (setq foo (nconc foo bar baz)) => (a b c d e f g h i j k l m)
+ foo => (a b c d e f g h i j k l m)
+ bar => (f g h i j k l m)
+ baz => (k l m)
 
-
-
+ (setq foo (list 'a 'b 'c 'd 'e)
+       bar (list 'f 'g 'h 'i 'j)
+       baz (list 'k 'l 'm)) =>  (k l m)
+ (setq foo (nconc nil foo bar nil baz)) => (a b c d e f g h i j k l m) 
+ foo => (a b c d e f g h i j k l m)
+ bar => (f g h i j k l m)
+ baz => (k l m)
 )code");
 
     TEST_CODE(m, R"code(

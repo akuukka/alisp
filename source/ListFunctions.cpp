@@ -24,6 +24,12 @@ void Machine::initListFunctions()
             assert(list->isList());
             assert(!list->isNil());
             auto next = args.pop();
+            while (next->isNil()) {
+                if (!args.hasNext()) {
+                    break;
+                }
+                next = args.pop();
+            }
             while (list->asList()->next()) {
                 list = list->asList()->next();
             }

@@ -42,7 +42,7 @@ ALISP_INLINE ObjectPtr Machine::set(bool quoted, FArgs& args)
         throw exceptions::SettingConstant(name->toString());
     }
     sym->variable = args.pop()->clone();
-    return sym->variable->clone();
+    return args.hasNext() ? set(quoted, args) : sym->variable->clone();
 }
 
 ALISP_INLINE Function*
