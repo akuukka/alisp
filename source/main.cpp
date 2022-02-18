@@ -844,6 +844,7 @@ void testFunctions()
     Machine m;
     std::stringstream ss;
     m.setVariable("debugstream", std::make_unique<OStreamObject>(&ss));
+    ASSERT_OUTPUT_EQ(m, "(apply 'cons '((+ 2 3) 4))", "((+ 2 3) . 4)");
     ASSERT_OUTPUT_EQ(m, "(defun tempfunc () nil)"
                      "(let (tempfunc)(setq tempfunc 5) (fboundp 'tempfunc))", "t");
     ASSERT_OUTPUT_EQ(m, "(fset 'minus '-)", "-");
@@ -1388,36 +1389,36 @@ void testPublicInterface()
 void testSetf()
 {
     Machine m;
-    ASSERT_OUTPUT_EQ(m, "(setq li (list 1 2 3))", "(1 2 3)");
-    
-    
     ASSERT_OUTPUT_EQ(m, "(setf (symbol-value 'foo) 5)", "5");
     ASSERT_OUTPUT_EQ(m, "foo", "5");
-    /*
+    
     ASSERT_OUTPUT_EQ(m, R"code(
+(defun setnth (n x value)
+  (rplaca (nthcdr n x) value)
+  value)
+
 (defun eleventh (list)
   (nth 10 list))
 
 (defun set-eleventh (list new-val)
-  (setf (nth 10 list) new-val))
+  (setnth 10 list new-val))
 
-(defsetf 'eleventh 'set-eleventh)
+(defsetf eleventh set-eleventh)
 
 (let ((l (list 1 2 3 4 5 6 7 8 9 10 11 12 13)))
   (setf (eleventh l) :foo)
   l)
-)code", "1000000");
-    */
+)code", "(1 2 3 4 5 6 7 8 9 10 :foo 12 13)");
 }
 
 void test()
 {
-    testSetf();
     testListBasics();
-    testPublicInterface();
-    testFunctions();
-    testMacros();
     testQuote();
+    testFunctions();
+    testSetf();
+    testPublicInterface();
+    testMacros();
     testSequences();
     testErrors();
     testNullFunction();
