@@ -256,7 +256,12 @@ void testListBasics()
 (setq x '(a b c)) => (a b c)
 (setq y '(d e f)) => (d e f)
 (nconc x y) =>  (a b c d e f)
-x =>  (a b c d e f))code");
+x =>  (a b c d e f)
+
+
+
+
+)code");
 
     TEST_CODE(m, R"code(
 (list-length '(a b c d)) =>  4
@@ -853,7 +858,7 @@ void testMacros()
     ASSERT_OUTPUT_EQ(m, "(defmacro asetf (var value) (setq ty value) (list 2 3))", "asetf");
     ASSERT_OUTPUT_EQ(m, "(macroexpand '(asetf 1 2))", "(2 3)");
     ASSERT_OUTPUT_EQ(m, "ty", "2");
-    ASSERT_OUTPUT_EQ(m, "(macroexpand '(inc r))", "(set 'r (1+ r))");
+    ASSERT_OUTPUT_EQ(m, "(macroexpand '(inc r))", "(setq r (1+ r))");
     ASSERT_OUTPUT_EQ(m, "(setf x (list 1 2))", "(1 2)");
     ASSERT_OUTPUT_EQ(m, "(setf (car x) 3)", "3");
     ASSERT_OUTPUT_EQ(m, "x", "(3 2)");

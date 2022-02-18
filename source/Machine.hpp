@@ -104,10 +104,13 @@ public:
     
     std::unique_ptr<Object> parse(const char *expr);
     std::unique_ptr<Object> evaluate(const char *expr);
+    ObjectPtr set(bool quoted, FArgs& args);
     ObjectPtr execute(const ConsCellObject& lambda, FArgs& a);
 
     Function* makeFunc(std::string name, int minArgs, int maxArgs,
                        const std::function<std::unique_ptr<Object>(FArgs &)>& f);
+    Function* makeSpecialForm(std::string name, int minArgs, int maxArgs,
+                              const std::function<std::unique_ptr<Object>(FArgs &)>& f);
 
     Machine(bool initStandardLibrary = true);
     Machine(const Machine&) = delete;

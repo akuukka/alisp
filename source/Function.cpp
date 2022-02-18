@@ -149,7 +149,7 @@ void Machine::initFunctionFunctions()
     defun("functionp", [](const Object& obj) {
         try {
             auto func = obj.resolveFunction();
-            return func && !func->isMacro;
+            return func && !func->isMacro && !func->isSpecialForm;
         }
         catch (exceptions::InvalidFunction&) {
             return false;

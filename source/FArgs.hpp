@@ -22,6 +22,7 @@ struct Function
     int maxArgs = 0xffff;
     std::function<std::unique_ptr<Object>(FArgs&)> func;
     bool isMacro = false;
+    bool isSpecialForm = false;
 };
 
 struct FArgs

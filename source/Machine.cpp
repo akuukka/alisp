@@ -23,6 +23,37 @@ namespace alisp {
 
 void initMacroFunctions(Machine& m);
 
+ALISP_INLINE ObjectPtr Machine::set(bool quoted, FArgs& args)
+{
+    const SymbolObject nil(this, nullptr, parsedSymbolName("nil"));
+    const auto& p1 = args.pop(!quoted);
+    const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
+    if (!name) {
+        throw exceptions::WrongTypeArgument(p1->toString());
+    }
+    if (!name->sym && m_locals.count(name->name) && m_locals[name->name].size()) {
+        auto& loc = m_locals[name->name].back()->variable;
+        loc = args.pop()->clone();
+        return loc->clone();
+    }
+    auto sym = name->getSymbol();
+    assert(sym);
+    if (sym->constant) {
+        throw exceptions::SettingConstant(name->toString());
+    }
+    sym->variable = args.pop()->clone();
+    return sym->variable->clone();
+}
+
+ALISP_INLINE Function*
+Machine::makeSpecialForm(std::string name, int minArgs, int maxArgs,
+                         const std::function<std::unique_ptr<Object>(FArgs &)>& f)
+{
+    auto func = makeFunc(name, minArgs, maxArgs, f);
+    func->isSpecialForm = true;
+    return func;
+}
+
 ALISP_INLINE Function* Machine::makeFunc(std::string name, int minArgs, int maxArgs,
                                          const std::function<std::unique_ptr<Object>(FArgs &)>& f)
 {
@@ -417,26 +448,13 @@ ALISP_INLINE Machine::Machine(bool initStandardLibrary)
         rest.evalAll();
         return ret.clone();
     });
-    makeFunc("set", 2, 2, [this](FArgs& args) {
-        const SymbolObject nil(this, nullptr, parsedSymbolName("nil"));
-        const auto& p1 = args.pop();
-        const SymbolObject* name = p1->isNil() ? &nil : dynamic_cast<SymbolObject*>(p1);
-        if (!name) {
-            throw exceptions::WrongTypeArgument(p1->toString());
-        }
-        if (!name->sym && m_locals.count(name->name) && m_locals[name->name].size()) {
-            auto& loc = m_locals[name->name].back()->variable;
-            loc = args.pop()->clone();
-            return loc->clone();
-        }
-        auto sym = name->getSymbol();
-        assert(sym);
-        if (sym->constant) {
-            throw exceptions::SettingConstant(name->toString());
-        }
-        sym->variable = args.pop()->clone();
-        return sym->variable->clone();
-    });
+    makeFunc("set", 2,
+             std::numeric_limits<int>::max(),
+             std::bind(&Machine::set, this, false, std::placeholders::_1));
+    makeSpecialForm("setq",
+                    2,
+                    std::numeric_limits<int>::max(),
+                    std::bind(&Machine::set, this, true, std::placeholders::_1));
     makeFunc("defvar", 1, 3, [this](FArgs& args) {
         const SymbolObject nil(this, nullptr, parsedSymbolName("nil"));
         const auto& p1 = args.pop(false);

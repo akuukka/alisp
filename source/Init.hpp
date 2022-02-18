@@ -36,9 +36,6 @@ namespace alisp { inline const char* getInitCode() { return R"code(
   (list 'setq listname
         (list 'cons element listname)))
 
-(defmacro setq (sym var)
-  (list 'set (list 'quote sym) var))
-
 (defmacro defsetf (access-fn update-fn)
   "Add as simple setf rule"
   (list 'put (list 'quote 'setf-simple-rules) (list 'quote access-fn) (list 'quote update-fn)))
