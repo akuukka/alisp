@@ -110,6 +110,7 @@ public:
                        const std::function<std::unique_ptr<Object>(FArgs &)>& f);
 
     Machine(bool initStandardLibrary = true);
+    Machine(const Machine&) = delete;
 
     template<typename F>
     void defun(const char* name, F&& f)
