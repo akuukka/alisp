@@ -60,6 +60,7 @@ struct ConsCellObject :
     Object* setCar(ObjectPtr obj) { cc->car = std::move(obj); return cc->car.get(); }
     Object* setCdr(ObjectPtr obj) { cc->cdr = std::move(obj); return cc->cdr.get(); }
     const ConsCellObject* next() const;
+    ConsCellObject* next();
     std::shared_ptr<Function> resolveFunction() const override;
     std::string typeOf() const override { return "cons"; }
 

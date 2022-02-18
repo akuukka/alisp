@@ -23,6 +23,11 @@ ALISP_INLINE const ConsCellObject* ConsCellObject::next() const
     return cdr() && cdr()->isList() ? cdr()->asList() : nullptr;
 }
 
+ALISP_INLINE ConsCellObject* ConsCellObject::next()
+{
+    return cdr() && cdr()->isList() ? cdr()->asList() : nullptr;
+}
+
 ALISP_INLINE ObjectPtr ConsCellObject::copy() const
 {
     ListBuilder builder(*parent);

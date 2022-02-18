@@ -75,6 +75,7 @@ ObjectPtr Machine::execute(const ConsCellObject& closure, FArgs& a)
         }
     });
     std::unique_ptr<Object> ret = makeNil();
+    assert(closure.cdr() && closure.cdr()->isList());
     for (auto& obj : *closure.cdr()->asList()) {
         ret = obj.eval();
     }

@@ -112,6 +112,34 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res
     }                                                                   \
 }
 
+void TEST_CODE(Machine& m, std::string code)
+{
+    for (;;) {
+        auto it = code.find("=>");
+        if (it == std::string::npos) {
+            m.evaluate(code.c_str());
+            break;
+        }
+        auto expr = code.substr(0, it - 1);
+        auto newline = code.find('\n', it + 1);
+        std::string res;
+        if (newline == std::string::npos) {
+            res = code.substr(it + 2);
+        }
+        else {
+            res = code.substr(it + 2, newline - (it + 2));
+        }
+        while (res[0] == ' ') {
+            res = res.substr(1);
+        }
+        ASSERT_OUTPUT_EQ(m, expr.c_str(), res);
+        if (newline == std::string::npos) {
+            break;
+        }
+        code = code.substr(newline + 1);
+    }
+}
+
 void testRemqFunction()
 {
     Machine m;
@@ -219,6 +247,30 @@ void testListBasics()
     ASSERT_OUTPUT_EQ(m, "(rplaca *some-list* 'uno)", "(uno two three . four)");
     ASSERT_OUTPUT_EQ(m, "(rplacd (last *some-list*) (list 'iv))", "(three iv)");
     ASSERT_OUTPUT_EQ(m, "*some-list*", "(uno two three iv)");
+
+    TEST_CODE(m, R"code((nconc) => nil
+(nconc nil nil) => nil
+(nconc '(1 2 3)) => (1 2 3)
+(nconc nil '(1 2 3)) => (1 2 3)
+(nconc "can be anything") => "can be anything"
+(setq x '(a b c)) => (a b c)
+(setq y '(d e f)) => (d e f)
+(nconc x y) =>  (a b c d e f)
+x =>  (a b c d e f))code");
+
+    TEST_CODE(m, R"code(
+(list-length '(a b c d)) =>  4
+(list-length '(a (b c) d)) =>  3
+(list-length '()) =>  0
+(list-length nil) =>  0
+(defun circular-list (&rest elems)
+ (let ((cycle (copy-list elems))) 
+   (nconc cycle cycle)))
+(list-length (circular-list 'a 'b)) => nil
+(list-length (circular-list 'a)) => nil
+(circular-list)
+(list-length (circular-list)) => 0
+)code");
 }
 
 template <typename E>

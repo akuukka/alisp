@@ -13,6 +13,38 @@ namespace alisp
 
 void Machine::initListFunctions()
 {
+    defun("nconc", [this](FArgs& args) -> ObjectPtr {
+        if (!args.hasNext()) return makeNil();
+        auto list = args.pop();
+        while (list->isNil() && args.hasNext()) {
+            list = args.pop();
+        }
+        auto origList = list;
+        while (args.hasNext()) {
+            assert(list->isList());
+            assert(!list->isNil());
+            auto next = args.pop();
+            while (list->asList()->next()) {
+                list = list->asList()->next();
+            }
+            list->asList()->setCdr(next->clone());
+            list = next;
+        }
+        return origList->clone();
+    });
+    defun("list-length", [this](const Object& obj) -> ObjectPtr {
+        requireType<ConsCellObject>(obj);
+        try {
+            return makeInt(static_cast<std::int64_t>(obj.asList()->length()));
+        }
+        catch (std::runtime_error&) {
+            return makeNil();
+        }
+    });
+    defun("copy-list", [this](const Object& obj) -> ObjectPtr {
+        requireType<ConsCellObject>(obj);
+        return obj.asList()->deepCopy();
+    });
     defun("append", [this](const ConsCell* a, const ConsCell* b) {
         ListBuilder builder(*this);
         if (a) {
