@@ -1391,6 +1391,7 @@ void testSetf()
     Machine m;
     ASSERT_OUTPUT_EQ(m, "(setf (symbol-value 'foo) 5)", "5");
     ASSERT_OUTPUT_EQ(m, "foo", "5");
+    ASSERT_OUTPUT_EQ(m, "(macroexpand '(setf (car x) 10))", "(setcar x 10)");
     
     ASSERT_OUTPUT_EQ(m, R"code(
 (defun setnth (n x value)
