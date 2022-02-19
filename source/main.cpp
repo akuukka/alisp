@@ -887,6 +887,13 @@ void testMacros()
   (list 'progn (list 'inc var1) (list 'inc var2)))
 (macroexpand '(inc2 r s))
 )code", "(progn (inc r) (inc s))");
+    TEST_CODE(m, R"code(
+(defmacro mirror (x)
+  1
+  2
+  x)
+(mirror 12) => 12
+)code");
 }
 
 void testDeepCopy()
