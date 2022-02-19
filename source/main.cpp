@@ -1492,6 +1492,25 @@ void testSetf()
   (setf (eleventh l) :foo)
   l)
 )code", "(1 2 3 4 5 6 7 8 9 10 :foo 12 13)");
+
+    TEST_CODE(m, R"code(
+(defun middleguy (x) (nth (truncate (1- (list-length x)) 2) x)) => middleguy
+(middleguy '(1 2 3 4)) => 2
+(defun set-middleguy (x v)
+    (unless (null x)
+      (rplaca (nthcdr (truncate (1- (list-length x)) 2) x) v))
+    v) => set-middleguy
+(defsetf middleguy set-middleguy) => middleguy
+(setq a (list 'a 'b 'c 'd)
+      b (list 'x)
+      c (list 1 2 3 (list 4 5 6) 7 8 9)) =>  (1 2 3 (4 5 6) 7 8 9)
+(setf (middleguy a) 3) =>  3
+(setf (middleguy b) 7) =>  7
+(setf (middleguy (middleguy c)) 'middleguy-symbol) => middleguy-symbol
+a => (a 3 c d)
+b => (7)
+c => (1 2 3 (4 middleguy-symbol 6) 7 8 9)
+)code");
 }
 
 void test()
