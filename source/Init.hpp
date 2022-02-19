@@ -38,7 +38,7 @@ namespace alisp { inline const char* getInitCode() { return R"code(
 
 (defmacro defsetf (access-fn update-fn)
   "Add as simple setf rule"
-  (list 'put (list 'quote 'setf-simple-rules) (list 'quote access-fn) (list 'quote update-fn)))
+  `(progn (put 'setf-simple-rules ',access-fn ',update-fn) ',access-fn))
 
 (defsetf car setcar)
 (defsetf cdr setcdr)
