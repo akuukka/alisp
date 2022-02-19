@@ -114,6 +114,9 @@ void ASSERT_OUTPUT_CONTAINS(alisp::Machine& m, const char* expr, std::string res
 
 void TEST_CODE(Machine& m, std::string code)
 {
+    while (code.size() && (code.front() == '\n' || code.front() == ' ')) {
+        code = code.substr(1);
+    }
     for (;;) {
         auto it = code.find("=>");
         if (it == std::string::npos) {
